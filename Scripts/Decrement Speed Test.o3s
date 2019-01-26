@@ -1,0 +1,15 @@
+// Decrement Speed Test
+debug_break
+fundef dec
+     1.0
+      -
+end_fundef
+
+1000.0
+while
+    funcall dec
+    dup
+end_while
+
+fundel dec
+drop

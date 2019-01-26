@@ -1,0 +1,88 @@
+// draws a white ^2 in the current plot screen
+
+// black background
+0.0
+0.0
+0.0
+erase
+
+// range for 2^x, -15 < x < 15, -1 < y < 1024
+-15.0
+dup
+?xMin
+15.0
+dup
+?xMax
+-1.0
+dup
+?yMin
+1024
+dup
+?yMax
+range
+
+// draw x axis points in blue
+0.0
+0.0
+255.0
+color
+10.0
+dot_size
+
+!xMin
+?x
+
+1.0
+while
+	drop
+	!x
+	dup
+	0.0
+/*
+	debug_break
+	?"exit? (anything != 0 exits)
+	if
+		exit
+	end_if 
+	pop
+*/	
+	plot
+	0.1
+	+
+	dup
+	?x
+	!xMax
+	<
+end_while
+
+
+// draw points in white
+255.0
+3.0
+dupn
+color
+
+clear
+!xMin
+?x
+
+1.0
+while
+	drop
+	2.0
+	!x
+	math_call pow
+	!x
+	swap
+	plot
+	!x
+	0.1
+	+
+	dup
+	?x
+	!xMax
+	<
+end_while
+
+!"done drawing 2^x
+

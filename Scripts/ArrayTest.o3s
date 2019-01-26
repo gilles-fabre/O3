@@ -1,0 +1,30 @@
+// array test
+//  a small sample to demonstrate array capabilities
+
+debug_break
+
+100.0
+99.0
+?[]a
+99.0
+![]a
+
+99.0
+while
+	3.0 
+	dupn
+	?[]a
+	funcall dec
+end_while
+//clear
+
+//debug_break
+
+99.0
+while
+	dup
+	![]a
+	swap
+	funcall dec
+end_while
+

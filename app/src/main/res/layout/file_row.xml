@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" 
+    android:padding="@dimen/page_padding"
+	android:background="?android:attr/activatedBackgroundIndicator">	
+	
+	<ImageView
+	    android:id="@+id/fd_icon"
+    	android:contentDescription="@android:string/unknownName"
+	    android:layout_width="50dip"
+	    android:layout_height="50dip" 
+	    android:layout_marginTop="5dip">
+	
+	</ImageView>
+	               
+	<TextView 
+	    android:id="@+id/fd_name"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:singleLine="true"
+	    android:textStyle="bold"
+	    android:layout_toRightOf="@+id/fd_icon"
+	    android:layout_marginTop="5dip" 
+	    android:layout_marginLeft="5dip">
+	
+	</TextView>
+	
+	<TextView 
+	    android:id="@+id/fd_data"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_toRightOf="@+id/fd_icon"
+	    android:layout_below="@+id/fd_name"
+	    android:layout_marginLeft="10dip">
+	   
+	</TextView>
+	
+	<TextView 
+	    android:id="@+id/fd_date"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@+id/fd_data"
+	    android:layout_alignParentRight="true"
+	    android:layout_marginLeft="5dip"
+	    android:layout_marginRight="5dip">
+	
+	</TextView>
+
+</RelativeLayout>

@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".CalculatorActivity"
+    tools:layout_editor_absoluteY="81dp">
+
+    <EditText
+        android:id="@+id/input_value"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:ems="10"
+        android:enabled="true"
+        android:focusableInTouchMode="false"
+        android:gravity="end"
+        android:inputType="none"
+        android:selectAllOnFocus="false"
+        android:singleLine="true"
+        android:textColor="#008800"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ListView
+        android:id="@+id/stack"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:clickable="false"
+        android:focusableInTouchMode="false"
+        android:isScrollContainer="true"
+        android:longClickable="false"
+        android:saveEnabled="false"
+        android:scrollbarAlwaysDrawHorizontalTrack="false"
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        app:layout_constraintBottom_toTopOf="@+id/tableLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/input_value"
+        app:layout_constraintVertical_bias="0.465" />
+
+    <TableLayout
+        android:id="@+id/tableLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/stack">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/button_swap"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="SWAP"
+                android:textColor="#0099CC"
+                android:textStyle="italic"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_7"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="7"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_8"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="8"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_9"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="9"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_div"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="/"
+                android:textColor="@android:color/black"
+                android:textSize="14sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/button_dup"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="DUP"
+                android:textColor="#0099CC"
+                android:textStyle="italic"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="4"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="5"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="6"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_mul"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="x"
+                android:textColor="@android:color/black"
+                android:textSize="14sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/button_drop"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="DROP"
+                android:textColor="#FF0000"
+                android:textStyle="italic"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_1"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="1"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="2"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="3"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_sub"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="-"
+                android:textColor="@android:color/black"
+                android:textSize="14sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/button_clear"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="CLEAR"
+                android:textColor="#FF0000"
+                android:textStyle="italic"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_0"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0"
+                android:textColor="#008800"
+                android:textStyle="bold"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/button_neg"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="n"
+                    android:textColor="#008800"
+                    android:textStyle="bold"
+                    tools:layout_editor_absoluteX="89dp"
+                    tools:layout_editor_absoluteY="259dp" />
+
+                <Button
+                    android:id="@+id/button_dot"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="."
+                    android:textColor="#008800"
+                    android:textStyle="bold"
+                    tools:layout_editor_absoluteX="89dp"
+                    tools:layout_editor_absoluteY="259dp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/button_enter"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="enter"
+                android:textColor="#0099CC"
+                android:textStyle="italic"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_add"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="+"
+                android:textColor="@android:color/black"
+                android:textSize="14sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+        </TableRow>
+    </TableLayout>
+
+</android.support.constraint.ConstraintLayout>

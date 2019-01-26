@@ -1,0 +1,109 @@
+// draws a white sine in the current plot screen
+ debug_break
+
+
+// black background
+0.0
+0.0
+0.0
+erase
+
+// range for sine(x), -10 < x < 10, -10 < y < 10
+-10.0
+dup
+?xMin
+10.0
+dup
+?xMax
+-10.0
+dup
+?yMin
+10.0
+dup
+?yMax
+range
+
+// draw x,y axis points in blue
+0.0
+0.0
+255.0
+color
+10.0
+dot_size
+
+!xMin
+?x
+
+1.0
+while
+	drop
+	!x
+	dup
+	0.0
+//debug_break
+	plot
+	0.1
+	+
+	dup
+	?x
+	!xMax
+	<
+end_while
+
+!yMin
+?y
+
+1.0
+while
+	drop
+	!y
+	0.0
+	swap
+//debug_break
+	plot
+	!y
+	0.1
+	+
+	dup
+	?y
+	!yMax
+	<
+end_while
+
+// draw points in white
+255.0
+3.0
+dupn
+color
+
+!xMin
+?x
+
+1.0
+while
+	drop
+	!x
+	math_call sin
+	!x
+	swap
+	10.0
+	*
+//debug_break
+	plot
+	!x
+	dup
+	math_call ceil
+	math_call abs
+	2.0
+	*
+	dot_size
+	0.05
+	+
+	dup
+	?x
+	!xMax
+	<
+end_while
+
+!"done drawing sine
+

@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">O3</string>
+    <string name="stack">Stack</string>
+    <string name="rolln">Roll N</string>
+    <string name="swapn">Swap N</string>
+    <string name="dupn">Dup N</string>
+    <string name="dropn">Drop N</string>
+    <string name="functions">Functions</string>
+    <string name="maths_functions">Java Math Functions..</string>
+    <string name="script_functions">Script Functions</string>
+    <string name="scripts">Scritps</string>
+    <string name="edit_script">Edit..</string>
+    <string name="run_script">Run..</string>
+    <string name="debug_script">Debug</string>
+    <string name="new_script">New..</string>
+    <string name="new_script_name">NewScript</string>
+    <string name="graph">Graph View..</string>
+    <string name="select">Select</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="pick_script">Pick a Script</string>
+    <string name="pick_math_function">Pick a Math Function</string>
+    <string name="about">About..</string>
+    <string name="about_o3">About O3</string>
+    <string name="graph_view">Graph View</string>
+    <string name="function_call_err">Error calling function :</string>
+    <string name="param_cast_err">Error casting parameters :</string>
+    <string name="invalid_number">Not a valid number :</string>
+    <string name="exit_show_on">exiting on</string>
+    <string name="syntax_error">Error at line/column (</string>
+    <string name="unexpected_token">"), unexpected token : "</string>
+    <string name="invalid_path">invalid path :</string>
+</resources>

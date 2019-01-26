@@ -1,0 +1,73 @@
+fundef dec
+    1.0
+     -
+end_fundef
+
+fundef inc
+    1.0
+    +
+end_fundef
+
+fundef sum
+    // stack average
+
+    // keep stacksize and sum
+    stack_size
+    ?stacksize
+    0.0
+    ?sum
+
+    !stacksize
+    funcall dec
+    while
+        	// drop stacksize
+	       drop
+
+	      // add sum to top value
+       	!sum	
+	      +
+       	?sum
+	
+       	// dec stack_size
+       	!stacksize
+       	funcall dec
+	      dup
+       	?stacksize
+    end_while
+
+    // get sum
+    clear
+    !sum
+end_fundef
+
+fundef average
+     stack_size
+     ?elems
+     funcall sum
+     !elems
+     /
+end_fundef
+
+fundef modulo
+     ?div
+     ?val
+     !val
+     !div
+     /
+    math_call floor
+    dup
+    ?res
+    !div
+    !res
+    *
+    !val
+    //debug_break
+    swap
+    -
+    ?rem
+    !"result modulo & remain
+    !res
+    !rem
+end_fundef
+
+!"basic functions 'defuned', see Functions/Script Functions menu
