@@ -1,13 +1,13 @@
 # O3
-O3 : Programmable RPN Calculator
+O3 : Programmable RPN (Reverse Polish Notation) Calculator.
 
 O3 (Operand Operand Operator) is a free and open source RPN Calculator. 
 
-O3 can be programmed and support graphical capabilities. It includes a full featured
+O3 can be programmed and supports graphical capabilities. It includes a full featured
 debugger which can be used to follow a script execution and fix its defects.
 
 O3 provides user with the basic operations, plus all the java math functions, obtained through 
-inspection, and hence keep up to date with the java jdk evolutions. 
+inspection, and hence keeps up to date with the java jdk evolutions. 
 
 O3 maths capabilities can also be extended by creating scripts and script functions (functions 
 defined in scripts).
