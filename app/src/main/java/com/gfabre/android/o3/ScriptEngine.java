@@ -266,16 +266,17 @@ public class ScriptEngine {
      * @return the block execution result
      */
     private boolean runIfBlock(String block) {
-        boolean runOk = false;
+        if (!mCalculator.hasValueOnStack())
+            return false;
 
         // run the function in the context of a new engine
         try {
-            if (mCalculator.hasValueOnStack() && mCalculator.peekValueFromStack() != 0.0)
-                runOk = new ScriptEngine(this, mCalculator, block).runScript();
+            if (mCalculator.peekValueFromStack() != 0.0)
+                return new ScriptEngine(this, mCalculator, block).runScript();
         } catch (IOException e) {
         }
 
-        return runOk;
+        return true;
     }
 
     /**
@@ -287,21 +288,22 @@ public class ScriptEngine {
      * @return the block execution result
      */
     private boolean runIfElseBlock(String ifBlock, String elseBlock) {
-        boolean runOk = false;
+        if (!mCalculator.hasValueOnStack())
+            return false;
 
         // run the if/else block in the context of a new engine
         try {
-            if (mCalculator.hasValueOnStack() && mCalculator.peekValueFromStack() == 0.0)
+            if (mCalculator.peekValueFromStack() == 0.0)
                 // run the the else block
-                runOk = new ScriptEngine(this, mCalculator, elseBlock).runScript();
+                return new ScriptEngine(this, mCalculator, elseBlock).runScript();
             else {
                 // run the if block
-                runOk = new ScriptEngine(this, mCalculator, ifBlock).runScript();
+                return new ScriptEngine(this, mCalculator, ifBlock).runScript();
             }
         } catch (IOException e) {
         }
 
-        return runOk;
+        return true;
     }
 
     /**
@@ -312,9 +314,11 @@ public class ScriptEngine {
      * @return the block execution result
      */
     private boolean runWhileBlock(String block) {
-        boolean runOk = false;
+        if (!mCalculator.hasValueOnStack())
+            return false;
 
         // run the while block in the context of a new engine
+        boolean runOk = true;
         try {
             while (mCalculator.hasValueOnStack() && mCalculator.peekValueFromStack() != 0.0) {
                 if (!(runOk = new ScriptEngine(this, mCalculator, block).runScript()))
@@ -855,6 +859,9 @@ public class ScriptEngine {
 
                         case EXIT:
                             stop = true;
+                            // if debugging, must close the debug dialog
+                            if (mDebugView.isShown())
+                                mDebugView.hide();
                             break;
                     }
             }

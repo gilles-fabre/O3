@@ -20,18 +20,18 @@ fundef sum
     !stacksize
     funcall dec
     while
-        	// drop stacksize
-	       drop
+		// drop stacksize
+	    drop
 
-	      // add sum to top value
+	    // add sum to top value
        	!sum	
-	      +
+	    +
        	?sum
 	
        	// dec stack_size
        	!stacksize
        	funcall dec
-	      dup
+	    dup
        	?stacksize
     end_while
 
@@ -49,11 +49,11 @@ fundef average
 end_fundef
 
 fundef modulo
-     ?div
-     ?val
-     !val
-     !div
-     /
+    ?div
+    ?val
+    !val
+    !div
+    /
     math_call floor
     dup
     ?res
