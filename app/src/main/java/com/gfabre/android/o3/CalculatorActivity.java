@@ -11,10 +11,8 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
-import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -22,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -61,9 +60,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private EditText        mValueField = null;
     private ListView        mStackView = null;
     private ArrayAdapter    mStackAdapter = null;
-    private GestureDetector mDetector = null;
     private Activity        mActivity;
-    private GraphView       mGraphView = null;
+    private GraphView mGraphView = null;
     private Menu            mScriptFunctionsMenu = null;
 
     public boolean hasValueOnStack() {
@@ -429,25 +427,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public void onDismiss(int Id, GenericDialog dialog, View mView) {
     }
 
-    /**
-     * Deals with the gestures on the value input field to backspace or erase all.
-     */
-    class ValueFieldGestureDetector extends GestureDetector.SimpleOnGestureListener{
-        public boolean onDoubleTap(MotionEvent event) {
-            super.onDoubleTap(event);
-            if (mValue.isEmpty())
-                return false;
-            mValue = mValue.substring(0, mValue.length() - 1);
-            mValueField.setText(mValue);
-            return true;
-        }
-        public void onLongPress(MotionEvent event) {
-            super.onLongPress(event);
-            mValue = "";
-            mValueField.setText(mValue);
-        }
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onStart() {
@@ -492,16 +471,32 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         mGraphView = new GraphView(getApplicationContext());
 
         // set up handlers
+        // edit field
         mValueField = findViewById(R.id.input_value);
 
-        mDetector = new GestureDetector(this, new ValueFieldGestureDetector());
-        mValueField.setOnTouchListener(new View.OnTouchListener() {
+        // backspace button
+        ImageButton backButton = findViewById(R.id.backspaceButton);
+        backButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return mDetector.onTouchEvent(event);
+            public void onClick(View view) {
+                if (mValue.isEmpty())
+                    return;
+                mValue = mValue.substring(0, mValue.length() - 1);
+                mValueField.setText(mValue);
+            }
+        });
+        backButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                if (mValue.isEmpty())
+                    return false;
+                mValue = "";
+                mValueField.setText(mValue);
+                return true;
             }
         });
 
+        // stack
         mStackView = findViewById(R.id.stack);
 
         mStackAdapter = new ArrayAdapter<>(this, R.layout.simple_row, new ArrayList<String>());
@@ -514,8 +509,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
              }
          });
 
+        // restore potential stack and edited value
         onRestoreInstanceState(savedInstanceState);
 
+        // calcpad handlers
         Button button = findViewById(R.id.button_0);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -796,14 +793,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         ColorLogView helpView = new ColorLogView(view);
 
-		/* #### create O3 github link
-		helpView.setFontSize(ColorLogView.BIG_FONT);
-		helpView.appendText("<a href=\"http://GpsRendezVous.no-ip.org\">" + getString(R.string.facebook) + "</a>", 0x0000FF, true);
-		helpView.resetFontSize();
-		*/
-
         helpView.setFontSize(ColorLogView.BIG_FONT);
-        helpView.appendText("O3: Operand Operand Operator.. calc\n\n", 0x00FFFF, true);
+        helpView.appendText("\nO3: Operand Operand Operator.. calc\n\n", 0x00FFFF, true);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
@@ -823,7 +814,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\t'DUP' pushes on the stack a copy of its topmost value\n", 0, false);
         helpView.appendText("\t\t'DROP' drops the topmost value off the stack\n", 0, false);
         helpView.appendText("\t\t'CLEAR' clears the whole stack\n", 0, false);
-        helpView.appendText("\nNOTE: all of the these actions, except 'N', first push the edited value (if present) on the stack. The value edit field can be erased using a long press, and a double tap will 'backspace'. Selecting a value in the stack copies it to the edit value field.\n", 0, true);
+        helpView.appendText("\nNOTE: all of the these actions, except 'N', first push the edited value (if present) on the stack. Selecting a value in the stack copies it to the edit value field.\n", 0, true);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
@@ -914,6 +905,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\trange : sets the graphical view virtual orthonormal extent to the xMin, xMax, yMin, yMax given by the first fours values of the stack.\n", 0, false);
         helpView.appendText("\t\tplot : draws with the current color, dot size, at the x, y coordinates given by the two topmost values of the stack.\n", 0, false);
         helpView.appendText("\t\tdebug_break : pops up a modal dialog reading various debugging information. The standard 'step over', 'step in', 'step out' are supported. 'done' resumes the script execution and ends the debugging session. 'exit' terminates the script..\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.BIG_FONT);
+        helpView.appendText("\n\nHave fun using O3. Gilles Fabre(c) 2019.\n\n", 0x00FFFF, true);
         helpView.resetFontSize();
     }
 
