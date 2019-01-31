@@ -23,11 +23,12 @@
     <string name="about">About..</string>
     <string name="about_o3">About O3</string>
     <string name="graph_view">Graph View</string>
-    <string name="function_call_err">Error calling function :</string>
-    <string name="param_cast_err">Error casting parameters :</string>
-    <string name="invalid_number">Not a valid number :</string>
+    <string name="function_call_err">Error calling function : </string>
+    <string name="param_cast_err">Error casting parameters : </string>
+    <string name="invalid_number">Not a valid number : </string>
     <string name="exit_show_on">exiting on</string>
     <string name="syntax_error">Error at line/column (</string>
     <string name="unexpected_token">"), unexpected token : "</string>
-    <string name="invalid_path">invalid path :</string>
+    <string name="invalid_path">invalid path : </string>
+    <string name="undefined_function">Function is not defined : </string>
 </resources>

@@ -215,8 +215,10 @@ public class ScriptEngine {
     private boolean callFunction(String function) {
         boolean runOk = false;
 
-        if (!mFunctions.containsKey(function))
+        if (!mFunctions.containsKey(function)) {
+            mCalculator.doDisplayMessage(mCalculator.getString(R.string.undefined_function) + function);
             return runOk;
+        }
 
         // run the function in the context of a new engine
         try {
@@ -238,8 +240,10 @@ public class ScriptEngine {
     public static boolean runFunction(CalculatorActivity calculator, String function) {
         boolean runOk = false;
 
-        if (!mFunctions.containsKey(function))
+        if (!mFunctions.containsKey(function)) {
+            calculator.doDisplayMessage(calculator.getString(R.string.undefined_function) + function);
             return runOk;
+        }
 
         // run the function in the context of a new engine
         try {
@@ -525,9 +529,6 @@ public class ScriptEngine {
                         case EOF:
                             mContexts.pop();
                             runOk = false; // unexpected EOF
-                            // if debugging, must close the debug dialog
-                            if (mDebugView.isShown())
-                                mDebugView.hide();
                             break;
 
                         case ELSE:
@@ -561,9 +562,6 @@ public class ScriptEngine {
                             mContexts.pop(); // if and else_if contexts were stacked
                             mContexts.pop();
                             runOk = false; // unexpected EOF
-                            // if debugging, must close the debug dialog
-                            if (mDebugView.isShown())
-                                mDebugView.hide();
                             break;
 
                         case END_IF:
@@ -586,9 +584,6 @@ public class ScriptEngine {
                         case EOF:
                             mContexts.pop();
                             runOk = false; // unexpected EOF
-                            // if debugging, must close the debug dialog
-                            if (mDebugView.isShown())
-                                mDebugView.hide();
                             break;
 
                         case END_WHILE:
@@ -609,9 +604,6 @@ public class ScriptEngine {
                         case EOF:
                             mContexts.pop();
                             runOk = false; // unexpected EOF
-                            // if debugging, must close the debug dialog
-                            if (mDebugView.isShown())
-                                mDebugView.hide();
                             break;
 
                         case FUNDEF:
@@ -885,6 +877,10 @@ public class ScriptEngine {
                     break;
             }
         }
+
+        // if debugging, must close the debug dialog
+        if (!runOk && mDebugView.isShown())
+            mDebugView.hide();
 
         return runOk;
     }
