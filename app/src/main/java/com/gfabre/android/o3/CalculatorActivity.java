@@ -794,7 +794,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         ColorLogView helpView = new ColorLogView(view);
 
         helpView.setFontSize(ColorLogView.BIG_FONT);
-        helpView.appendText("\nO3: Operand Operand Operator.. calc\n\n", 0x00FFFF, true);
+        helpView.appendText("\nO3: Operand Operand Operator.. calc", 0x00FFFF, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.BIG_FONT);
+        helpView.appendText("\n<a href=\"url\">https://github.com/gilles-fabre/O3</a>\n\n", 0xCCCCCC, true);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);

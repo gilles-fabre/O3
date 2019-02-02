@@ -15,7 +15,7 @@ import java.util.ArrayList;
  * be used to control a script execution (through a state automaton in the script
  * automation engine).
  *
- * The debug dialog must be instantiated, then it's setDebugInfo/show called everytime
+ * The debug dialog must be instantiated, then it's updateDebugInfo/show called everytime
  * a new instruction was interpreted, and the dialog's hide method is eventually called.
  *
  *  @author gilles fabre
@@ -51,14 +51,14 @@ public class DebugView implements GenericDialog.GenericDialogListener {
         mActivity = activity;
         mDialog = new GenericDialog(DEBUG_DIALOG_ID, null, true);
         mDialog.setListener(this);
+        mState = DebugState.none;
     }
 
-    public void setDebugInfo(int scriptLine, String script, String variables, String stack) {
+    public void updateDebugInfo(int scriptLine, String script, String variables, String stack) {
         mScript = script;
         mVariables = variables;
         mStack = stack;
         mScriptLine = scriptLine;
-        mState = DebugState.none;
     }
 
     public void show() {

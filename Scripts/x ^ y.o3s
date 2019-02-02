@@ -1,9 +1,6 @@
 // x^y
 
-fundef dec
-	1.0
-	-
-end_fundef
+//debug_break
 
 // create counter and result var
 ?y
@@ -35,4 +32,3 @@ drop
 // result
 !r
 
- 

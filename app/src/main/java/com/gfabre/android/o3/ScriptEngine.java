@@ -469,7 +469,7 @@ public class ScriptEngine {
                 if (array.get(k) != null)
                     variables += pair.getKey() + "[" + k + "] : " + array.get(k) + "\n";
         }
-        mDebugView.setDebugInfo(mContexts.peek().mLexer.yyline(), mScript, variables, mCalculator.getStackDebugInfo());
+        mDebugView.updateDebugInfo(mContexts.peek().mLexer.yyline(), mScript, variables, mCalculator.getStackDebugInfo());
         mDebugView.show();
     }
 
@@ -867,6 +867,7 @@ public class ScriptEngine {
                 case exit:
                     // force parent script to exit too
                     parentContext.mDebugState = exit;
+                    runOk = false;
                     break;
 
                 case step_out:

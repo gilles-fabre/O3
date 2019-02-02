@@ -70,4 +70,67 @@ fundef modulo
     !rem
 end_fundef
 
+fundef std_dev
+    // create global array!
+    0
+    0
+    ?[]a
+
+    stack_size
+    2
+    dupn
+    ?n
+    ?i
+    while
+        funcall dec 
+        dup
+        ?i
+        ?[]a
+        !i
+    end_while
+    drop
+
+    !n
+    dup
+    ?i
+    while
+        funcall dec
+        dup
+        ?i
+        ![]a
+        !i
+    end_while
+    drop
+
+    funcall average
+    ?avr
+
+    0
+    ?sum
+
+    !n
+    dup
+    ?i
+    while
+        funcall dec
+        dup
+        ?i
+        ![]a
+        !avr
+        -
+        2
+        math_call pow
+        !sum
+        +
+        ?sum
+        !i
+    end_while
+    drop
+
+    !sum
+    !n
+    /
+    math_call sqrt
+end_fundef
+
 !"basic functions 'defuned', see Functions/Script Functions menu
