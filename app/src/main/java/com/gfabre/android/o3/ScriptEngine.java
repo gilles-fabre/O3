@@ -474,6 +474,27 @@ public class ScriptEngine {
     }
 
     /**
+     * Debugs the given script.
+     *
+     * @return true if the script was executed correctly, else return false
+     *
+     * @throws IOException
+     */
+    public boolean debugScript() throws IOException {
+        Context newContext;
+
+        // we enter here to debug a complete script
+        newContext = new Context(Context.State.RUNNING);
+        newContext.mDebugState = DebugView.DebugState.step_over;
+
+        mContexts.push(newContext);
+        boolean runOk = runScript();
+        mContexts.pop();
+
+        return runOk;
+    }
+
+    /**
      * Executes the current script in the current execution/analysis context.
      *
      * @return true if the script was executed correctly, else return false

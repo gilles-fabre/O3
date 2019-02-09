@@ -9,9 +9,11 @@
     <string name="maths_functions">Java Math Functions..</string>
     <string name="script_functions">Script Functions</string>
     <string name="scripts">Scritps</string>
+    <string name="init_script">Select Init Script..</string>
+    <string name="cancel_init_script">Cancel Init Script</string>
     <string name="edit_script">Edit..</string>
     <string name="run_script">Run..</string>
-    <string name="debug_script">Debug</string>
+    <string name="debug_script">Debug..</string>
     <string name="new_script">New..</string>
     <string name="new_script_name">NewScript</string>
     <string name="graph">Graph View..</string>
@@ -31,4 +33,5 @@
     <string name="unexpected_token">"), unexpected token : "</string>
     <string name="invalid_path">invalid path : </string>
     <string name="undefined_function">Function is not defined : </string>
+    <string name="init_script_error">Error executing init script : </string>
 </resources>

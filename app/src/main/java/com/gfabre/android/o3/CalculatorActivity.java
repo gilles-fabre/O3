@@ -2,6 +2,8 @@ package com.gfabre.android.o3;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -48,10 +50,13 @@ import java.util.Stack;
 public class CalculatorActivity extends AppCompatActivity implements GenericDialog.GenericDialogListener {
 
     private static final int        RUN_SCRIPT_DIALOG_ID = 1;
-    private static final int        EDIT_SCRIPT_DIALOG_ID = 2;
+    private static final int        DEBUG_SCRIPT_DIALOG_ID = 2;
+    private static final int        EDIT_SCRIPT_DIALOG_ID = 3;
+    private static final int        INIT_SCRIPT_DIALOG_ID = 4;
     private static final int        HELP_DIALOG_ID = R.layout.log_view;
     private static final int        GRAPH_DIALOG_ID = R.layout.graph_view;
     private static final String     SCRIPT_EXTENSIONS = ".o3s .txt";
+    private static final String     INIT_SCRIPT_NAME = "InitScriptFilename";
 
     private static  Method[] mMethods = null;
 
@@ -63,6 +68,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private Activity        mActivity;
     private GraphView mGraphView = null;
     private Menu            mScriptFunctionsMenu = null;
+    private String          mInitScriptName = null;
 
     public boolean hasValueOnStack() {
         return !mStack.isEmpty();
@@ -146,10 +152,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
 
+        // stack menu
+        Menu submenu = menu.addSubMenu(getString(R.string.stack));
+
         /**
          * ROLLs the top value N position down the stack
          */
-        Menu submenu = menu.addSubMenu(getString(R.string.stack));
         MenuItem item = submenu.add(getString(R.string.rolln));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -195,11 +203,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
         });
 
+        // functions menu
+        submenu = menu.addSubMenu(getString(R.string.functions));
+
         /**
          *  Brings the maths functions dialog, let the pick a value and
          *  eventually apply the selected function to the stack.
          */
-        submenu = menu.addSubMenu(getString(R.string.functions));
         item = submenu.add(getString(R.string.maths_functions));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -210,12 +220,55 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
         });
 
+        // dynamic script functions menu
         mScriptFunctionsMenu = submenu.addSubMenu(getString(R.string.script_functions));
+
+        // scripts menu
+        submenu = menu.addSubMenu(R.string.scripts);
+
+        /**
+         * Pick an init script
+         */
+        item = submenu.add(getString(R.string.init_script));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                // path to the external download directory if available, internal one else.
+                File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                new FileChooser(INIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, dir == null ? "/" : dir.getPath());
+                return true;
+            }
+        });
+
+        /**
+         * Remove init script
+         */
+        item = submenu.add(getString(R.string.cancel_init_script));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                mInitScriptName = null;
+                return true;
+            }
+        });
+
+        /**
+         * Pick and debug a script
+         */
+        item = submenu.add(getString(R.string.debug_script));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                // path to the external download directory if available, internal one else.
+                File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                new FileChooser(DEBUG_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, dir == null ? "/" : dir.getPath());
+                return true;
+            }
+        });
 
         /**
          * Pick and execute a script
          */
-        submenu = menu.addSubMenu(R.string.scripts);
         item = submenu.add(getString(R.string.run_script));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -369,32 +422,82 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      */
     @Override
     public void onDialogPositiveClick(int Id, GenericDialog dialog, View view) {
-        if (Id == RUN_SCRIPT_DIALOG_ID) {
-            pushValueOnStack();
+        switch (Id) {
+            case RUN_SCRIPT_DIALOG_ID : {
+                // run the selected script
+                pushValueOnStack();
 
-            String filename = dialog.getBundle().getString(FileChooser.FILENAME);
-            String script = null;
-            try {
-                script = readFile(filename);
-                final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
-                new Runnable(){
-                    @Override
-                    public void run() {
-                        // Moves the current Thread into the background
-                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                        try {
-                            engine.runScript();
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                String filename = dialog.getBundle().getString(FileChooser.FILENAME);
+                String script = null;
+                try {
+                    script = readFile(filename);
+                    final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
+                    new Runnable(){
+                        @Override
+                        public void run() {
+                            // Moves the current Thread into the background
+                            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                            try {
+                                engine.runScript();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
-                    }
-                }.run();
-            } catch (IOException e) {
-                e.printStackTrace();
+                    }.run();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-        } else if (Id == EDIT_SCRIPT_DIALOG_ID)  {
-            String filename = dialog.getBundle().getString(FileChooser.FILENAME);
-            new EditDialog(this, filename);
+            break;
+
+            case DEBUG_SCRIPT_DIALOG_ID : {
+                // run the selected script
+                pushValueOnStack();
+
+                String filename = dialog.getBundle().getString(FileChooser.FILENAME);
+                String script = null;
+                try {
+                    script = readFile(filename);
+                    final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
+                    new Runnable(){
+                        @Override
+                        public void run() {
+                            // Moves the current Thread into the background
+                            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                            try {
+                                engine.debugScript();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }.run();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            break;
+
+            case EDIT_SCRIPT_DIALOG_ID :  {
+                // edit the selected script
+                String filename = dialog.getBundle().getString(FileChooser.FILENAME);
+                new EditDialog(this, filename);
+            }
+            break;
+
+            case INIT_SCRIPT_DIALOG_ID : {
+                // saves the init script name in the preferences
+                // it'll be run every time the program starts
+                mInitScriptName = dialog.getBundle().getString(FileChooser.FILENAME);
+
+                // run the init script
+                try {
+                    new ScriptEngine(this, readFile(mInitScriptName)).runScript();
+                } catch (Exception e) {
+                    doDisplayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage());
+                    mInitScriptName = null;
+                }
+            }
+            break;
         }
     }
 
@@ -404,17 +507,23 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     @Override
     public void onDialogInitialize(int Id, GenericDialog dialog, View view) {
-        if (Id == HELP_DIALOG_ID) {
-            TextView textView = (TextView)dialog.getField(R.id.color_log_view);
-            if (textView != null)
-                setHelpText(textView);
-        } else if (Id == GRAPH_DIALOG_ID) {
-            FrameLayout layout = (FrameLayout)dialog.getField(R.id.graphView);
-            if (layout != null) {
-                if (mGraphView.getParent() != null)
-                    ((ViewGroup)mGraphView.getParent()).removeView(mGraphView);
-                layout.addView(mGraphView);
+        switch (Id) {
+            case HELP_DIALOG_ID : {
+                TextView textView = (TextView)dialog.getField(R.id.color_log_view);
+                if (textView != null)
+                    setHelpText(textView);
             }
+            break;
+
+            case GRAPH_DIALOG_ID : {
+                FrameLayout layout = (FrameLayout) dialog.getField(R.id.graphView);
+                if (layout != null) {
+                    if (mGraphView.getParent() != null)
+                        ((ViewGroup) mGraphView.getParent()).removeView(mGraphView);
+                    layout.addView(mGraphView);
+                }
+            }
+            break;
         }
     }
 
@@ -425,6 +534,17 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     @Override
     public void onDismiss(int Id, GenericDialog dialog, View mView) {
+    }
+
+    @Override
+    protected void onStop() {
+        // get the init script from the preferences
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(INIT_SCRIPT_NAME, mInitScriptName);
+        editor.commit();
+
+        super.onStop();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -455,6 +575,20 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
         } else {
             // Permission has already been granted
+        }
+
+        // get the init script from the preferences
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        if (prefs.contains(INIT_SCRIPT_NAME)) {
+            mInitScriptName = prefs.getString(INIT_SCRIPT_NAME, null);
+
+            // run the init script
+            try {
+                new ScriptEngine(this, readFile(mInitScriptName)).runScript();
+            } catch (Exception e) {
+                //doDisplayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage()); can't be run at this stage
+                mInitScriptName = null;
+            }
         }
     }
 
@@ -852,11 +986,35 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nScripts/Select Init Script.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be run upon o3 start.\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nScripts/Cancel Init Script.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tThe previously selected init script won't be run anymore upon o3 start.\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
         helpView.appendText("\n\nScripts/Run.. menu :\n", 0x008888, true);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
         helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be run (see .o3s provided examples).\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nScripts/Debug.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be debugged (see .o3s provided examples).\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
