@@ -58,6 +58,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final String     SCRIPT_EXTENSIONS = ".o3s .txt";
     private static final String     INIT_SCRIPT_NAME = "InitScriptFilename";
 
+    // no GUI allowed in init scripts...
+    private boolean                 mInInitScript;
+
     private static  Method[] mMethods = null;
 
     private Stack<Double>   mStack = new Stack<Double>();
@@ -584,10 +587,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
             // run the init script
             try {
+                mInInitScript = true;
                 new ScriptEngine(this, readFile(mInitScriptName)).runScript();
             } catch (Exception e) {
                 //doDisplayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage()); can't be run at this stage
                 mInitScriptName = null;
+            } finally {
+                mInInitScript = false;
             }
         }
     }
@@ -1400,10 +1406,18 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public void doDisplayMessage(String message) {
+        // no GUI allowed in init script
+        if (mInInitScript)
+            return;
+
         GenericDialog.displayMessage(this, message);
     }
 
     public void doPromptMessage(String message) {
+        // no GUI allowed in init script
+        if (mInInitScript)
+            return;
+
         Double value = new Double(GenericDialog.promptMessage(this,
                                                               InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
                                                                message));
