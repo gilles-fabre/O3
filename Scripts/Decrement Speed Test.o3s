@@ -1,5 +1,6 @@
 // Decrement Speed Test
 debug_break
+
 fundef dec
      1.0
       -
@@ -11,5 +12,6 @@ while
     dup
 end_while
 
-fundel dec
+//now defined in functions.o3s, do not delete
+//fundel dec 
 drop
