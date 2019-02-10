@@ -481,11 +481,9 @@ public class ScriptEngine {
      * @throws IOException
      */
     public boolean debugScript() throws IOException {
-        Context newContext;
-
         // we enter here to debug a complete script
-        newContext = new Context(Context.State.RUNNING);
-        newContext.mDebugState = DebugView.DebugState.step_over;
+        Context newContext = new Context(Context.State.RUNNING);
+        newContext.mDebugState = DebugView.DebugState.step_in;
 
         mContexts.push(newContext);
         boolean runOk = runScript();
