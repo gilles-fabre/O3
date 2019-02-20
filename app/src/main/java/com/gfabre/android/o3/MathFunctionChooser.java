@@ -182,7 +182,7 @@ public class MathFunctionChooser implements GenericDialogListener {
     @Override
     public boolean onDialogValidate(int Id, GenericDialog dialog, View view) {
         if (mMethod != null) {
-            mCalculator.invokeMathFunction(mMethod);
+            mCalculator.invokeAndHistorizeMathFunction(mMethod);
             return true;
         }
         return false;

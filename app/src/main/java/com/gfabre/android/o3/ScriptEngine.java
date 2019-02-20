@@ -867,8 +867,10 @@ public class ScriptEngine {
                                 // debug break is ignored if already in debug
                                 displayDebugInfo();
                                 curContext.mDebugState = mDebugView.getDebugState();
-                                if (curContext.mDebugState == exit)
+                                if (curContext.mDebugState == exit) {
+                                    runOk = false;
                                     stop = true;
+                                }
                             }
                             break;
 

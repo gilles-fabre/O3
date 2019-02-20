@@ -925,9 +925,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      * @param method is the math method to be called per user request.
      */
+    public boolean invokeAndHistorizeMathFunction(Method method) {
+        mHistory += "math_call " + method.getName() + "\n";
+        return invokeMathFunction(method);
+    }
+
     public boolean invokeMathFunction(Method method) {
         // invoke the selected function
-        mHistory += "math_call " + method.getName() + "\n";
 
         // first make sure we have the appropriate number of elements
         // on the stack
