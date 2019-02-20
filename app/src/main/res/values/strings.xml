@@ -1,10 +1,14 @@
 <resources>
     <string name="app_name">O3</string>
+    <string name="history">History</string>
+    <string name="clear_history">Clear</string>
+    <string name="run_history">Run</string>
+    <string name="edit_history">Edit..</string>
     <string name="stack">Stack</string>
-    <string name="rolln">Roll N</string>
-    <string name="swapn">Swap N</string>
-    <string name="dupn">Dup N</string>
-    <string name="dropn">Drop N</string>
+    <string name="rolln_stack">Roll N</string>
+    <string name="swapn_stack">Swap N</string>
+    <string name="dupn_stack">Dup N</string>
+    <string name="dropn_stack">Drop N</string>
     <string name="functions">Functions</string>
     <string name="maths_functions">Java Math Functions..</string>
     <string name="script_functions">Script Functions</string>

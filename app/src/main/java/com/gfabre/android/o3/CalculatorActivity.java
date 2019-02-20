@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -58,20 +59,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final String     SCRIPT_EXTENSIONS = ".o3s .txt";
     private static final String     INIT_SCRIPT_NAME = "InitScriptFilename";
 
-    // no GUI allowed in init scripts...
-    private boolean                 mInInitScript;
-
     private static  Method[] mMethods = null;
 
-    private Stack<Double>   mStack = new Stack<Double>();
-    private String          mValue = "";
-    private EditText        mValueField = null;
-    private ListView        mStackView = null;
-    private ArrayAdapter    mStackAdapter = null;
-    private Activity        mActivity;
-    private GraphView mGraphView = null;
-    private Menu            mScriptFunctionsMenu = null;
-    private String          mInitScriptName = null;
+    private boolean           mInInitScript;                         // no GUI allowed in init scripts...
+    private ArrayList<String> mHistory = new ArrayList<String>();   // all actions history from beginning of time.
+    private Stack<Double>     mStack = new Stack<Double>();              // values stack
+    private String            mValue = "";                          // value currently edited
+    private EditText          mValueField = null;                   // value edit field
+    private ListView          mStackView = null;                    // stack view
+    private ArrayAdapter      mStackAdapter = null;                 // stack view adapter
+    private Activity          mActivity;                            // this reference
+    private GraphView         mGraphView = null;                    // canvas for graphical functions
+    private Menu              mScriptFunctionsMenu = null;          // dynamic script funtions menu
+    private String            mInitScriptName = null;               // init script, if set, run upon calculator start
 
     public boolean hasValueOnStack() {
         return !mStack.isEmpty();
@@ -155,13 +155,56 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
 
+        // history menu
+        Menu submenu = menu.addSubMenu(getString(R.string.history));
+
+        /**
+         * Clears the complete history
+         */
+        MenuItem item = submenu.add(getString(R.string.clear_history));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                mHistory.clear();
+                return true;
+            }
+        });
+
+        /**
+         * Runs the complete history
+         */
+        item = submenu.add(getString(R.string.run_history));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                String history = "";
+                for (String s : mHistory) {
+                    history += s;
+                }
+                runScript(history);
+                return true;
+            }
+        });
+
+        /**
+         * Edit the complete history
+         */
+        item = submenu.add(getString(R.string.edit_history));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                // TODO : display the complete history in a dialog, let the user save/cancel
+                return true;
+            }
+        });
+
         // stack menu
-        Menu submenu = menu.addSubMenu(getString(R.string.stack));
+        submenu = menu.addSubMenu(getString(R.string.stack));
 
         /**
          * ROLLs the top value N position down the stack
          */
-        MenuItem item = submenu.add(getString(R.string.rolln));
+        item = submenu.add(getString(R.string.rolln_stack));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -173,7 +216,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         /**
          * SWAPs the top value with N's position value on the stack
          */
-        item = submenu.add(getString(R.string.swapn));
+        item = submenu.add(getString(R.string.swapn_stack));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -185,7 +228,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         /**
          * DUPLICATEs the top value N times on the stack
          */
-        item = submenu.add(getString(R.string.dupn));
+        item = submenu.add(getString(R.string.dupn_stack) );
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -197,7 +240,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         /**
          * DROPs the first N top values from the stack
          */
-        item = submenu.add(getString(R.string.dropn));
+        item = submenu.add(getString(R.string.dropn_stack));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -431,7 +474,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 pushValueOnStack();
 
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
-                doRunScript(filename);
+                doRunScriptFile(filename);
             }
             break;
 
@@ -1458,22 +1501,25 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      * @param filename is the fully qualified script filename.
      */
-    public void doRunScript(String filename) {
+    private void runScript(String script) {
+        final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
+                new Runnable(){
+            @Override
+            public void run() {
+                // Moves the current Thread into the background
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                try {
+                    engine.runScript();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.run();
+    }
+    public void doRunScriptFile(String filename) {
         try {
             String script = readFile(filename);
-            final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
-            new Runnable(){
-                @Override
-                public void run() {
-                    // Moves the current Thread into the background
-                    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                    try {
-                        engine.runScript();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }.run();
+            runScript(script);
         } catch (IOException e) {
             e.printStackTrace();
         }

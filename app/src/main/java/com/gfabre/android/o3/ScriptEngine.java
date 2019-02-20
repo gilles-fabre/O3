@@ -805,7 +805,7 @@ public class ScriptEngine {
                             break;
 
                         case RUN_SCRIPT:
-                            mCalculator.doRunScript(curLexer.identifier);
+                            mCalculator.doRunScriptFile(curLexer.identifier);
                             break;
 
                         case WHILE:
