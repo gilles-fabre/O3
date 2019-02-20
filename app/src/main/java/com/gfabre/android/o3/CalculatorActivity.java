@@ -431,25 +431,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 pushValueOnStack();
 
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
-                String script = null;
-                try {
-                    script = readFile(filename);
-                    final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
-                    new Runnable(){
-                        @Override
-                        public void run() {
-                            // Moves the current Thread into the background
-                            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                            try {
-                                engine.runScript();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }.run();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                doRunScript(filename);
             }
             break;
 
@@ -858,6 +840,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return null;
     }
 
+    /**
+     * Returns an array containing all of the static java math methods.
+     *
+     * @return the java math methods array.
+     */
     public Method[] getJavaMathMethods() {
         if (mMethods == null) {
             Class math = null;
@@ -1061,6 +1048,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\twhile, end_while : iteration block[s], while does not pop the 'test' value off the stack.\n", 0, false);
         helpView.appendText("\t\tfundef, end_fundef : defines a function which can later be invoked (until deleted) from any script during the session.\n", 0, false);
         helpView.appendText("\t\tfundel : deletes (forgets) the given function.\n", 0, false);
+        helpView.appendText("\t\tfuncall _f : calls the script function _f.\n", 0, false);
         helpView.appendText("\t\t!\"_message : displays _message in a blocking modal dialog.\n", 0, false);
         helpView.appendText("\t\t?\"_prompt : displays _prompt message in a value prompting & blocking modal dialog. Pushes the value entered by the user on the stack.\n", 0, false);
         helpView.appendText("\t\t?\"_variable : pops the topmost value off the stack into the given _variable.\n", 0, false);
@@ -1072,6 +1060,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tdot_size : sets the point drawing size to that given by the topmost value of the stack.\n", 0, false);
         helpView.appendText("\t\trange : sets the graphical view virtual orthonormal extent to the xMin, xMax, yMin, yMax given by the first fours values of the stack.\n", 0, false);
         helpView.appendText("\t\tplot : draws with the current color, dot size, at the x, y coordinates given by the two topmost values of the stack.\n", 0, false);
+        helpView.appendText("\t\tmath_call _f : calls the java maths function _f.\n", 0, false);
+        helpView.appendText("\t\trun_script _s : runs the script _s.\n", 0, false);
         helpView.appendText("\t\tdebug_break : pops up a modal dialog reading various debugging information. The standard 'step over', 'step in', 'step out' are supported. 'done' resumes the script execution and ends the debugging session. 'exit' terminates the script..\n", 0, false);
         helpView.resetFontSize();
 
@@ -1405,6 +1395,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         populateStackView();
     }
 
+    /**
+     * Displays a message in an application modal (blocking) dialog
+     *
+     * @param message is the message to be displayed.
+     */
     public void doDisplayMessage(String message) {
         // no GUI allowed in init script
         if (mInInitScript)
@@ -1413,6 +1408,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         GenericDialog.displayMessage(this, message);
     }
 
+    /**
+     * Displays a message in an application modal (blocking) dialog and prompts
+     * the user for a double value. The value is pushed on the stack.
+     *
+     * @param message is the message to be displayed.
+     */
     public void doPromptMessage(String message) {
         // no GUI allowed in init script
         if (mInInitScript)
@@ -1425,6 +1426,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         doUpdate();
     }
 
+    /**
+     * Updates the Calculator's stack view.
+     */
     public void doUpdate() {
         // TODO : find why the UI ain't updated here
         mActivity.runOnUiThread(new Runnable() {
@@ -1435,6 +1439,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         });
     }
 
+    /**
+     * Returns a string containing the stack content.
+     *
+     * @return the stack content.
+     */
     public String getStackDebugInfo() {
         String stack = "";
         for (int i = mStack.size() - 1; i >= 0; i--) {
@@ -1442,6 +1451,32 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         }
 
         return stack;
+    }
+
+    /**
+     * Runs the given script.
+     *
+     * @param filename is the fully qualified script filename.
+     */
+    public void doRunScript(String filename) {
+        try {
+            String script = readFile(filename);
+            final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
+            new Runnable(){
+                @Override
+                public void run() {
+                    // Moves the current Thread into the background
+                    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                    try {
+                        engine.runScript();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.run();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -1474,7 +1509,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return true;
     }
 
-    public boolean doRange() {
+    public boolean doSetRange() {
         pushValueOnStack();
         if (mStack.size() < 4)
             return false;
@@ -1484,12 +1519,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double xMax = mStack.pop();
         Double xMin = mStack.pop();
 
-        mGraphView.doRange(xMin, xMax, yMin, yMax);
+        mGraphView.setRange(xMin, xMax, yMin, yMax);
 
         return true;
     }
 
-    public boolean doColor() {
+    public boolean doSetColor() {
         pushValueOnStack();
         if (mStack.size() < 3)
             return false;
@@ -1498,19 +1533,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double g = mStack.pop();
         Double r = mStack.pop();
 
-        mGraphView.doColor(r, g, b);
+        mGraphView.setColor(r, g, b);
 
         return true;
     }
 
-    public boolean doDotSize() {
+    public boolean doSetDotSize() {
         pushValueOnStack();
         if (mStack.size() < 1)
             return false;
 
         Double s = mStack.pop();
 
-        mGraphView.doDotSize(s);
+        mGraphView.setDotSize(s);
 
         return true;
     }

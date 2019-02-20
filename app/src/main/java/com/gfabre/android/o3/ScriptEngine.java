@@ -804,6 +804,10 @@ public class ScriptEngine {
                             mCalculator.doJavaMathCall(curLexer.identifier);
                             break;
 
+                        case RUN_SCRIPT:
+                            mCalculator.doRunScript(curLexer.identifier);
+                            break;
+
                         case WHILE:
                             // must stack this code, and execute upon end if calc's stack top value ain't 0
                             newContext = new Context(Context.State.WHILE_BLOCK_ANALYSIS);
@@ -831,15 +835,15 @@ public class ScriptEngine {
                             break;
 
                         case RANGE:
-                            runOk = mCalculator.doRange();
+                            runOk = mCalculator.doSetRange();
                             break;
 
                         case COLOR:
-                            runOk = mCalculator.doColor();
+                            runOk = mCalculator.doSetColor();
                             break;
 
                         case DOT_SIZE:
-                            runOk = mCalculator.doDotSize();
+                            runOk = mCalculator.doSetDotSize();
                             break;
 
                         case ELSE:

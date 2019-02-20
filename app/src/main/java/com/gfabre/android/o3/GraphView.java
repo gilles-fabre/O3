@@ -98,7 +98,7 @@ public class GraphView extends ScrollImageView {
         mBitmap.eraseColor(Color.rgb(r.intValue(), g.intValue(), b.intValue()));
     }
 
-    public void doRange(Double xMin, Double xMax, Double yMin, Double yMax) {
+    public void setRange(Double xMin, Double xMax, Double yMin, Double yMax) {
         mMinX = xMin;
         mMaxX = xMax;
         mMinY = yMin;
@@ -130,11 +130,11 @@ public class GraphView extends ScrollImageView {
         }
     }
 
-    public void doColor(Double r, Double g, Double b) {
+    public void setColor(Double r, Double g, Double b) {
         mPaint.setARGB(255, r.intValue(), g.intValue(), b.intValue());
     }
 
-    public void doDotSize(Double s) {
+    public void setDotSize(Double s) {
         mPaint.setStrokeWidth(s.floatValue());
     }
 }

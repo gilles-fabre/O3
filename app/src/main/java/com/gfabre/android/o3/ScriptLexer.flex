@@ -31,6 +31,7 @@ import java.lang.Double;
                 EXIT,
                 FUNCALL,
                 JAVA_MATH_CALL,
+                RUN_SCRIPT,
                 NEG,
                 DUP,
                 DUPN,
@@ -73,6 +74,7 @@ import java.lang.Double;
   final static int FUNDEL_LEN = new String("fundel").length();
   final static int FUNCALL_LEN = new String("funcall").length();
   final static int MATH_CALL_LEN = new String("math_call").length();
+  final static int RUN_SCRIPT_LEN = new String("run_script").length();
   final static int PUSH_VAR_LEN = new String("!").length();
   final static int POP_VAR_LEN = new String("?").length();
   final static int PUSH_ARRAY_LEN = new String("![]").length();
@@ -144,6 +146,7 @@ FunDef = "fundef"(" "|\t)+{Identifier}
 FunDel = "fundel"(" "|\t)+{Identifier}
 FunCall = "funcall"(" "|\t)+{Identifier}
 JavaMathCall = "math_call"(" "|\t)+{Identifier}
+RunScript = "run_script"(" "|\t)+{Identifier}
 
 %%
 
@@ -182,6 +185,7 @@ JavaMathCall = "math_call"(" "|\t)+{Identifier}
 {FunDel}                       { identifier = yytext().substring(FUNDEL_LEN).trim(); return symbol(sym.FUNDEL); }
 {FunCall}                      { identifier = yytext().substring(FUNCALL_LEN).trim(); return symbol(sym.FUNCALL); }
 {JavaMathCall}                 { identifier = yytext().substring(MATH_CALL_LEN).trim(); return symbol(sym.JAVA_MATH_CALL);  }
+{RunScript}                    { identifier = yytext().substring(RUN_SCRIPT_LEN).trim(); return symbol(sym.RUN_SCRIPT);  }
 
 {DoubleLiteral}                { try {doubleValue = new Double(yytext());} catch (Exception e) {doubleValue = Double.NaN;} return symbol(sym.DOUBLE_LITERAL); }
 {PushIdentifier}               { identifier = yytext().substring(PUSH_VAR_LEN).trim(); return symbol(sym.PUSH_IDENTIFIER); }
