@@ -253,7 +253,7 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
     "\0\u19b2\0\u19e0\0\u1a0e\0\u1a3c\0\u1a6a\0\u1a98\0\u1ac6\0\u1af4"+
     "\0\u1b22\0\u1b50\0\56\0\u1b7e\0\u1bac\0\u1bda\0\u1c08\0\u1c36"+
     "\0\u1c64\0\u1c92\0\u1cc0\0\56\0\u1cee\0\u1d1c\0\u1d4a\0\u1d78"+
-    "\0\56\0\u1da6\0\u1dd4\0\56\0\56\0\u1e02\0\u1e30\0\u1e5e";
+    "\0\56\0\u1da6\0\u1dd4\0\56\0\56\0\u1e02\0\u1e30\0\u1e30";
 
   private static int [] zzUnpackRowMap() {
     int [] result = new int[208];
@@ -351,13 +351,11 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
     "\45\0\1\311\62\0\1\312\62\0\1\313\47\0\1\314"+
     "\75\0\1\315\20\0\1\316\1\0\1\316\6\0\5\316"+
     "\1\312\22\316\33\0\1\317\35\0\1\316\1\0\1\316"+
-    "\1\0\2\316\5\0\5\316\1\0\22\316\15\0\1\320"+
-    "\1\0\1\320\6\0\5\320\1\317\22\320\13\0\1\320"+
-    "\1\0\1\320\1\0\2\320\5\0\5\320\1\0\22\320"+
-    "\4\0";
+    "\1\0\2\316\5\0\5\316\1\0\22\316\4\0\1\320"+
+    "\2\0\53\320";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[7820];
+    int [] result = new int[7774];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -549,6 +547,7 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
   final static int PROMPT_MESSAGE_LEN = new String("?\"").length();
 
   String identifier = null;
+  String filename = null;
   Double doubleValue = null;
 
   public int yyline() {
@@ -1197,7 +1196,7 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
             // fall through
           case 97: break;
           case 49: 
-            { identifier = yytext().substring(RUN_SCRIPT_LEN).trim(); return symbol(sym.RUN_SCRIPT);
+            { filename = yytext().substring(RUN_SCRIPT_LEN).trim(); return symbol(sym.RUN_SCRIPT);
             } 
             // fall through
           case 98: break;

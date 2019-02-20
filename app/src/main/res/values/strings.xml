@@ -3,7 +3,7 @@
     <string name="history">History</string>
     <string name="clear_history">Clear</string>
     <string name="run_history">Run</string>
-    <string name="edit_history">Edit..</string>
+    <string name="save_history">Save..</string>
     <string name="stack">Stack</string>
     <string name="rolln_stack">Roll N</string>
     <string name="swapn_stack">Swap N</string>
@@ -12,7 +12,7 @@
     <string name="functions">Functions</string>
     <string name="maths_functions">Java Math Functions..</string>
     <string name="script_functions">Script Functions</string>
-    <string name="scripts">Scritps</string>
+    <string name="scripts">Scripts</string>
     <string name="init_script">Select Init Script..</string>
     <string name="cancel_init_script">Cancel Init Script</string>
     <string name="edit_script">Edit..</string>

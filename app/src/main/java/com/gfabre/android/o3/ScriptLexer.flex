@@ -83,6 +83,7 @@ import java.lang.Double;
   final static int PROMPT_MESSAGE_LEN = new String("?\"").length();
 
   String identifier = null;
+  String filename = null;
   Double doubleValue = null;
 
   public int yyline() {
@@ -146,7 +147,10 @@ FunDef = "fundef"(" "|\t)+{Identifier}
 FunDel = "fundel"(" "|\t)+{Identifier}
 FunCall = "funcall"(" "|\t)+{Identifier}
 JavaMathCall = "math_call"(" "|\t)+{Identifier}
-RunScript = "run_script"(" "|\t)+{Identifier}
+RunScript = "run_script"(" "|\t)+{Filename}
+
+/* to call a script */
+Filename = [^\r\n]+
 
 %%
 
@@ -185,7 +189,7 @@ RunScript = "run_script"(" "|\t)+{Identifier}
 {FunDel}                       { identifier = yytext().substring(FUNDEL_LEN).trim(); return symbol(sym.FUNDEL); }
 {FunCall}                      { identifier = yytext().substring(FUNCALL_LEN).trim(); return symbol(sym.FUNCALL); }
 {JavaMathCall}                 { identifier = yytext().substring(MATH_CALL_LEN).trim(); return symbol(sym.JAVA_MATH_CALL);  }
-{RunScript}                    { identifier = yytext().substring(RUN_SCRIPT_LEN).trim(); return symbol(sym.RUN_SCRIPT);  }
+{RunScript}                    { filename = yytext().substring(RUN_SCRIPT_LEN).trim(); return symbol(sym.RUN_SCRIPT);  }
 
 {DoubleLiteral}                { try {doubleValue = new Double(yytext());} catch (Exception e) {doubleValue = Double.NaN;} return symbol(sym.DOUBLE_LITERAL); }
 {PushIdentifier}               { identifier = yytext().substring(PUSH_VAR_LEN).trim(); return symbol(sym.PUSH_IDENTIFIER); }

@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Stack;
 
 /**
@@ -53,25 +52,26 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final int        RUN_SCRIPT_DIALOG_ID = 1;
     private static final int        DEBUG_SCRIPT_DIALOG_ID = 2;
     private static final int        EDIT_SCRIPT_DIALOG_ID = 3;
-    private static final int        INIT_SCRIPT_DIALOG_ID = 4;
+    private static final int        INIT_SCRIPT_DIALOG_ID = 6;
     private static final int        HELP_DIALOG_ID = R.layout.log_view;
     private static final int        GRAPH_DIALOG_ID = R.layout.graph_view;
     private static final String     SCRIPT_EXTENSIONS = ".o3s .txt";
     private static final String     INIT_SCRIPT_NAME = "InitScriptFilename";
+    private static final String     HISTORY_SCRIPT_NAME = "HistoryScript.o3s";
 
     private static  Method[] mMethods = null;
 
-    private boolean           mInInitScript;                         // no GUI allowed in init scripts...
-    private ArrayList<String> mHistory = new ArrayList<String>();   // all actions history from beginning of time.
-    private Stack<Double>     mStack = new Stack<Double>();              // values stack
-    private String            mValue = "";                          // value currently edited
-    private EditText          mValueField = null;                   // value edit field
-    private ListView          mStackView = null;                    // stack view
-    private ArrayAdapter      mStackAdapter = null;                 // stack view adapter
-    private Activity          mActivity;                            // this reference
-    private GraphView         mGraphView = null;                    // canvas for graphical functions
-    private Menu              mScriptFunctionsMenu = null;          // dynamic script funtions menu
-    private String            mInitScriptName = null;               // init script, if set, run upon calculator start
+    private boolean       mInInitScript;                        // no GUI allowed in init scripts...
+    private String        mHistory = "";                        // all actions history from beginning of time.
+    private Stack<Double> mStack = new Stack<Double>();              // values stack
+    private String        mValue = "";                          // value currently edited
+    private EditText      mValueField = null;                   // value edit field
+    private ListView      mStackView = null;                    // stack view
+    private ArrayAdapter  mStackAdapter = null;                 // stack view adapter
+    private Activity      mActivity;                            // this reference
+    private GraphView     mGraphView = null;                    // canvas for graphical functions
+    private Menu          mScriptFunctionsMenu = null;          // dynamic script funtions menu
+    private String        mInitScriptName = null;               // init script, if set, run upon calculator start
 
     public boolean hasValueOnStack() {
         return !mStack.isEmpty();
@@ -138,6 +138,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
+                    mHistory += "funcall " + f + "\n";
                     return ScriptEngine.runFunction((CalculatorActivity)mActivity, f);
                 }
             });
@@ -165,7 +166,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                mHistory.clear();
+                mHistory = "";
                 return true;
             }
         });
@@ -177,23 +178,25 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                String history = "";
-                for (String s : mHistory) {
-                    history += s;
-                }
-                runScript(history);
+                if (mHistory.isEmpty())
+                    return true;
+
+                runScript(mHistory);
                 return true;
             }
         });
 
         /**
-         * Edit the complete history
+         * Saves the history
          */
-        item = submenu.add(getString(R.string.edit_history));
+        item = submenu.add(getString(R.string.save_history));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                // TODO : display the complete history in a dialog, let the user save/cancel
+                // saves history in a temporary file
+                String historyFile = getFilesDir() + "/" + HISTORY_SCRIPT_NAME;
+                writeFile(historyFile, mHistory);
+                new EditDialog((CalculatorActivity)mActivity, historyFile);
                 return true;
             }
         });
@@ -208,6 +211,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                mHistory += "rolln\n";
                 doRollN();
                 return true;
             }
@@ -220,6 +224,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                mHistory += "swapn\n";
                 doSwapN();
                 return true;
             }
@@ -232,6 +237,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                mHistory += "dupn\n";
                 doDupN();
                 return true;
             }
@@ -244,6 +250,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                mHistory += "dropn\n";
                 doDropN();
                 return true;
             }
@@ -474,6 +481,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 pushValueOnStack();
 
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
+                mHistory += "run_script " + filename + "\n";
                 doRunScriptFile(filename);
             }
             break;
@@ -751,30 +759,35 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_add);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += "+\n";
                 doAdd();
             }
         });
         button = findViewById(R.id.button_sub);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += "-\n";
                 doSub();
             }
         });
         button = findViewById(R.id.button_mul);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += "*\n";
                 doMul();
             }
         });
         button = findViewById(R.id.button_div);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += "/\n";
                 doDiv();
             }
         });
         button =   findViewById(R.id.button_enter);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += mValue + "\n";
                 pushValueOnStack();
             }
         });
@@ -790,30 +803,35 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_neg);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += "neg\n";
                 doNeg();
             }
         });
         button = findViewById(R.id.button_dup);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += "dup\n";
                 doDup();
             }
         });
         button = findViewById(R.id.button_drop);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += "drop\n";
                 doDrop();
             }
         });
         button = findViewById(R.id.button_swap);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += "swap\n";
                 doSwap();
             }
         });
         button = findViewById(R.id.button_clear);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mHistory += "clear\n";
                 doClear();
             }
         });
@@ -909,6 +927,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      */
     public boolean invokeMathFunction(Method method) {
         // invoke the selected function
+        mHistory += "math_call " + method.getName() + "\n";
 
         // first make sure we have the appropriate number of elements
         // on the stack
@@ -992,14 +1011,24 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nHistory menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\t'Clear' clears all the history registered so far (since last clear/startup).\n", 0, false);
+        helpView.appendText("\t\t'Run' runs the history registered so far.\n", 0, false);
+        helpView.appendText("\t\t'Save..' Pops up a dialog where one can edit and save the history under a new filename.\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
         helpView.appendText("\n\nStack menu :\n", 0x008888, true);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
-        helpView.appendText("\t\t'Roll N' rolls the 2nd value down the stack by the number of positions given by the 1st value on the stack\n", 0, false);
-        helpView.appendText("\t\t'Swap N' swaps the 2nd value on the stack with the one at the position given by the 1st value on the stack\n", 0, false);
-        helpView.appendText("\t\t'Dup N' duplicates the 2nd value on the stack the number of times given by the 1st value on the stack\n", 0, false);
-        helpView.appendText("\t\t'Drop N' drops as many values off the stack as the number given by the 1st value on the stack\n", 0, false);
+        helpView.appendText("\t\t'Roll N' rolls the 2nd value down the stack by the number of positions given by the 1st value on the stack.\n", 0, false);
+        helpView.appendText("\t\t'Swap N' swaps the 2nd value on the stack with the one at the position given by the 1st value on the stack.\n", 0, false);
+        helpView.appendText("\t\t'Dup N' duplicates the 2nd value on the stack the number of times given by the 1st value on the stack.\n", 0, false);
+        helpView.appendText("\t\t'Drop N' drops as many values off the stack as the number given by the 1st value on the stack.\n", 0, false);
         helpView.appendText("\nNOTE: all of the these actions first push the edited value (if present) on the stack.\n", 0, true);
         helpView.resetFontSize();
 
@@ -1083,6 +1112,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\n\nScripts syntax :\n", 0x008888, true);
         helpView.appendText("\t\trolln, swap, dup, dupn, clear : have the same effect as their UI peers.\n", 0, false);
         helpView.appendText("\t\tstack_size : pushes the stack size onto the stack.\n", 0, false);
+        helpView.appendText("\t\tneg : inverts the edited (if any) and top stack value(s).\n", 0, false);
         helpView.appendText("\t\t_value : pushes the _value onto the stack.\n", 0, false);
         helpView.appendText("\t\t+, -, *, / : have the same effect as their UI equivalents.\n", 0, false);
         helpView.appendText("\t\t% : Pushes the modulus (remaining part of division) on the stack.\n", 0, false);
@@ -1499,7 +1529,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     /**
      * Runs the given script.
      *
-     * @param filename is the fully qualified script filename.
+     * @param script is the script text.
      */
     private void runScript(String script) {
         final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
@@ -1516,6 +1546,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
         }.run();
     }
+
+    /**
+     * Runs the given script file
+     *
+     * @param filename is the fully qualified script filename.
+     */
     public void doRunScriptFile(String filename) {
         try {
             String script = readFile(filename);
