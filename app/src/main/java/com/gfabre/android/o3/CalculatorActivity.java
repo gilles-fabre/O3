@@ -1054,7 +1054,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.setFontSize(ColorLogView.SMALL_FONT);
         helpView.appendText("\t\t'Clear' clears all the history registered so far (since last clear/startup).\n", 0, false);
         helpView.appendText("\t\t'Run' runs the history registered so far.\n", 0, false);
-        helpView.appendText("\t\t'Save..' Pops up a dialog where one can edit and save the history under a new filename.\n", 0, false);
+        helpView.appendText("\t\t'Edit..' Pops up a dialog where one can edit the history.\n", 0, false);
+        helpView.appendText("\t\t'Save..' Pops up a dialog where one can edit and save the history into a file.\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
