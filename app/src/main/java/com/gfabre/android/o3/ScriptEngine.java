@@ -654,11 +654,13 @@ public class ScriptEngine {
                             // push a gc in step_out when getting down into
                             // inner func_call/while/if/else block
                         case step_in:
-                            // debug here
-                            displayDebugInfo();
-                            curContext.mDebugState = mDebugView.getDebugState();
-                            if (curContext.mDebugState == exit)
-                                stop = true;
+                            if (ScriptLexer.sym.values()[symbol.sym] != ScriptLexer.sym.EOF) {
+                                // debug here
+                                displayDebugInfo();
+                                curContext.mDebugState = mDebugView.getDebugState();
+                                if (curContext.mDebugState == exit)
+                                    stop = true;
+                            }
                             break;
 
                         case exit:
