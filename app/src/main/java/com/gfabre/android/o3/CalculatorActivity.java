@@ -57,6 +57,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final int        GRAPH_DIALOG_ID = R.layout.graph_view;
     private static final String     SCRIPT_EXTENSIONS = ".o3s .txt";
     private static final String     INIT_SCRIPT_NAME = "InitScriptFilename";
+
+    private static final String     STACK_CONTENT_KEY = "StackContent";
+    private static final String     EDITED_VALUE_KEY = "EditedValue";
+    private static final String     HISTORY_SCRIPT_KEY = "HistoryScript";
     private static final String     HISTORY_SCRIPT_NAME = "HistoryScript.o3s";
 
     private static  Method[] mMethods = null;
@@ -399,11 +403,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         super.onSaveInstanceState(savedInstanceState);
 
-        savedInstanceState.putString("VALUE", mValue);
+        savedInstanceState.putString(EDITED_VALUE_KEY, mValue);
         double[] doubleArray = new double[mStack.size()];
         for (int i = 0; i < mStack.size(); i++)
             doubleArray[i] = mStack.get(i);
-        savedInstanceState.putDoubleArray("STACK", doubleArray);
+        savedInstanceState.putDoubleArray(STACK_CONTENT_KEY, doubleArray);
+
+        // history
+        savedInstanceState.putString(HISTORY_SCRIPT_KEY, mHistory);
     }
 
     /**
@@ -416,14 +423,17 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         super.onRestoreInstanceState(savedInstanceState);
 
-        mValue = savedInstanceState.getString("VALUE");
-        double[] doubleArray = savedInstanceState.getDoubleArray("STACK");
+        mValue = savedInstanceState.getString(EDITED_VALUE_KEY);
+        double[] doubleArray = savedInstanceState.getDoubleArray(STACK_CONTENT_KEY);
         mStack.clear();
         for (int i = 0; i < doubleArray.length; i++)
             mStack.push(new Double(doubleArray[i]));
 
         mValueField.setText(mValue);
         populateStackView();
+
+        // history
+        mHistory = savedInstanceState.getString(HISTORY_SCRIPT_KEY);
     }
 
     /**
