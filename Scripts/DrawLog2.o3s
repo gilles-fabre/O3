@@ -1,0 +1,88 @@
+// draws a white log base 2 in the current plot screen
+
+// black background
+0.0
+0.0
+0.0
+erase
+
+// range for log2, 1 < x < 1024, 0 < y < 10
+1.0
+dup
+?xMin
+1024.0
+dup
+?xMax
+0
+dup
+?yMin
+10
+dup
+?yMax
+range
+
+// draw x axis points in blue
+0.0
+0.0
+255.0
+color
+10.0
+dot_size
+
+!xMin
+?x
+
+1.0
+while
+	drop
+	!x
+	dup
+	0.0
+/*
+	debug_break
+	?"exit? (anything != 0 exits)
+	if
+		exit
+	end_if 
+	pop
+*/	
+	plot
+	1
+	+
+	dup
+	?x
+	!xMax
+	<
+end_while
+
+
+// draw points in white
+255.0
+3.0
+dupn
+color
+
+clear
+!xMin
+?x
+
+1.0
+while
+	drop
+	2.0
+	!x
+	funcall logN
+	!x
+	swap
+	plot
+	!x
+	1
+	+
+	dup
+	?x
+	!xMax
+	<
+end_while
+
+!"done drawing log2 x
+
