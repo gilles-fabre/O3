@@ -191,7 +191,20 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         });
 
         /**
-         * Saves the history
+         * Edit the history
+         */
+        item = submenu.add(getString(R.string.edit_history));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                // saves history in a temporary file
+                new HistoryDialog((CalculatorActivity)mActivity, mHistory);
+                return true;
+            }
+        });
+
+        /**
+         * Edit & Saves the history
          */
         item = submenu.add(getString(R.string.save_history));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -200,7 +213,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 // saves history in a temporary file
                 String historyFile = getFilesDir() + "/" + HISTORY_SCRIPT_NAME;
                 writeFile(historyFile, mHistory);
-                new EditDialog((CalculatorActivity)mActivity, historyFile);
+                new EditScriptDialog((CalculatorActivity)mActivity, historyFile);
                 return true;
             }
         });
@@ -360,7 +373,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
                 File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                new EditDialog((CalculatorActivity) mActivity, dir.getAbsolutePath() + "/" + getString(R.string.new_script_name));
+                new EditScriptDialog((CalculatorActivity) mActivity, dir.getAbsolutePath() + "/" + getString(R.string.new_script_name));
                 return true;
             }
         });
@@ -461,6 +474,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     /**
+     * Sets the calculator history.
+     *
+     * @param history is the new calculator history
+     */
+    public boolean setHistory(String history) {
+        mHistory = history;
+        return true;
+    }
+
+    /**
      * Write a string as the full content of the given file.
      *
      * @param fileName is the file to be (over)written
@@ -526,7 +549,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             case EDIT_SCRIPT_DIALOG_ID :  {
                 // edit the selected script
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
-                new EditDialog(this, filename);
+                new EditScriptDialog(this, filename);
             }
             break;
 

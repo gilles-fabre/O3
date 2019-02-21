@@ -3,6 +3,7 @@
     <string name="history">History</string>
     <string name="clear_history">Clear</string>
     <string name="run_history">Run</string>
+    <string name="edit_history">Edit..</string>
     <string name="save_history">Save..</string>
     <string name="stack">Stack</string>
     <string name="rolln_stack">Roll N</string>
@@ -23,6 +24,7 @@
     <string name="graph">Graph View..</string>
     <string name="select">Select</string>
     <string name="cancel">Cancel</string>
+    <string name="apply">Apply</string>
     <string name="save">Save</string>
     <string name="pick_script">Pick a Script</string>
     <string name="pick_math_function">Pick a Math Function</string>
