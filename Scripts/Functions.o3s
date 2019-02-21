@@ -133,4 +133,22 @@ fundef std_dev
     math_call sqrt
 end_fundef
 
+fundef logN
+	// logN(x) = log(x) / log(N)
+
+	// get x
+	?x
+
+	// get base
+	?base
+
+	!x
+	math_call log
+
+	!base
+	math_call log
+
+	/
+end_fundef
+
 !"basic functions 'defuned', see Functions/Script Functions menu
