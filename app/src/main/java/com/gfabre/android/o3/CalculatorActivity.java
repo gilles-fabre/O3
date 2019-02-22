@@ -378,15 +378,44 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
         });
 
+
+        /**
+         * graph view menu
+         */
+        submenu = menu.addSubMenu(R.string.graph);
+
         /**
          * Displays the graph view
          */
-        item = submenu.add(R.string.graph);
+        item = submenu.add(getString(R.string.show_graph));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 GenericDialog graphDialog = new GenericDialog(R.layout.graph_view, getString(R.string.graph_view), true);
                 graphDialog.show(mActivity.getFragmentManager(), getString(R.string.graph_view));
+                return true;
+            }
+        });
+
+        /**
+         * Saves the graph view as png
+         */
+        item = submenu.add(getString(R.string.save_graph));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                String filename = GenericDialog.promptMessage(mActivity,
+                                                              InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
+                                                               getString(R.string.enter_png_filename));
+
+                File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                try {
+                    filename = dir.getAbsolutePath() + "/" + filename;
+                    mGraphView.saveToPngFile(filename);
+                    doDisplayMessage(getString(R.string.saved_png) + filename);
+                } catch (IOException e) {
+                    doDisplayMessage(getString(R.string.error_saving_png) + e.getLocalizedMessage());
+                }
                 return true;
             }
         });
@@ -1137,11 +1166,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
-        helpView.appendText("\n\nScripts/Graph View.. menu :\n", 0x008888, true);
+        helpView.appendText("\n\nGraph View/Show.. menu :\n", 0x008888, true);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
         helpView.appendText("\t\tPops up a dialog containing the graphical (using orthonormal coordinates) result of the run o3s scripts (if containing graphical calls).\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nGraph View/Save.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tPrompts the user for a .png filename to save the graph to (no path, no extension expected).\n", 0, false);
         helpView.resetFontSize();
 
         helpView.appendText("\nNOTE: running any script first pushes the edited value (if present) on the stack.\n", 0, true);

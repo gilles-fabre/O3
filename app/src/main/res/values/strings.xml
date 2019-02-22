@@ -21,7 +21,9 @@
     <string name="debug_script">Debug..</string>
     <string name="new_script">New..</string>
     <string name="new_script_name">NewScript</string>
-    <string name="graph">Graph View..</string>
+    <string name="graph">Graph View</string>
+    <string name="show_graph">Show..</string>
+    <string name="save_graph">Save..</string>
     <string name="select">Select</string>
     <string name="cancel">Cancel</string>
     <string name="apply">Apply</string>
@@ -31,6 +33,9 @@
     <string name="about">About..</string>
     <string name="about_o3">About O3</string>
     <string name="graph_view">Graph View</string>
+    <string name="enter_png_filename">Enter a .png filename : </string>
+    <string name="error_saving_png">Error saving png file : </string>
+    <string name="saved_png">Saved png : </string>
     <string name="function_call_err">Error calling function : </string>
     <string name="param_cast_err">Error casting parameters : </string>
     <string name="invalid_number">Not a valid number : </string>

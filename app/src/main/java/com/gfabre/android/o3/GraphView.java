@@ -12,6 +12,9 @@ import android.view.WindowManager;
 
 import com.gfabre.android.utilities.widgets.ScrollImageView;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 /**
  * A simple canvas view used to draw from scripts
  *
@@ -136,5 +139,13 @@ public class GraphView extends ScrollImageView {
 
     public void setDotSize(Double s) {
         mPaint.setStrokeWidth(s.floatValue());
+    }
+
+    public void saveToPngFile(String filename) throws IOException {
+        if (!filename.endsWith(".png") && !filename.endsWith(".PNG"))
+            filename += ".png";
+        FileOutputStream out = new FileOutputStream(filename);
+        mBitmap.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
+        out.close();
     }
 }
