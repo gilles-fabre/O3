@@ -38,6 +38,9 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -58,10 +61,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final String     SCRIPT_EXTENSIONS = ".o3s .txt";
     private static final String     INIT_SCRIPT_NAME = "InitScriptFilename";
 
+    private static final String     FUNCTION_SCRIPTS_KEY = "FunctionScripts";
+    private static final String     FUNCTION_TITLES_KEY = "FunctionTitles";
     private static final String     STACK_CONTENT_KEY = "StackContent";
     private static final String     EDITED_VALUE_KEY = "EditedValue";
     private static final String     HISTORY_SCRIPT_KEY = "HistoryScript";
     private static final String     HISTORY_SCRIPT_NAME = "HistoryScript.o3s";
+
+    private static final int        NUM_FUNC_BUTTONS = 10;
 
     private static  Method[] mMethods = null;
 
@@ -76,6 +83,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private GraphView     mGraphView = null;                    // canvas for graphical functions
     private Menu          mScriptFunctionsMenu = null;          // dynamic script funtions menu
     private String        mInitScriptName = null;               // init script, if set, run upon calculator start
+
+    private String        mFunctionScripts[] = new String[NUM_FUNC_BUTTONS];
+    private String        mFunctionTitles[] = new String[NUM_FUNC_BUTTONS];
 
     public boolean hasValueOnStack() {
         return !mStack.isEmpty();
@@ -636,17 +646,25 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     @Override
     protected void onStop() {
-        // get the init script from the preferences
+        // save the init script into the preferences
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(INIT_SCRIPT_NAME, mInitScriptName);
+
+        // save the function buttons
+        for (int i = 0; i < NUM_FUNC_BUTTONS; i++) {
+            editor.putString(FUNCTION_TITLES_KEY + i, mFunctionTitles[i] == null ? "" : mFunctionTitles[i]);
+            editor.putString(FUNCTION_SCRIPTS_KEY + i, mFunctionScripts[i] == null ? "" : mFunctionScripts[i]);
+        }
+
         editor.commit();
 
         super.onStop();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+
     @Override
+    // called before onCreate, no GUI ready
     protected void onStart() {
         super.onStart();
         // permission in manifest ain't enough now...
@@ -674,29 +692,60 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         } else {
             // Permission has already been granted
         }
-
-        // get the init script from the preferences
-        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-        if (prefs.contains(INIT_SCRIPT_NAME)) {
-            mInitScriptName = prefs.getString(INIT_SCRIPT_NAME, null);
-
-            // run the init script
-            try {
-                mInInitScript = true;
-                new ScriptEngine(this, readFile(mInitScriptName)).runScript();
-            } catch (Exception e) {
-                //doDisplayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage()); can't be run at this stage
-                mInitScriptName = null;
-            } finally {
-                mInInitScript = false;
-            }
-        }
     }
 
     /**
-     * Called upon activity start to setup the whole thingy.
+     * Sets the given function call button's listeners and associated script and name.
+     *
+     * @param button is the button to be set.
+     * @param index is the button index.
      */
+    private void SetFunctionButton(Button button, int index) {
+        final int _index = index;
+
+        if (mFunctionTitles[_index] != null &&
+            !mFunctionTitles[_index].isEmpty())
+            button.setText(mFunctionTitles[_index]);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (mFunctionScripts[_index] != null && !mFunctionScripts[_index].isEmpty()) {
+                    try {
+                        new ScriptEngine((CalculatorActivity) mActivity, mFunctionScripts[_index]).runScript();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        button.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                // prompt the user for a call script line
+                mFunctionScripts[_index] = GenericDialog.promptMessage(mActivity,
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
+                        getString(R.string.enter_call_script));
+                // prompt the user for a text
+                mFunctionTitles[_index] = GenericDialog.promptMessage(mActivity,
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
+                        getString(R.string.enter_button_title));
+
+                // reset by user?
+                if (mFunctionTitles[_index] == null ||
+                    mFunctionTitles[_index].isEmpty() ||
+                    mFunctionScripts[_index] == null ||
+                    mFunctionScripts[_index].isEmpty()) {
+                    mFunctionScripts[_index] = null;
+                    mFunctionTitles[_index] = getString(R.string.select);
+                }
+
+                ((Button) v).setText(mFunctionTitles[_index]);
+                return true;
+            }
+        });
+    }
+
     @Override
+    // called after onStart, prepare GUI, but then onResume will be called before the UI is ready.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); // application runs only in portrait mode
@@ -897,6 +946,57 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 doClear();
             }
         });
+    }
+
+    @Override
+    // called after onStart, onCreate, no GUI ready yet
+    protected void onResume() {
+        super.onResume();
+
+        // get the init script from the preferences
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        if (prefs.contains(INIT_SCRIPT_NAME)) {
+            mInitScriptName = prefs.getString(INIT_SCRIPT_NAME, null);
+
+            // run the init script
+            try {
+                mInInitScript = true;
+                new ScriptEngine(this, readFile(mInitScriptName)).runScript();
+            } catch (Exception e) {
+                //doDisplayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage()); can't be run at this stage
+                mInitScriptName = null;
+            } finally {
+                mInInitScript = false;
+            }
+        }
+
+        // restore the function buttons
+        for (int i = 0; i < NUM_FUNC_BUTTONS; i++) {
+            mFunctionTitles[i] = prefs.getString(FUNCTION_TITLES_KEY + i, null);
+            mFunctionScripts[i] = prefs.getString(FUNCTION_SCRIPTS_KEY + i, null);
+        }
+
+        // function buttons handlers
+        Button button = findViewById(R.id.button_fn1);
+        SetFunctionButton(button, 0);
+        button = findViewById(R.id.button_fn2);
+        SetFunctionButton(button, 1);
+        button = findViewById(R.id.button_fn3);
+        SetFunctionButton(button, 2);
+        button = findViewById(R.id.button_fn4);
+        SetFunctionButton(button, 3);
+        button = findViewById(R.id.button_fn5);
+        SetFunctionButton(button, 4);
+        button = findViewById(R.id.button_fn6);
+        SetFunctionButton(button, 5);
+        button = findViewById(R.id.button_fn7);
+        SetFunctionButton(button, 6);
+        button = findViewById(R.id.button_fn8);
+        SetFunctionButton(button, 7);
+        button = findViewById(R.id.button_fn9);
+        SetFunctionButton(button, 8);
+        button = findViewById(R.id.button_fn10);
+        SetFunctionButton(button, 9);
     }
 
     /**

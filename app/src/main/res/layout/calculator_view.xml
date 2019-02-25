@@ -76,6 +76,148 @@
             android:layout_height="match_parent">
 
             <Button
+                android:id="@+id/button_fn1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_fn2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_fn3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_fn4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_fn5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/button_fn6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_fn7"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_fn8"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_fn9"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+            <Button
+                android:id="@+id/button_fn10"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/darker_gray"
+                android:text="@string/select"
+                android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
+                android:textColor="@android:color/background_light"
+                android:textSize="12sp"
+                tools:layout_editor_absoluteX="89dp"
+                tools:layout_editor_absoluteY="259dp" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
                 android:id="@+id/button_swap"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
