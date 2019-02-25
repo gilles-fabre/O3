@@ -89,7 +89,7 @@ public class ScriptEngine {
      * @param array is the target array
      * @param index is the position[ where to stop filling the array
      */
-    private void extendArrayToIndex(ArrayList<Double> array,int index) {
+    private void extendArrayToIndex(ArrayList<Double> array, int index) {
         for (int i = array.size(); i <= index; i++)
             array.add(i, null);
     }

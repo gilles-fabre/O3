@@ -735,7 +735,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                     mFunctionScripts[_index] == null ||
                     mFunctionScripts[_index].isEmpty()) {
                     mFunctionScripts[_index] = null;
-                    mFunctionTitles[_index] = getString(R.string.select);
+                    mFunctionTitles[_index] = getString(R.string.undefined_button);
                 }
 
                 ((Button) v).setText(mFunctionTitles[_index]);
