@@ -45,7 +45,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
         step_over,
         step_out,
         exit
-    };
+    }
 
     DebugView(CalculatorActivity activity) {
         mActivity = activity;
@@ -98,8 +98,8 @@ public class DebugView implements GenericDialog.GenericDialogListener {
 
         adapter.clear();
         String []lineArray = lines.split("\n");
-        for (int i = 0; i < lineArray.length; i++)
-            adapter.add(lineArray[i]);
+        for (String line : lineArray)
+            adapter.add(line);
 
         adapter.notifyDataSetChanged();
     }

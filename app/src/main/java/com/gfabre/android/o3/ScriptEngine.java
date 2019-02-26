@@ -121,7 +121,7 @@ public class ScriptEngine {
         // need to create the array?
         ArrayList<Double> array = lookupForArray(id);
         if(array == null) {
-            array = new ArrayList<Double>();
+            array = new ArrayList<>();
             mArrays.put(id, array);
         }
 
@@ -224,6 +224,7 @@ public class ScriptEngine {
         try {
             runOk = new ScriptEngine(this, mCalculator, mFunctions.get(function)).runScript();
         } catch (IOException e) {
+            // ignored on purpose
         }
 
         return runOk;
@@ -249,6 +250,7 @@ public class ScriptEngine {
         try {
             runOk = new ScriptEngine(calculator, mFunctions.get(function)).runScript();
         } catch (IOException e) {
+            // ignored on purpose
         }
 
         return runOk;
@@ -258,8 +260,7 @@ public class ScriptEngine {
      * @return the list of ('defuned') functions.
      */
     static String[] getFunctions() {
-        String []keys = mFunctions.keySet().toArray(new String[mFunctions.size()]);
-        return keys;
+        return mFunctions.keySet().toArray(new String[0]);
     }
 
     /**
@@ -278,6 +279,7 @@ public class ScriptEngine {
             if (mCalculator.peekValueFromStack() != 0.0)
                 return new ScriptEngine(this, mCalculator, block).runScript();
         } catch (IOException e) {
+            // ignored on purpose
         }
 
         return true;
@@ -305,6 +307,7 @@ public class ScriptEngine {
                 return new ScriptEngine(this, mCalculator, ifBlock).runScript();
             }
         } catch (IOException e) {
+            // ignored on purpose
         }
 
         return true;
@@ -329,6 +332,7 @@ public class ScriptEngine {
                     break;
             }
         } catch (IOException e) {
+            // ignored on purpose
         }
 
         return runOk;
@@ -361,7 +365,7 @@ public class ScriptEngine {
         int offset = 0;
         int l = 0;
         while (l < line && offset < mScript.length()) {
-            Character c = mScript.charAt(offset++);
+            char c = mScript.charAt(offset++);
             if (c == '\n' || c == '\r')
                 ++l;
         }
@@ -455,11 +459,11 @@ public class ScriptEngine {
      * Populates and show (or refresh) the debug dialog
      */
     private void displayDebugInfo() {
-        String variables = "";
+        StringBuilder variables = new StringBuilder();
         Iterator<Map.Entry<String, Double>> i = lookupVariables().entrySet().iterator();
         while (i.hasNext()) {
             Map.Entry<String, Double> pair = i.next();
-            variables += pair.getKey() + ":" + pair.getValue() + "\n";
+            variables.append(pair.getKey()).append(":").append(pair.getValue()).append("\n");
         }
         Iterator<Map.Entry<String, ArrayList<Double>>> j = lookupArrays().entrySet().iterator();
         while (j.hasNext()) {
@@ -467,9 +471,9 @@ public class ScriptEngine {
             ArrayList array = pair.getValue();
             for (int k = 0; k < array.size(); k++)
                 if (array.get(k) != null)
-                    variables += pair.getKey() + "[" + k + "] : " + array.get(k) + "\n";
+                    variables.append(pair.getKey()).append("[").append(k).append("] : ").append(array.get(k)).append("\n");
         }
-        mDebugView.updateDebugInfo(mContexts.peek().mLexer.yyline(), mScript, variables, mCalculator.getStackDebugInfo());
+        mDebugView.updateDebugInfo(mContexts.peek().mLexer.yyline(), mScript, variables.toString(), mCalculator.getStackDebugInfo());
         mDebugView.show();
     }
 

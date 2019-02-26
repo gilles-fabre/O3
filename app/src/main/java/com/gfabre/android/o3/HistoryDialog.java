@@ -5,9 +5,6 @@ import android.widget.EditText;
 
 import com.gfabre.android.utilities.widgets.GenericDialog;
 
-import java.io.File;
-import java.io.IOException;
-
 /**
  * A simple modal dialog used to edit/[save] history.
  *

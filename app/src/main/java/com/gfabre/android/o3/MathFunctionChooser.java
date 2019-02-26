@@ -26,7 +26,6 @@ import com.gfabre.android.utilities.widgets.GenericDialog.GenericDialogListener;
  */
 public class MathFunctionChooser implements GenericDialogListener {
     private CalculatorActivity  mCalculator;
-    private GenericDialog       mDialog;
     private EditText            mFunction;
     private ListView            mFunctionList;
     private ArrayAdapter        mFunctionsAdapter;
@@ -70,15 +69,15 @@ public class MathFunctionChooser implements GenericDialogListener {
         if (method == null)
             return "";
 
-        String list = "(";
+        StringBuilder list = new StringBuilder("(");
         Class<?>[] params = method.getParameterTypes();
         for (int j = 0; j < params.length; j++) {
-            list += params[j].getSimpleName();
+            list.append(params[j].getSimpleName());
             if (j < params.length - 1)
-                list += ", ";
+                list.append(", ");
         }
-        list += ")";
-        return list;
+        list.append(")");
+        return list.toString();
     }
 
     /**
@@ -112,9 +111,9 @@ public class MathFunctionChooser implements GenericDialogListener {
     public MathFunctionChooser(CalculatorActivity activity) {
         mCalculator = activity;
 
-        mDialog = new GenericDialog(MATHS_FUNCTIONS_DIALOG_ID, activity.getString(R.string.pick_math_function), false);
-        mDialog.setListener(this);
-        mDialog.show(mCalculator.getFragmentManager(), activity.getString(R.string.pick_math_function));
+        GenericDialog dialog = new GenericDialog(MATHS_FUNCTIONS_DIALOG_ID, activity.getString(R.string.pick_math_function), false);
+        dialog.setListener(this);
+        dialog.show(mCalculator.getFragmentManager(), activity.getString(R.string.pick_math_function));
     }
 
     @Override

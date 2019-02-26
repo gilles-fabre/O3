@@ -532,7 +532,7 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
                 GTE,
                 EOF,
                 SYNTAX_ERROR
-  };
+  }
 
   final static int FUNDEF_LEN = new String("fundef").length();
   final static int FUNDEL_LEN = new String("fundel").length();

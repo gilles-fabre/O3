@@ -69,7 +69,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     private boolean       mInInitScript;                        // no GUI allowed in init scripts...
     private String        mHistory = "";                        // all actions history from beginning of time.
-    private Stack<Double> mStack = new Stack<Double>();              // values stack
+    private Stack<Double> mStack = new Stack<>();               // values stack
     private String        mValue = "";                          // value currently edited
     private EditText      mValueField = null;                   // value edit field
     private ListView      mStackView = null;                    // stack view
@@ -102,14 +102,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     /**
      * If present, pushes the currently edited value onto the stack.
      */
-    public void pushValueOnStack() {
+    private void pushValueOnStack() {
         if (mValue.isEmpty())
             return;
 
         // make sure we're pushing a properly formatted double
         try {
             mHistory += mValue + "\n";
-            Double val = new Double(mValue);
+            Double val = Double.valueOf(mValue);
             pushValueOnStack(val);
         } catch (Exception e) {
             // there ain't much we can do here
@@ -128,9 +128,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return;
 
         mStackAdapter.clear();
-        Integer depth = 1;
+        int depth = 1;
         for (int i = mStack.size() - 1; i >= 0; i--) {
-            mStackAdapter.add(depth.toString() + ": " + mStack.elementAt(i).toString());
+            mStackAdapter.add(depth + ": " + mStack.elementAt(i).toString());
             depth++;
         }
     }
@@ -481,8 +481,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         mValue = savedInstanceState.getString(EDITED_VALUE_KEY);
         double[] doubleArray = savedInstanceState.getDoubleArray(STACK_CONTENT_KEY);
         mStack.clear();
-        for (int i = 0; i < doubleArray.length; i++)
-            mStack.push(new Double(doubleArray[i]));
+
+        if (doubleArray != null) {
+            for (double d : doubleArray)
+                mStack.push(Double.valueOf(d));
+        }
 
         mValueField.setText(mValue);
         populateStackView();
@@ -499,8 +502,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @throws IOException
      */
     public String readFile(String fileName) throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(fileName));
-        try {
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
 
@@ -510,8 +512,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 line = br.readLine();
             }
             return sb.toString();
-        } finally {
-            br.close();
         }
     }
 
@@ -565,7 +565,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 pushValueOnStack();
                 // no history here, we're debugging
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
-                String script = null;
+                String script;
                 try {
                     script = readFile(filename);
                     final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
@@ -1027,19 +1027,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param classname
      * @return on object corresponding to the passed  className
      */
-    protected Object castDoubleToType(String classname, Double value) throws ClassNotFoundException {
+    private Object castDoubleToType(String classname, Double value) {
         switch(classname) {
             case "Long":
             case "long":
-                return new Long(value.longValue());
+                return Long.valueOf(value.longValue());
 
             case "Integer":
             case "int":
-                return new Integer(value.intValue());
+                return Integer.valueOf(value.intValue());
 
             case "Float":
             case "float":
-                return new Float(value);
+                return Float.valueOf(value.floatValue());
 
             case "Double":
             case "double":
@@ -1055,31 +1055,31 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param classname
      * @return on object corresponding to the passed  className
      */
-    protected Double castTypeToDouble(String classname, Object value) throws ClassNotFoundException {
+    private Double castTypeToDouble(String classname, Object value) {
         switch(classname) {
             case "Long":
-                return new Double((Long)value);
+                return Double.valueOf((Long)value);
 
             case "long":
-                return new Double((long)value);
+                return Double.valueOf((long)value);
 
             case "Integer":
-                return new Double((Integer)value);
+                return Double.valueOf((Integer)value);
 
             case "int":
-                return new Double((int)value);
+                return Double.valueOf((int)value);
 
             case "Float":
-                return new Double((Float)value);
+                return Double.valueOf((Float)value);
 
             case "float":
-                return new Double((float)value);
+                return Double.valueOf((float)value);
 
             case "Double":
                 return (Double)value;
 
             case "double":
-                return new Double((double)value);
+                return Double.valueOf((double)value);
         }
 
         return null;
@@ -1095,10 +1095,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             Class math = null;
             try {
                 math = Class.forName("java.lang.Math");
+                mMethods = math.getMethods();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
-            mMethods = math.getMethods();
         }
 
         return mMethods;
@@ -1115,7 +1115,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return invokeMathFunction(method);
     }
 
-    public boolean invokeMathFunction(Method method) {
+    private boolean invokeMathFunction(Method method) {
         // invoke the selected function
 
         // first make sure we have the appropriate number of elements
@@ -1127,14 +1127,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         // prepare the parameters.
         Object []argObjects = new Object[numParams];
-        while (--numParams >= 0) {
-            try {
-                argObjects[numParams] = castDoubleToType(params[numParams].toString(), mStack.pop());
-            } catch (ClassNotFoundException e) {
-                GenericDialog.displayMessage(this, getString(R.string.param_cast_err) + e.getMessage());
-                return false;
-            }
-        }
+        while (--numParams >= 0)
+            argObjects[numParams] = castDoubleToType(params[numParams].toString(), mStack.pop());
 
         // invoke the method
         boolean runOk = true;
@@ -1459,7 +1453,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         // v1 v2 -
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
-        mStack.push(v1 == v2 ? 1.0 : 0.0);
+        mStack.push(v1.doubleValue() == v2.doubleValue() ? 1.0 : 0.0);
         populateStackView();
 
         return true;
@@ -1472,7 +1466,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         // v1 v2 -
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
-        mStack.push(v1 == v2 ? 0.0 : 1.0);
+        mStack.push(v1.doubleValue() != v2.doubleValue() ? 1.0 : 0.0);
         populateStackView();
 
         return true;
@@ -1543,7 +1537,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         Double val = mStack.pop();
-        Stack<Double> st = new Stack<Double>();
+        Stack<Double> st = new Stack<>();
         while (--i >= 0)
             st.push(mStack.pop());
 
@@ -1620,7 +1614,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return true;
     }
 
-    public boolean doSwapN() {
+    private boolean doSwapN() {
         if (mStack.isEmpty())
             return false;
 
@@ -1638,12 +1632,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public void doClear() {
-        mStack = new Stack<Double>();
+        mStack = new Stack<>();
         populateStackView();
     }
 
     public void doStackSize() {
-        mStack.push(new Double(mStack.size()));
+        mStack.push(Double.valueOf(mStack.size()));
         populateStackView();
     }
 
@@ -1671,9 +1665,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mInInitScript)
             return;
 
-        Double value = new Double(GenericDialog.promptMessage(this,
-                                                              InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
-                                                               message));
+        Double value = Double.valueOf(GenericDialog.promptMessage(this,
+                                                         InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
+                                                                   message));
         mStack.push(value);
         doUpdate();
     }
@@ -1697,12 +1691,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @return the stack content.
      */
     public String getStackDebugInfo() {
-        String stack = "";
-        for (int i = mStack.size() - 1; i >= 0; i--) {
-            stack += "stack(" + i + ") : " + mStack.get(i) + "\n";
-        }
+        StringBuilder stack = new StringBuilder();
+        for (int i = mStack.size() - 1; i >= 0; i--)
+            stack.append("stack(").append(i).append(") : ").append(mStack.get(i)).append("\n");
 
-        return stack;
+        return stack.toString();
     }
 
     /**

@@ -121,11 +121,11 @@ public class GenericDialog extends DialogFragment {
      * implement this interface in order to receive event callbacks.
      * Each method passes the DialogFragment in case the host needs to query it. */
     public interface GenericDialogListener {
-        public void onDialogPositiveClick(int Id, GenericDialog dialog, View view);
-        public void onDialogNegativeClick(int Id, GenericDialog dialog, View view);
-        public void onDialogInitialize(int Id, GenericDialog dialog, View view);
-        public boolean onDialogValidate(int Id, GenericDialog dialog, View view);
-		public void onDismiss(int mDialogId, GenericDialog mFragment, View mView);
+        void onDialogPositiveClick(int Id, GenericDialog dialog, View view);
+        void onDialogNegativeClick(int Id, GenericDialog dialog, View view);
+        void onDialogInitialize(int Id, GenericDialog dialog, View view);
+        boolean onDialogValidate(int Id, GenericDialog dialog, View view);
+		void onDismiss(int mDialogId, GenericDialog mFragment, View mView);
     }
     
     // Use this instance of the interface to deliver action events
@@ -247,8 +247,7 @@ public class GenericDialog extends DialogFragment {
      * Invoke the listener activity to get populated
      */
     @Override 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     	View view = null;
     	
     	if (savedInstanceState == null) {

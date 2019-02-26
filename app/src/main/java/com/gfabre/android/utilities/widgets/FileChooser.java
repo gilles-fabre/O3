@@ -57,8 +57,8 @@ public class FileChooser implements GenericDialogListener {
 	private void populate() {
 		File[]dirs = mCurrentFile.listFiles();
 	    mDialog.getDialog().setTitle(mCurrentFile.getAbsolutePath());
-	    List<FileItem> dir = new ArrayList<FileItem>();
-	    List<FileItem> fls = new ArrayList<FileItem>();
+	    List<FileItem> dir = new ArrayList<>();
+	    List<FileItem> fls = new ArrayList<>();
         try{
         	for (File ff: dirs) {
                 Date 		lastModDate = new Date(ff.lastModified());
@@ -69,8 +69,6 @@ public class FileChooser implements GenericDialogListener {
                     int buf = 0;
                     if (fbuf != null) 
                         buf = fbuf.length;
-                    else 
-                    	buf = 0;
                     String num_item = String.valueOf(buf);
                     if (buf <= 1) 
                     	num_item = num_item + " item";
@@ -138,7 +136,7 @@ public class FileChooser implements GenericDialogListener {
         		@Override
         		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         			FileItem item = mAdapter.getItem(position);
-                    if (item.getPath().equals("/")) // from Android 7, can't list files in root
+					if (item == null || item.getPath().equals("/")) // from Android 7, can't list files in root
                     	return;
                     mCurrentFile = new File(item.getPath());
                     String image = item.getImage();
