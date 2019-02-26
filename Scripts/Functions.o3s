@@ -65,6 +65,7 @@ fundef modulo
     swap
     -
     ?rem
+    drop
     !"result modulo & remain
     !res
     !rem

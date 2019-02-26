@@ -6,10 +6,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -38,9 +36,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -68,7 +63,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final String     HISTORY_SCRIPT_KEY = "HistoryScript";
     private static final String     HISTORY_SCRIPT_NAME = "HistoryScript.o3s";
 
-    private static final int        NUM_FUNC_BUTTONS = 10;
+    private static final int        NUM_FUNC_BUTTONS = 15;
 
     private static  Method[] mMethods = null;
 
@@ -109,10 +104,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      */
     public void pushValueOnStack() {
         if (mValue.isEmpty())
-        return;
+            return;
 
         // make sure we're pushing a properly formatted double
         try {
+            mHistory += mValue + "\n";
             Double val = new Double(mValue);
             pushValueOnStack(val);
         } catch (Exception e) {
@@ -152,6 +148,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
+                    pushValueOnStack();
                     mHistory += "funcall " + f + "\n";
                     return ScriptEngine.runFunction((CalculatorActivity)mActivity, f);
                 }
@@ -238,6 +235,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                pushValueOnStack();
                 mHistory += "rolln\n";
                 doRollN();
                 return true;
@@ -251,6 +249,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                pushValueOnStack();
                 mHistory += "swapn\n";
                 doSwapN();
                 return true;
@@ -264,6 +263,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                pushValueOnStack();
                 mHistory += "dupn\n";
                 doDupN();
                 return true;
@@ -277,6 +277,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                pushValueOnStack();
                 mHistory += "dropn\n";
                 doDropN();
                 return true;
@@ -295,6 +296,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // pops up a dialog to pick a java math func
+                pushValueOnStack();
                 new MathFunctionChooser((CalculatorActivity)mActivity);
                 return true;
             }
@@ -354,6 +356,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
+                pushValueOnStack();
                 File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                 new FileChooser(RUN_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, dir == null ? "/" : dir.getPath());
                 return true;
@@ -550,9 +553,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         switch (Id) {
             case RUN_SCRIPT_DIALOG_ID : {
                 // run the selected script
-                pushValueOnStack();
-
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
+                pushValueOnStack();
                 mHistory += "run_script " + filename + "\n";
                 doRunScriptFile(filename);
             }
@@ -561,7 +563,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             case DEBUG_SCRIPT_DIALOG_ID : {
                 // run the selected script
                 pushValueOnStack();
-
+                // no history here, we're debugging
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
                 String script = null;
                 try {
@@ -700,16 +702,18 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param button is the button to be set.
      * @param index is the button index.
      */
-    private void SetFunctionButton(Button button, int index) {
+    private void setFunctionButton(Button button, int index) {
         final int _index = index;
 
         if (mFunctionTitles[_index] != null &&
             !mFunctionTitles[_index].isEmpty())
             button.setText(mFunctionTitles[_index]);
-        button.setOnClickListener(new View.OnClickListener() {
+            button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (mFunctionScripts[_index] != null && !mFunctionScripts[_index].isEmpty()) {
                     try {
+                        pushValueOnStack();
+                        mHistory += mFunctionScripts[_index] + "\n";
                         new ScriptEngine((CalculatorActivity) mActivity, mFunctionScripts[_index]).runScript();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -870,6 +874,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_add);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                pushValueOnStack();
                 mHistory += "+\n";
                 doAdd();
             }
@@ -877,6 +882,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_sub);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                pushValueOnStack();
                 mHistory += "-\n";
                 doSub();
             }
@@ -884,6 +890,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_mul);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                pushValueOnStack();
                 mHistory += "*\n";
                 doMul();
             }
@@ -891,6 +898,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_div);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                pushValueOnStack();
                 mHistory += "/\n";
                 doDiv();
             }
@@ -898,7 +906,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button =   findViewById(R.id.button_enter);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mHistory += mValue + "\n";
                 pushValueOnStack();
             }
         });
@@ -914,6 +921,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_neg);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                pushValueOnStack();
                 mHistory += "neg\n";
                 doNeg();
             }
@@ -921,6 +929,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_dup);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                pushValueOnStack();
                 mHistory += "dup\n";
                 doDup();
             }
@@ -928,6 +937,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_drop);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                pushValueOnStack();
                 mHistory += "drop\n";
                 doDrop();
             }
@@ -935,6 +945,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_swap);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                pushValueOnStack();
                 mHistory += "swap\n";
                 doSwap();
             }
@@ -942,6 +953,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_clear);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                pushValueOnStack();
                 mHistory += "clear\n";
                 doClear();
             }
@@ -978,25 +990,35 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         // function buttons handlers
         Button button = findViewById(R.id.button_fn1);
-        SetFunctionButton(button, 0);
+        setFunctionButton(button, 0);
         button = findViewById(R.id.button_fn2);
-        SetFunctionButton(button, 1);
+        setFunctionButton(button, 1);
         button = findViewById(R.id.button_fn3);
-        SetFunctionButton(button, 2);
+        setFunctionButton(button, 2);
         button = findViewById(R.id.button_fn4);
-        SetFunctionButton(button, 3);
+        setFunctionButton(button, 3);
         button = findViewById(R.id.button_fn5);
-        SetFunctionButton(button, 4);
+        setFunctionButton(button, 4);
         button = findViewById(R.id.button_fn6);
-        SetFunctionButton(button, 5);
+        setFunctionButton(button, 5);
         button = findViewById(R.id.button_fn7);
-        SetFunctionButton(button, 6);
+        setFunctionButton(button, 6);
         button = findViewById(R.id.button_fn8);
-        SetFunctionButton(button, 7);
+        setFunctionButton(button, 7);
         button = findViewById(R.id.button_fn9);
-        SetFunctionButton(button, 8);
+        setFunctionButton(button, 8);
         button = findViewById(R.id.button_fn10);
-        SetFunctionButton(button, 9);
+        setFunctionButton(button, 9);
+        button = findViewById(R.id.button_fn11);
+        setFunctionButton(button, 10);
+        button = findViewById(R.id.button_fn12);
+        setFunctionButton(button, 11);
+        button = findViewById(R.id.button_fn13);
+        setFunctionButton(button, 12);
+        button = findViewById(R.id.button_fn14);
+        setFunctionButton(button, 13);
+        button = findViewById(R.id.button_fn15);
+        setFunctionButton(button, 14);
     }
 
     /**
@@ -1088,6 +1110,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param method is the math method to be called per user request.
      */
     public boolean invokeAndHistorizeMathFunction(Method method) {
+        pushValueOnStack();
         mHistory += "math_call " + method.getName() + "\n";
         return invokeMathFunction(method);
     }
@@ -1097,7 +1120,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         // first make sure we have the appropriate number of elements
         // on the stack
-        pushValueOnStack();
         Type[] params = method.getParameterTypes();
         int numParams = params.length;
         if (numParams > mStack.size())
@@ -1173,6 +1195,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\t'DUP' pushes on the stack a copy of its topmost value\n", 0, false);
         helpView.appendText("\t\t'DROP' drops the topmost value off the stack\n", 0, false);
         helpView.appendText("\t\t'CLEAR' clears the whole stack\n", 0, false);
+        helpView.appendText("\t\t'...' buttons can be programmed (long press) to call a script, a java math or script function, via a single line script.\n", 0, false);
         helpView.appendText("\nNOTE: all of the these actions, except 'N', first push the edited value (if present) on the stack. Selecting a value in the stack copies it to the edit value field.\n", 0, true);
         helpView.resetFontSize();
 
@@ -1341,7 +1364,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      */
     public boolean doAdd() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1356,7 +1378,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSub() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1370,7 +1391,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doDiv() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1384,7 +1404,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doMul() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1421,7 +1440,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doModulo() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1435,7 +1453,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doEqual() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1449,7 +1466,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doNotEqual() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1463,7 +1479,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doLessThan() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1477,7 +1492,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doLessThanOrEqual() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1491,7 +1505,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doGreaterThan() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1505,7 +1518,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doGreaterThanOrEqual() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1523,7 +1535,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      */
     public boolean doRollN() {
-        pushValueOnStack();
         if (mStack.isEmpty())
             return false;
 
@@ -1546,7 +1557,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doDup() {
-        pushValueOnStack();
         if (mStack.isEmpty())
             return false;
 
@@ -1557,7 +1567,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doDupN() {
-        pushValueOnStack();
         if (mStack.isEmpty())
             return false;
 
@@ -1574,7 +1583,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doDrop() {
-        pushValueOnStack();
         if (mStack.isEmpty())
             return false;
 
@@ -1585,7 +1593,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doDropN() {
-        pushValueOnStack();
         if (mStack.isEmpty())
             return false;
 
@@ -1601,7 +1608,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSwap() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1615,7 +1621,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSwapN() {
-        pushValueOnStack();
         if (mStack.isEmpty())
             return false;
 
@@ -1633,7 +1638,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public void doClear() {
-        pushValueOnStack();
         mStack = new Stack<Double>();
         populateStackView();
     }
@@ -1740,7 +1744,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * Graphical functions
      */
     public boolean doPlot() {
-        pushValueOnStack();
         if (mStack.size() < 2)
             return false;
 
@@ -1753,7 +1756,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doErase() {
-        pushValueOnStack();
         if (mStack.size() < 3)
             return false;
 
@@ -1767,7 +1769,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSetRange() {
-        pushValueOnStack();
         if (mStack.size() < 4)
             return false;
 
@@ -1782,7 +1783,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSetColor() {
-        pushValueOnStack();
         if (mStack.size() < 3)
             return false;
 
@@ -1796,7 +1796,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSetDotSize() {
-        pushValueOnStack();
         if (mStack.size() < 1)
             return false;
 
