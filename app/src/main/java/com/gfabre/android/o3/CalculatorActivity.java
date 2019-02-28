@@ -1344,10 +1344,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // lookup function
-        for (Method method : methods) {
-            if (function.equals(method.getName())) {
-                return invokeMathFunction(method);
-            }
+        // for (Method method : methods) too slow
+        for (int i = 0; i < methods.length; i++) {
+            Method m = methods[i];
+            if (function.equals(m.getName()))
+                return invokeMathFunction(m);
         }
 
         return false;
