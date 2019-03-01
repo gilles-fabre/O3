@@ -1097,7 +1097,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 math = Class.forName("java.lang.Math");
                 mMethods = math.getMethods();
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                doDisplayMessage(getString(R.string.java_math_inspection_error) + e.getLocalizedMessage());
             }
         }
 
@@ -1336,7 +1336,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     /**
-     * Java math call
+     * Calls the given java math function if existing
+     *
+     * @param function is the function to be called.
+     *
+     * @return true if the function was found, false else.
      */
     public boolean doJavaMathCall(String function) {
         Method[] methods = getJavaMathMethods();
@@ -1350,6 +1354,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             if (function.equals(m.getName()))
                 return invokeMathFunction(m);
         }
+
+        // the function was not found
+        doDisplayMessage(getString(R.string.undefined_function) + function);
 
         return false;
     }
@@ -1724,14 +1731,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * Runs the given script file
      *
      * @param filename is the fully qualified script filename.
+     * @return the script was found and spawned.
      */
-    public void doRunScriptFile(String filename) {
+    public boolean doRunScriptFile(String filename) {
+        boolean found = false;
         try {
             String script = readFile(filename);
             runScript(script);
+            found = true;
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return found;
     }
 
     /**

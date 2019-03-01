@@ -47,5 +47,6 @@
     <string name="unexpected_token">"), unexpected token : "</string>
     <string name="invalid_path">invalid path : </string>
     <string name="undefined_function">Function is not defined : </string>
+    <string name="java_math_inspection_error">Error retrieving java math functions : </string>
     <string name="init_script_error">Error executing init script : </string>
 </resources>

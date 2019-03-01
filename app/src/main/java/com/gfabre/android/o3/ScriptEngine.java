@@ -807,11 +807,11 @@ public class ScriptEngine {
                             break;
 
                         case JAVA_MATH_CALL:
-                            mCalculator.doJavaMathCall(curLexer.identifier);
+                            runOk = mCalculator.doJavaMathCall(curLexer.identifier);
                             break;
 
                         case RUN_SCRIPT:
-                            mCalculator.doRunScriptFile(curLexer.filename);
+                            runOk = mCalculator.doRunScriptFile(curLexer.filename);
                             break;
 
                         case WHILE:
