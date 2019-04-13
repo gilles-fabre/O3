@@ -727,11 +727,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 // prompt the user for a call script line
                 mFunctionScripts[_index] = GenericDialog.promptMessage(mActivity,
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
-                        getString(R.string.enter_call_script));
+                        getString(R.string.enter_call_script), mFunctionScripts[_index]);
                 // prompt the user for a text
                 mFunctionTitles[_index] = GenericDialog.promptMessage(mActivity,
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
-                        getString(R.string.enter_button_title));
+                        getString(R.string.enter_button_title), mFunctionTitles[_index]);
 
                 // reset by user?
                 if (mFunctionTitles[_index] == null ||
