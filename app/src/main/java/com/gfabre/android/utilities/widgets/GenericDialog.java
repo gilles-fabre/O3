@@ -350,63 +350,6 @@ public class GenericDialog extends DialogFragment {
         }
 	}
 
-    /**
-     * Utility method to display a modal and SYNCHRONOUS persistent message dialog
-     * and return the user input as a String.
-     *
-     * @param activity is the parent activity
-     * @param inputType is the user expected input type (EditText InputType)
-     * @param msg is the message to display
-     */
-    public static String promptMessage(Activity activity, int inputType, String msg) {
-        final String 	_msg = msg;
-        final int       _inputType = inputType;
-
-        final GenericDialog _dialog = new GenericDialog(PROMPT_DIALOG_ID, null, true);
-        _dialog.setListener(new GenericDialogListener() {
-            @Override
-            public void onDialogPositiveClick(int Id, GenericDialog dialog, View view) {
-            }
-
-            @Override
-            public void onDialogNegativeClick(int Id, GenericDialog dialog, View view) {
-            }
-
-            @Override
-            public void onDialogInitialize(int Id, GenericDialog dialog, View view) {
-                TextView text = (TextView)dialog.getField(R.id.message);
-                if (text != null)
-                    text.setText(_msg);
-                EditText inputField = (EditText)dialog.getField(R.id.input);
-                if (inputField != null)
-                    inputField.setInputType(_inputType);
-            }
-
-            @Override
-            public boolean onDialogValidate(int Id, GenericDialog dialog, View view) {
-                _dialog.mHandler.sendMessage(_dialog.mHandler.obtainMessage());
-                EditText inputField = (EditText)dialog.getField(R.id.input);
-                if (inputField != null)
-                    _dialog.mUserInput = inputField.getText().toString();
-                return true;
-            }
-
-            @Override
-            public void onDismiss(int mDialogId, GenericDialog mFragment,
-                                  View mView) {
-            }
-        });
-
-        _dialog.show(activity.getFragmentManager(), MESSAGE_DIALOG_TAG);
-        try{
-            Looper.loop();
-        } catch (RuntimeException e) {
-            System.out.println("exiting on" + e.getMessage());
-        }
-
-        return _dialog.mUserInput;
-    }
-
 	/**
 	 * Utility method to display a modal and SYNCHRONOUS persistent message dialog
 	 * and return the user input as a String.
@@ -414,7 +357,7 @@ public class GenericDialog extends DialogFragment {
 	 * @param activity is the parent activity
 	 * @param inputType is the user expected input type (EditText InputType)
 	 * @param msg is the message to display
-	 * @param value is the default input value
+	 * @param value is the default input value (can be null)
 	 */
 	public static String promptMessage(Activity activity, int inputType, String msg, String value) {
 		final String    _value = value;

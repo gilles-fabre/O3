@@ -419,7 +419,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 String filename = GenericDialog.promptMessage(mActivity,
                                                               InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
-                                                               getString(R.string.enter_png_filename));
+                                                               getString(R.string.enter_png_filename), null);
 
                 File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                 try {
@@ -1675,7 +1675,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         Double value = Double.valueOf(GenericDialog.promptMessage(this,
                                                          InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
-                                                                   message));
+                                                                   message, null));
         mStack.push(value);
         doUpdate();
     }

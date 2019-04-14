@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">O3</string>
+    <string name="app_name">o3</string>
     <string name="history">History</string>
     <string name="clear_history">Clear</string>
     <string name="run_history">Run</string>
