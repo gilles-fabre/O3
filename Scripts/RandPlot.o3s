@@ -1,5 +1,71 @@
-?y
-100
-*
-!y
-/
+5
+?max_coord
+
+10
+?max_size
+5
+?min_size
+
+500
+?iter
+
+fundef rand_color
+     math_call random
+     255
+     *
+end_fundef
+
+fundef rand_coord
+     math_call random
+     !max_coord
+     *
+end_fundef
+
+fundef rand_size
+     math_call random
+     !max_size
+     *
+     !min_size
+     +
+end_fundef
+
+0
+0
+0
+erase
+
+0
+!max_coord
+0
+!max_coord
+range
+
+!iter
+while
+     drop
+
+     funcall rand_size
+     dot_size
+
+     funcall rand_color
+     funcall rand_color
+     funcall rand_color
+     color
+
+     funcall rand_coord
+     funcall rand_coord
+     plot
+
+     !iter
+     funcall dec
+     dup
+
+     ?iter
+end_while
+drop
+
+fundel rand_coord
+fundel rand_color
+fundel rand_size
+
+!"done drawing randomly
