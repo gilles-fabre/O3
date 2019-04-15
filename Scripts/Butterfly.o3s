@@ -1,0 +1,81 @@
+0
+dup
+?min_t
+?t
+
+3.14159
+12
+*
+?max_t
+
+fundef func_of_t
+	!t
+    math_call cos
+    math_call exp
+    !t
+    4
+    *
+    math_call cos
+    2
+    *
+    -
+    !t
+    12
+    /
+    math_call sin
+    -
+end_fundef
+
+fundef x_func_of_t
+	funcall func_of_t
+    !t
+    math_call sin
+    *
+end_fundef
+
+fundef y_func_of_t
+	funcall func_of_t
+    !t
+    math_call cos
+    *
+end_fundef
+
+0
+2
+dupn
+erase
+
+255
+2
+dupn
+color
+
+-5
+5
+-5
+5
+range
+
+5
+dot_size
+
+1
+while
+    drop
+    funcall x_func_of_t
+    funcall y_func_of_t
+    plot
+    !t
+    0.05
+    +
+    dup
+    ?t
+    !max_t
+    funcall lte
+end_while
+drop
+
+fundel x_func_of_t
+fundel y_func_of_t
+
+!"done drawing butterfly
