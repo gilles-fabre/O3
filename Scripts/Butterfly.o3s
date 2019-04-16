@@ -9,7 +9,7 @@ dup
 ?max_t
 
 fundef func_of_t
-	!t
+    !t
     math_call cos
     math_call exp
     !t
@@ -27,14 +27,14 @@ fundef func_of_t
 end_fundef
 
 fundef x_func_of_t
-	funcall func_of_t
+    funcall func_of_t
     !t
     math_call sin
     *
 end_fundef
 
 fundef y_func_of_t
-	funcall func_of_t
+    funcall func_of_t
     !t
     math_call cos
     *
@@ -77,5 +77,6 @@ drop
 
 fundel x_func_of_t
 fundel y_func_of_t
+fundel func_of_t
 
 !"done drawing butterfly
