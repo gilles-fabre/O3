@@ -11,6 +11,7 @@ import java.util.Stack;
 import java_cup.runtime.Symbol;
 
 import static com.gfabre.android.o3.DebugView.DebugState.exit;
+import static com.gfabre.android.o3.DebugView.DebugState.none;
 import static com.gfabre.android.o3.DebugView.DebugState.step_in;
 import static com.gfabre.android.o3.DebugView.DebugState.step_over;
 
@@ -662,8 +663,16 @@ public class ScriptEngine {
                                 // debug here
                                 displayDebugInfo();
                                 curContext.mDebugState = mDebugView.getDebugState();
-                                if (curContext.mDebugState == exit)
-                                    stop = true;
+                                switch (curContext.mDebugState) {
+                                    case exit:
+                                        runOk = false;
+                                        stop = true;
+                                        break;
+
+                                    case none:
+                                        mDebugView.hide();
+                                        break;
+                                }
                             }
                             break;
 
@@ -873,9 +882,15 @@ public class ScriptEngine {
                                 // debug break is ignored if already in debug
                                 displayDebugInfo();
                                 curContext.mDebugState = mDebugView.getDebugState();
-                                if (curContext.mDebugState == exit) {
-                                    runOk = false;
-                                    stop = true;
+                                switch (curContext.mDebugState) {
+                                    case exit:
+                                        runOk = false;
+                                        stop = true;
+                                        break;
+
+                                    case none:
+                                        mDebugView.hide();
+                                        break;
                                 }
                             }
                             break;
@@ -907,10 +922,15 @@ public class ScriptEngine {
                     if (parentContext.mDebugState == step_in)
                         parentContext.mDebugState = step_over;
                     break;
+
+                case none:
+                    // resume
+                    parentContext.mDebugState = none;
+                    break;
             }
         }
 
-        // if debugging, must close the debug dialog
+        // if debugging, must close the debug dialog on error/exit
         if (!runOk && mDebugView.isShown())
             mDebugView.hide();
 

@@ -1327,7 +1327,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tplot : draws with the current color, dot size, at the x, y coordinates given by the two topmost values of the stack.\n", 0, false);
         helpView.appendText("\t\tmath_call _f : calls the java maths function _f.\n", 0, false);
         helpView.appendText("\t\trun_script _s : runs the script _s.\n", 0, false);
-        helpView.appendText("\t\tdebug_break : pops up a modal dialog reading various debugging information. The standard 'step over', 'step in', 'step out' are supported. 'done' resumes the script execution and ends the debugging session. 'exit' terminates the script..\n", 0, false);
+        helpView.appendText("\t\tdebug_break : pops up a modal dialog reading various debugging information. The standard 'step over', 'step in', 'step out' are supported. 'resume' resumes the script execution and ends the debugging session. 'exit' terminates the script..\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.BIG_FONT);

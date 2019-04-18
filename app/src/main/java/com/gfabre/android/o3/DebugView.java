@@ -49,7 +49,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
 
     DebugView(CalculatorActivity activity) {
         mActivity = activity;
-        mDialog = new GenericDialog(DEBUG_DIALOG_ID, null, true);
+        mDialog = new GenericDialog(DEBUG_DIALOG_ID, null, true, activity.getString(R.string.resume));
         mDialog.setListener(this);
         mState = DebugState.none;
     }

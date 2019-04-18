@@ -60,6 +60,7 @@ public class GenericDialog extends DialogFragment {
 		mLayout = android.R.layout.simple_list_item_1;
 		mTitle = "";
 		mSingleButton = true;
+		mPositiveButtonText = "Done";
 		mDialogId = 0;
 		mBundle = new Bundle();
 		setRetainInstance(true); // don't dismiss dialog on rotation.
@@ -73,10 +74,13 @@ public class GenericDialog extends DialogFragment {
 		mSingleButton = singleButton;
 		mDialogId = layout;
 		mBundle = new Bundle();
-		if (buttonTexts != null && buttonTexts[0] != null) 
-			mPositiveButtonText = buttonTexts[0];
-		if (buttonTexts != null && buttonTexts[1] != null) 
-			mNegativeButtonText = buttonTexts[1];
+		mPositiveButtonText = "Done";
+		if (buttonTexts != null) {
+		    if (buttonTexts[0] != null)
+			    mPositiveButtonText = buttonTexts[0];
+		    if (buttonTexts.length > 1 && buttonTexts[1] != null)
+			    mNegativeButtonText = buttonTexts[1];
+		}
 		setRetainInstance(true); // don't dismiss dialog on rotation.
 	}
 
@@ -88,17 +92,7 @@ public class GenericDialog extends DialogFragment {
 		mSingleButton = singleButton;
 		mDialogId = layout;
 		mBundle = new Bundle();
-		setRetainInstance(true); // don't dismiss dialog on rotation.
-	}
-
-	public GenericDialog(int layout, String title) {
-		super();		
-		mFragment = this;
-		mLayout = layout;
-		mTitle = title;
-		mSingleButton = false;
-		mDialogId = layout;
-		mBundle = new Bundle();
+		mPositiveButtonText = "Done";
 		setRetainInstance(true); // don't dismiss dialog on rotation.
 	}
 
@@ -173,7 +167,7 @@ public class GenericDialog extends DialogFragment {
         builder.setView(mView);
         
         // Add action buttons
-        builder.setPositiveButton(mSingleButton ? "Done" : mPositiveButtonText, new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(mPositiveButtonText, new DialogInterface.OnClickListener() {
         	@Override
 	       	public void onClick(DialogInterface dialog, int id) {
         		// this one won't be called, since we re set it later on...
