@@ -1,13 +1,20 @@
+// t parameter
+// min and initial value
 0
-dup
-?min_t
 ?t
 
+// max value = 12 * pi
 3.14159
 12
 *
 ?max_t
 
+// t increment
+0.00625
+?t_step
+
+// factorized parametric equation
+// fun(t) = (e(cos(t)) - (cos(4 * t) * 2) - sin(t / 12))
 fundef func_of_t
     !t
     math_call cos
@@ -26,6 +33,7 @@ fundef func_of_t
     -
 end_fundef
 
+// fun(x) = sin(t) * fun(t)
 fundef x_func_of_t
     funcall func_of_t
     !t
@@ -33,6 +41,7 @@ fundef x_func_of_t
     *
 end_fundef
 
+// fun(y) = cos(t) * fun(t)
 fundef y_func_of_t
     funcall func_of_t
     !t
@@ -40,25 +49,30 @@ fundef y_func_of_t
     *
 end_fundef
 
+// erase background
 0
 2
 dupn
 erase
 
+// butterfly color
 255
 2
 dupn
 color
 
+// drawing range : -5 < x < 5, -5 < y < 5
 -5
 5
 -5
 5
 range
 
+// pen size
 5
 dot_size
 
+// iterate until t reaches max_t, by increments of t_step
 1
 while
     drop
@@ -66,7 +80,7 @@ while
     funcall y_func_of_t
     plot
     !t
-    0.05
+    !t_step
     +
     dup
     ?t
@@ -75,8 +89,10 @@ while
 end_while
 drop
 
+// get rid of local functions
 fundel x_func_of_t
 fundel y_func_of_t
 fundel func_of_t
 
+// display message to the user
 !"done drawing butterfly
