@@ -1,3 +1,27 @@
+fundef neq
+    <>
+end_fundef
+
+fundef lt
+    <
+end_fundef
+
+fundef lte
+    <=
+end_fundef
+
+fundef gt
+   >
+end_fundef
+
+fundef gte
+    >=
+end_fundef
+
+fundef eq
+    ==
+end_fundef
+
 fundef dec
     1.0
      -
@@ -150,6 +174,14 @@ fundef logN
 	math_call log
 
 	/
+end_fundef
+
+fundef percent
+    ?y
+    100
+    *
+    !y
+    /
 end_fundef
 
 !"basic functions 'defuned', see Functions/Script Functions menu

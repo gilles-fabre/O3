@@ -656,7 +656,7 @@ public class ScriptEngine {
                             break;
 
                         case step_over:
-                            // push a gc in step_out when getting down into
+                            // will push a gc in step_out when getting down into
                             // inner func_call/while/if/else block
                         case step_in:
                             if (ScriptLexer.sym.values()[symbol.sym] != ScriptLexer.sym.EOF) {
