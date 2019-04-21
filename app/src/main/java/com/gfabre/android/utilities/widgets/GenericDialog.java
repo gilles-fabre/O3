@@ -1,6 +1,5 @@
 package com.gfabre.android.utilities.widgets;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -31,7 +30,6 @@ import static com.gfabre.android.o3.R.layout.prompt_dialog;
  * @author gilles fabre
  * @date February, 2014
  */
-@SuppressLint("ValidFragment")
 public class GenericDialog extends DialogFragment {
 
 	private static final String DIALOG_ID = "DialogId";
@@ -60,7 +58,6 @@ public class GenericDialog extends DialogFragment {
 		mLayout = android.R.layout.simple_list_item_1;
 		mTitle = "";
 		mSingleButton = true;
-		mPositiveButtonText = "Done";
 		mDialogId = 0;
 		mBundle = new Bundle();
 		setRetainInstance(true); // don't dismiss dialog on rotation.
@@ -74,7 +71,6 @@ public class GenericDialog extends DialogFragment {
 		mSingleButton = singleButton;
 		mDialogId = layout;
 		mBundle = new Bundle();
-		mPositiveButtonText = "Done";
 		if (buttonTexts != null) {
 		    if (buttonTexts[0] != null)
 			    mPositiveButtonText = buttonTexts[0];
@@ -92,7 +88,6 @@ public class GenericDialog extends DialogFragment {
 		mSingleButton = singleButton;
 		mDialogId = layout;
 		mBundle = new Bundle();
-		mPositiveButtonText = "Done";
 		setRetainInstance(true); // don't dismiss dialog on rotation.
 	}
 
@@ -221,7 +216,7 @@ public class GenericDialog extends DialogFragment {
 		 super.onResume();
 		 
 	    // add a listener to validate the dialog when the ok button is pressed.
-	    Button positiveButton = (Button)mDialog.getButton(Dialog.BUTTON_POSITIVE);
+	    Button positiveButton = mDialog.getButton(Dialog.BUTTON_POSITIVE);
 	    if (positiveButton != null) 
 	        positiveButton.setOnClickListener(new View.OnClickListener() {
 	            @Override
@@ -245,7 +240,7 @@ public class GenericDialog extends DialogFragment {
     	View view = null;
     	
     	if (savedInstanceState == null) {
-	    	view = super.onCreateView(inflater, container, savedInstanceState);
+	    	view = super.onCreateView(inflater, container, null);
 			if (mListener != null)
 				mListener.onDialogInitialize(mDialogId, mFragment, mView);
     	}
@@ -270,7 +265,7 @@ public class GenericDialog extends DialogFragment {
     public View getField(int id) {
     	return mView == null ? null : mView.findViewById(id);
     }
-    
+
     public final LinearLayout getLayout() {
     	return (LinearLayout)mView;
     }

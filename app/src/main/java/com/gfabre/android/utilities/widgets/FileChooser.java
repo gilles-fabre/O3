@@ -24,7 +24,7 @@ import com.gfabre.android.o3.R;
  * @date   May 14, 2014	
  */
 public class FileChooser implements GenericDialogListener {
-	public static final int FILE_CHOOSER_DIALOG_ID = R.layout.file_chooser;
+	private static final int FILE_CHOOSER_DIALOG_ID = R.layout.file_chooser;
 	
 	private static final String EMPTY_DIR_ICON 	= "empty_directory_icon";
 	private static final String DIR_ICON 		= "directory_icon";
@@ -97,7 +97,8 @@ public class FileChooser implements GenericDialogListener {
 	                						 FILE_ICON));
                 }
             }
-        } catch(Exception e) {   
+        } catch(Exception e) {
+        	// do not get intrusive, that would be useless
         }
 
         Collections.sort(dir);

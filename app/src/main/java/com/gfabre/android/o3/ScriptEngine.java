@@ -494,6 +494,10 @@ public class ScriptEngine {
         boolean runOk = runScript();
         mContexts.pop();
 
+        // close the debug dialog
+        if (mDebugView.isShown())
+            mDebugView.hide();
+
         return runOk;
     }
 
@@ -508,7 +512,17 @@ public class ScriptEngine {
         Context newContext;
         Context curContext = mContexts.isEmpty() ? null : mContexts.peek();
 
-        // we enter here to either execute a complete script or a script sub-block (if/else/while)
+        /*
+        // #### debug contexts
+        System.out.println("\n\n\n >>>> on runScript PREPARE entry: ");
+        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
+        for (Context c : mContexts)
+            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
+        System.out.println("\n\n");
+        // ####
+        */
+
+        // we enter here to either execute a complete script or a script sub-block (if/else/while/funcall)
         newContext = new Context(Context.State.RUNNING);
         newContext.mLexer = new ScriptLexer(new StringReader(mScript));
         if (curContext != null) {
@@ -534,6 +548,16 @@ public class ScriptEngine {
             }
         }
         mContexts.push(newContext);
+
+        /*
+        // #### debug contexts
+        System.out.println("\n\n\n >>>> on runScript entry: ");
+        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
+        for (Context c : mContexts)
+            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
+        System.out.println("\n\n");
+        // ####
+        */
 
         Symbol symbol;
         boolean runOk = true, stop = false;
@@ -648,6 +672,11 @@ public class ScriptEngine {
                     break;
 
                 case RUNNING:
+                    /*
+                    // #### debug contexts
+                    System.out.println("\n\n\n #### runScript hits : " + ScriptLexer.sym.values()[symbol.sym] + "\n\n\n");
+                    // ####
+                    */
                     switch (curContext.mDebugState) {
                         case none:
                             // not in a debug session
@@ -677,7 +706,7 @@ public class ScriptEngine {
                             break;
 
                         case exit:
-                            // step out until we're done with alll the scripts stack
+                            // step out until we're done with all the scripts stack
                             runOk = false;
                             stop = true;
                             break;
@@ -870,11 +899,10 @@ public class ScriptEngine {
                             runOk = false; // get outa here!
                             // fall into
 
+                        case EXIT:
                         case EOF:
-                            stop = true; // normal end of script
-                            // if debugging, must close the debug dialog
-                            if (mDebugView.isShown())
-                                mDebugView.hide();
+                            // normal end of script (either implicit or explicit)
+                            stop = true;
                             break;
 
                         case DEBUG_BREAK:
@@ -894,16 +922,19 @@ public class ScriptEngine {
                                 }
                             }
                             break;
-
-                        case EXIT:
-                            stop = true;
-                            // if debugging, must close the debug dialog
-                            if (mDebugView.isShown())
-                                mDebugView.hide();
-                            break;
                     }
             }
         }
+
+        /*
+        // #### debug contexts
+        System.out.println("\n\n\n <<<< on runScript PREPARE exit: ");
+        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
+        for (Context c : mContexts)
+            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
+        System.out.println("\n\n");
+        // ####
+        */
 
         // pops the current context
         mContexts.pop();
@@ -930,8 +961,18 @@ public class ScriptEngine {
             }
         }
 
-        // if debugging, must close the debug dialog on error/exit
-        if (!runOk && mDebugView.isShown())
+        /*
+        // #### debug contexts
+        System.out.println("\n\n\n <<<< on runScript exit: ");
+        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
+        for (Context c : mContexts)
+            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
+        System.out.println("\n\n");
+        // ####
+        */
+
+        // if debugging, must close the debug dialog on error/exit/end of top most parent script
+        if ((!runOk || mContexts.size() == 0) && mDebugView.isShown())
             mDebugView.hide();
 
         return runOk;

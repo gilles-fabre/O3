@@ -10,9 +10,9 @@ import android.widget.Toast;
  * @date March, 2014
  */
 public class MessageDisplayer implements Runnable {
-	String 		mMessage;
-	int 		mDuration; // -1 == dialog, 0 == short toast, 1 == long toast
-	Activity 	mActivity;
+	private String 		mMessage;
+	private int 		mDuration; // -1 == dialog, 0 == short toast, 1 == long toast
+	private Activity 	mActivity;
 	
 	/**
 	 * Message displayer constructor.

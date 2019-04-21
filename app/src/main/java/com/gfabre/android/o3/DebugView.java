@@ -86,7 +86,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
     }
 
     public void hide() {
-        mDialog.dismiss();
+        mDialog.dismiss(); // mIsShown is set on onDismiss
     }
 
     /**
