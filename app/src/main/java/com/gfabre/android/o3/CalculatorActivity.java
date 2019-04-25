@@ -965,7 +965,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     protected void onResume() {
         super.onResume();
 
-        // get the init script from the preferences
+        // get the preferences
+
+        // init script
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
         if (prefs.contains(INIT_SCRIPT_NAME)) {
             mInitScriptName = prefs.getString(INIT_SCRIPT_NAME, null);
@@ -982,7 +984,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
         }
 
-        // restore the function buttons
+        // function buttons
         for (int i = 0; i < NUM_FUNC_BUTTONS; i++) {
             mFunctionTitles[i] = prefs.getString(FUNCTION_TITLES_KEY + i, null);
             mFunctionScripts[i] = prefs.getString(FUNCTION_SCRIPTS_KEY + i, null);
@@ -1316,10 +1318,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tfuncall _f : calls the script function _f.\n", 0, false);
         helpView.appendText("\t\t!\"_message : displays _message in a blocking modal dialog.\n", 0, false);
         helpView.appendText("\t\t?\"_prompt : displays _prompt message in a value prompting & blocking modal dialog. Pushes the value entered by the user on the stack.\n", 0, false);
-        helpView.appendText("\t\t?\"_variable : pops the topmost value off the stack into the given _variable.\n", 0, false);
-        helpView.appendText("\t\t!\"_variable : pushes the given _variable's value onto the stack.\n", 0, false);
-        helpView.appendText("\t\t?\"[]_array : pops the 2nd value off the stack into the given _array at the index given by the 1st value.\n", 0, false);
-        helpView.appendText("\t\t!\"[]_array : pushes on the stack the value from the _array at the index given by the stack's topmost value.\n", 0, false);
+        helpView.appendText("\t\t?_variable : pops the topmost value off the stack into the given _variable.\n", 0, false);
+        helpView.appendText("\t\t!_variable : pushes the given _variable's value onto the stack.\n", 0, false);
+        helpView.appendText("\t\t?[]_array : pops the 2nd value off the stack into the given _array at the index given by the 1st value.\n", 0, false);
+        helpView.appendText("\t\t![]_array : pushes on the stack the value from the _array at the index given by the stack's topmost value.\n", 0, false);
         helpView.appendText("\t\terase : clears the graphical view background with the r,g,b indexes given by the first three values of the stack.\n", 0, false);
         helpView.appendText("\t\tcolor : sets the graphical view drawing color with the r,g,b indexes given by the first three values of the stack.\n", 0, false);
         helpView.appendText("\t\tdot_size : sets the point drawing size to that given by the topmost value of the stack.\n", 0, false);
@@ -1668,7 +1670,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      * @param message is the message to be displayed.
      */
-    public void doPromptMessage(String message) {
+    public void doPromptForValue(String message) {
         // no GUI allowed in init script
         if (mInInitScript)
             return;

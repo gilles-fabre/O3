@@ -742,7 +742,7 @@ public class ScriptEngine {
                             break;
 
                         case PROMPT_MESSAGE:
-                            mCalculator.doPromptMessage(curLexer.identifier);
+                            mCalculator.doPromptForValue(curLexer.identifier);
                             break;
 
                         case ADD:
