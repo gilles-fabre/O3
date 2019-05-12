@@ -813,6 +813,10 @@ public class ScriptEngine {
                             runOk = mCalculator.doSwap();
                             break;
 
+                        case SWAPN:
+                            runOk = mCalculator.doSwapN();
+                            break;
+
                         case ROLLN:
                             runOk = mCalculator.doRollN();
                             break;

@@ -1,3 +1,15 @@
+fundef stack_exchange
+    // exchange elements at i,j in the stack
+    ?i
+    ?j
+    !i
+    swapn
+    !j
+    swapn
+    !i
+    swapn
+end_fundef
+
 fundef neq
     <>
 end_fundef

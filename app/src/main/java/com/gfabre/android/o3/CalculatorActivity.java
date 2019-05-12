@@ -1304,7 +1304,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
         helpView.appendText("\n\nScripts syntax :\n", 0x008888, true);
-        helpView.appendText("\t\trolln, swap, dup, dupn, clear : have the same effect as their UI peers.\n", 0, false);
+        helpView.appendText("\t\trolln, swap, swapn, dup, dupn, clear : have the same effect as their UI peers.\n", 0, false);
         helpView.appendText("\t\tstack_size : pushes the stack size onto the stack.\n", 0, false);
         helpView.appendText("\t\tneg : inverts the edited (if any) and top stack value(s).\n", 0, false);
         helpView.appendText("\t\t_value : pushes the _value onto the stack.\n", 0, false);
@@ -1624,7 +1624,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return true;
     }
 
-    private boolean doSwapN() {
+    public boolean doSwapN() {
         if (mStack.isEmpty())
             return false;
 
