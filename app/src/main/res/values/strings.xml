@@ -14,6 +14,7 @@
     <string name="maths_functions">Java Math Functions..</string>
     <string name="script_functions">Script Functions</string>
     <string name="scripts">Scripts</string>
+    <string name="show_samples">Show Samples..</string>
     <string name="init_script">Select Init Script..</string>
     <string name="cancel_init_script">Cancel Init Script</string>
     <string name="edit_script">Edit..</string>
@@ -30,7 +31,7 @@
     <string name="save">Save</string>
     <string name="pick_script">Pick a Script</string>
     <string name="pick_math_function">Pick a Math Function</string>
-    <string name="about">About..</string>
+    <string name="help">Help..</string>
     <string name="about_o3">About O3</string>
     <string name="graph_view">Graph View</string>
     <string name="enter_png_filename">Enter a .png filename : </string>

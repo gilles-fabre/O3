@@ -3,9 +3,12 @@ package com.gfabre.android.o3;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -392,6 +395,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
         });
 
+        /**
+         * Show sample scripts
+         */
+        item = submenu.add(getString(R.string.show_samples));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                String samplesUrl = "https://github.com/gilles-fabre/O3/tree/master/Scripts";
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(samplesUrl));
+                mActivity.startActivity(intent);
+                return true;
+            }
+        });
 
         /**
          * graph view menu
@@ -437,7 +453,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         /**
          * The usual about/help menu
          */
-        item = menu.add(getString(R.string.about));
+        item = menu.add(getString(R.string.help));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -1170,11 +1186,21 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         ColorLogView helpView = new ColorLogView(view);
 
         helpView.setFontSize(ColorLogView.BIG_FONT);
-        helpView.appendText("\nO3: Operand Operand Operator.. calc", 0x00FFFF, true);
+        helpView.appendText("\nO3 Calculator", 0x008888, true);
         helpView.resetFontSize();
 
+        PackageInfo pinfo = null;
+        try {
+            pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            helpView.setFontSize(ColorLogView.BIG_FONT);
+            helpView.appendText("\nVersion : " + pinfo.versionName, 0x008888, true);
+            helpView.resetFontSize();
+        } catch (PackageManager.NameNotFoundException e) {
+            // nop
+        }
+
         helpView.setFontSize(ColorLogView.BIG_FONT);
-        helpView.appendText("\n<a href=\"url\">https://github.com/gilles-fabre/O3</a>\n\n", 0xCCCCCC, true);
+        helpView.appendText("\n<a href=\"url\">https://github.com/gilles-fabre/O3</a>\n\n", 0x00FFFF, true);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
