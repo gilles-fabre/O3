@@ -771,7 +771,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     // called after onStart, prepare GUI, but then onResume will be called before the UI is ready.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); // application runs only in portrait mode
+        // #### lock screen in portrait mode
+        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); // application runs only in portrait mode
         setContentView(R.layout.calculator_view);
 
         mActivity = this;
@@ -1342,8 +1343,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\t&lt&gt, &lt, &lt=, &gt, &gt= : pop the two topmost values and pushes the result (0 means false, not 0.0 means true) of their comparison on the stack.\n", 0, false);
         helpView.appendText("\t\tif, [else], end_if : conditional block[s], if and else do not pop the 'test' value off the stack.\n", 0, false);
         helpView.appendText("\t\twhile, end_while : iteration block[s], while does not pop the 'test' value off the stack.\n", 0, false);
-        helpView.appendText("\t\tfundef, end_fundef : defines a function which can later be invoked (until deleted) from any script during the session.\n", 0, false);
-        helpView.appendText("\t\tfundel : deletes (forgets) the given function.\n", 0, false);
+        helpView.appendText("\t\tfundef _f, end_fundef : defines a function _f which can later be invoked (until deleted) from any script during the session.\n", 0, false);
+        helpView.appendText("\t\tfundel _f : deletes (forgets) the _f function.\n", 0, false);
         helpView.appendText("\t\tfuncall _f : calls the script function _f.\n", 0, false);
         helpView.appendText("\t\t!\"_message : displays _message in a blocking modal dialog.\n", 0, false);
         helpView.appendText("\t\t?\"_prompt : displays _prompt message in a value prompting & blocking modal dialog. Pushes the value entered by the user on the stack.\n", 0, false);

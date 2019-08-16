@@ -530,7 +530,7 @@ public class ScriptEngine {
                 case none:
                     // not in a debug session
                 case step_out:
-                    // no debug here, down from step_over or from step_out
+                    // no debug here, down from step_over or up from step_out
                 case step_in:
                     // no change down the call stack
                     break;
