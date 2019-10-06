@@ -47,6 +47,7 @@ import java.lang.Double;
                 COLOR,
                 ERASE,
                 PLOT,
+                LINE,
                 DOT_SIZE,
                 PUSH_IDENTIFIER,
                 POP_IDENTIFIER,
@@ -182,6 +183,7 @@ Filename = [^\r\n]+
 "color"                        { return symbol(sym.COLOR); }
 "erase"                        { return symbol(sym.ERASE); }
 "plot"                         { return symbol(sym.PLOT); }
+"line"                         { return symbol(sym.LINE); }
 "dot_size"                     { return symbol(sym.DOT_SIZE); }
 
 /* literals */

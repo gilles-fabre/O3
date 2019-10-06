@@ -1,0 +1,83 @@
+?"enter the number of angles
+?num_angles
+
+0
+0
+0
+erase
+
+-5
+5
+-5
+5
+range
+
+255
+0
+0
+color
+
+// draw first segment
+0
+0
+1
+0
+line
+
+// total angle reached
+0
+?angle
+
+// angle increment
+360
+!num_angles
+/
+0.0174533
+*
+?angle_inc
+
+// set current segment end point
+1
+?x
+0
+?y
+
+1
+while
+		drop
+		!angle
+		!angle_inc
+		+
+		?angle
+		!x
+		!angle
+		math_call cos
+		+
+		?dest_x
+		!y
+		!angle
+		math_call sin
+		+
+		?dest_y
+		!x
+		!y
+		!dest_x
+		!dest_y
+		line
+		!dest_x
+		?x
+		!dest_y
+		?y
+		!num_angles
+		1
+		-
+		dup
+		?num_angles
+		0
+		>=
+end_while
+drop
+
+!"done drawing polygon
+
+

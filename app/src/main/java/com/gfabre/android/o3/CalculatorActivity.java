@@ -1356,7 +1356,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tcolor : sets the graphical view drawing color with the r,g,b indexes given by the first three values of the stack.\n", 0, false);
         helpView.appendText("\t\tdot_size : sets the point drawing size to that given by the topmost value of the stack.\n", 0, false);
         helpView.appendText("\t\trange : sets the graphical view virtual orthonormal extent to the xMin, xMax, yMin, yMax given by the first fours values of the stack.\n", 0, false);
-        helpView.appendText("\t\tplot : draws with the current color, dot size, at the x, y coordinates given by the two topmost values of the stack.\n", 0, false);
+        helpView.appendText("\t\tplot : draws a dot with the current color, dot size, at the x, y coordinates given by the two topmost values of the stack.\n", 0, false);
+        helpView.appendText("\t\tline : draws a line with the current color, dot size, at the x0, y0, x1, y1 coordinates given by the four topmost values of the stack.\n", 0, false);
         helpView.appendText("\t\tmath_call _f : calls the java maths function _f.\n", 0, false);
         helpView.appendText("\t\trun_script _s : runs the script _s.\n", 0, false);
         helpView.appendText("\t\tdebug_break : pops up a modal dialog reading various debugging information. The standard 'step over', 'step in', 'step out' are supported. 'resume' resumes the script execution and ends the debugging session. 'exit' terminates the script..\n", 0, false);
@@ -1789,6 +1790,20 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double x = mStack.pop();
 
         mGraphView.doPlot(x, y);
+
+        return true;
+    }
+
+    public boolean doLine() {
+        if (mStack.size() < 4)
+            return false;
+
+        Double y1 = mStack.pop();
+        Double x1 = mStack.pop();
+        Double y0 = mStack.pop();
+        Double x0 = mStack.pop();
+
+        mGraphView.doLine(x0, y0, x1, y1);
 
         return true;
     }

@@ -878,6 +878,10 @@ public class ScriptEngine {
                             runOk = mCalculator.doPlot();
                             break;
 
+                        case LINE:
+                            runOk = mCalculator.doLine();
+                            break;
+
                         case ERASE:
                             runOk = mCalculator.doErase();
                             break;

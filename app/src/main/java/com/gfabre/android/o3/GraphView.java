@@ -97,6 +97,33 @@ public class GraphView extends ScrollImageView {
         mBmpCanvas.drawPoint(x.intValue(), y.intValue(), mPaint);
     }
 
+    public void doLine(Double x0, Double y0, Double x1, Double y1) {
+        // compute screen ratio and origin x,y in 'screen' coords (without ratio yet)
+        double dx = (mMaxX - mMinX);
+        double ox = mMinX - 1;
+        double dy = (mMaxY - mMinY);
+        double oy = mMaxY;
+
+        // if range is incorrect, don't draw anything (and don't divide by 0!)
+        if (dx == 0.0 || dy == 0.0)
+            return;
+
+        // convert orthonormal coordinates to screen coordinates
+        x0 -= ox;
+        y0 = oy - y0;
+        x1 -= ox;
+        y1 = oy - y1;
+
+        // apply screen ratio
+        x0 *= Double.valueOf(mWidth) / dx;
+        y0 *= Double.valueOf(mHeight) / dy;
+        x1 *= Double.valueOf(mWidth) / dx;
+        y1 *= Double.valueOf(mHeight) / dy;
+
+        // TODO : clip line to the screen
+        mBmpCanvas.drawLine(x0.intValue(), y0.intValue(), x1.intValue(), y1.intValue(), mPaint);
+    }
+
     public void doErase(Double r, Double g, Double b) {
         mBitmap.eraseColor(Color.rgb(r.intValue(), g.intValue(), b.intValue()));
     }
