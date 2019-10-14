@@ -590,9 +590,18 @@ public class ScriptEngine {
                             newContext.mLexer = curLexer;
                             mContexts.push(newContext);
                             break;
-
-                        case END_IF:
-                            mContexts.pop();
+                        
+                        case IF:
+                            // inner if block, must stack this code, and execute upon end if calc's stack top value ain't 0
+                            newContext = new Context(Context.State.IF_BLOCK_ANALYSIS);
+                            newContext.mBlockId = curLexer.yytext();
+                            newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
+                            newContext.mLexer = curLexer;
+                            mContexts.push(newContext);
+                            break;
+						
+			            case END_IF:
+                            mContexts.pop(); // closes and executes inner most if/else block
                             curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
                             runOk = runIfBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
                             break;
@@ -612,8 +621,17 @@ public class ScriptEngine {
                             runOk = false; // unexpected EOF
                             break;
 
+                        case IF:
+                            // inner if block, must stack this code, and execute upon end if calc's stack top value ain't 0
+                            newContext = new Context(Context.State.IF_BLOCK_ANALYSIS);
+                            newContext.mBlockId = curLexer.yytext();
+                            newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
+                            newContext.mLexer = curLexer;
+                            mContexts.push(newContext);
+                            break;
+
                         case END_IF:
-                            mContexts.pop(); // if and else_if contexts were stacked
+                            mContexts.pop(); // closes and executes inner most if/else block
                             String elseBlock = mScript.substring(curContext.mBlockStart, computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()));
                             curContext = mContexts.pop();
                             String ifBlock = mScript.substring(curContext.mBlockStart, curContext.mBlockEnd);
@@ -634,8 +652,17 @@ public class ScriptEngine {
                             runOk = false; // unexpected EOF
                             break;
 
+			case WHILE:
+				// inner while block, must stack this code, and execute upon end if calc's stack top value ain't 0
+				newContext = new Context(Context.State.WHILE_BLOCK_ANALYSIS);
+				newContext.mBlockId = curLexer.yytext();
+				newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
+				newContext.mLexer = curLexer;
+				mContexts.push(newContext);
+				break;
+
                         case END_WHILE:
-                            mContexts.pop();
+                            mContexts.pop(); // closes and executes inner most while block
                             curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
                             runOk = runWhileBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
                             break;
