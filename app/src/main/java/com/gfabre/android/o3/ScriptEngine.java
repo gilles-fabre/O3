@@ -50,11 +50,14 @@ public class ScriptEngine {
         }
     }
 
-    private String                      mScript;
-    private CalculatorActivity          mCalculator;
-    private ScriptEngine                mParent = null; // lookup for arrays and vars
+    private String               mScript;
+    private int                  mInnerIf;
+    private int                  mInnerWhile;
+    private int                  mInnerFundef;
+    private CalculatorActivity   mCalculator;
+    private ScriptEngine         mParent = null; // lookup for arrays and vars
 
-    private static DebugView            mDebugView = null;
+    private static DebugView     mDebugView = null;
 
     // variables are 'in-scope' only
     private HashMap<String, Double>     mVariables = new HashMap<>();
@@ -65,6 +68,9 @@ public class ScriptEngine {
 
     ScriptEngine(CalculatorActivity calculator, String script) {
         mScript = script;
+        mInnerIf = 0;
+        mInnerWhile = 0;
+        mInnerFundef = 0;
         mCalculator = calculator;
         if (mDebugView == null)
             mDebugView = new DebugView(mCalculator);
@@ -80,6 +86,9 @@ public class ScriptEngine {
     private ScriptEngine(ScriptEngine parent, CalculatorActivity calculator, String script) {
         mParent = parent;
         mScript = script;
+        mInnerIf = mParent.mInnerIf;
+        mInnerWhile = mParent.mInnerWhile;
+        mInnerFundef = mParent.mInnerFundef;
         mCalculator = calculator;
     }
 
@@ -590,20 +599,19 @@ public class ScriptEngine {
                             newContext.mLexer = curLexer;
                             mContexts.push(newContext);
                             break;
-                        
+
                         case IF:
-                            // inner if block, must stack this code, and execute upon end if calc's stack top value ain't 0
-                            newContext = new Context(Context.State.IF_BLOCK_ANALYSIS);
-                            newContext.mBlockId = curLexer.yytext();
-                            newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
-                            newContext.mLexer = curLexer;
-                            mContexts.push(newContext);
+                            // skip inner if's end_if
+                            ++mInnerIf;
                             break;
-						
-			            case END_IF:
-                            mContexts.pop(); // closes and executes inner most if/else block
-                            curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
-                            runOk = runIfBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+
+                        case END_IF:
+                            if (mInnerIf == 0) {
+                                mContexts.pop(); // closes and executes inner most if/else block
+                                curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
+                                runOk = runIfBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+                            } else
+                                --mInnerIf;
                             break;
                     }
                     break;
@@ -622,20 +630,19 @@ public class ScriptEngine {
                             break;
 
                         case IF:
-                            // inner if block, must stack this code, and execute upon end if calc's stack top value ain't 0
-                            newContext = new Context(Context.State.IF_BLOCK_ANALYSIS);
-                            newContext.mBlockId = curLexer.yytext();
-                            newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
-                            newContext.mLexer = curLexer;
-                            mContexts.push(newContext);
+                            // skip inner if's end_if
+                            ++mInnerIf;
                             break;
 
                         case END_IF:
-                            mContexts.pop(); // closes and executes inner most if/else block
-                            String elseBlock = mScript.substring(curContext.mBlockStart, computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()));
-                            curContext = mContexts.pop();
-                            String ifBlock = mScript.substring(curContext.mBlockStart, curContext.mBlockEnd);
-                            runOk = runIfElseBlock(ifBlock, elseBlock);
+                            if (mInnerIf == 0) {
+                                mContexts.pop(); // closes and executes inner most if/else block
+                                String elseBlock = mScript.substring(curContext.mBlockStart, computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()));
+                                curContext = mContexts.pop();
+                                String ifBlock = mScript.substring(curContext.mBlockStart, curContext.mBlockEnd);
+                                runOk = runIfElseBlock(ifBlock, elseBlock);
+                            } else
+                                --mInnerIf;
                             break;
                     }
                     break;
@@ -652,19 +659,18 @@ public class ScriptEngine {
                             runOk = false; // unexpected EOF
                             break;
 
-			case WHILE:
-				// inner while block, must stack this code, and execute upon end if calc's stack top value ain't 0
-				newContext = new Context(Context.State.WHILE_BLOCK_ANALYSIS);
-				newContext.mBlockId = curLexer.yytext();
-				newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
-				newContext.mLexer = curLexer;
-				mContexts.push(newContext);
-				break;
+                        case WHILE:
+                            // skip inner while's end_while
+                            ++mInnerWhile;
+                            break;
 
                         case END_WHILE:
-                            mContexts.pop(); // closes and executes inner most while block
-                            curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
-                            runOk = runWhileBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+                            if (mInnerWhile == 0) {
+                                mContexts.pop(); // closes and executes inner most while block
+                                curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
+                                runOk = runWhileBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+                            } else
+                                --mInnerWhile;
                             break;
                     }
                     break;
@@ -682,18 +688,17 @@ public class ScriptEngine {
                             break;
 
                         case FUNDEF:
-                            //  all lines until END_FUNDEF are save into the functions hashmap
-                            newContext = new Context(Context.State.FUNDEF_BLOCK_ANALYSIS);
-                            newContext.mBlockId = mContexts.peek().mLexer.identifier;
-                            newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
-                            newContext.mLexer = curLexer;
-                            mContexts.push(newContext);
+                            // skip inner fundef's end_fundef
+                            ++mInnerFundef;
                             break;
 
                         case END_FUNDEF:
-                            mContexts.pop();
-                            curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
-                            saveFunction(curContext.mBlockId, mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+                            if (mInnerFundef == 0) {
+                                mContexts.pop();
+                                curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
+                                saveFunction(curContext.mBlockId, mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+                            } else
+                                --mInnerFundef;
                             break;
                     }
                     break;
@@ -905,8 +910,16 @@ public class ScriptEngine {
                             runOk = mCalculator.doPlot();
                             break;
 
+                        case PLOT3D:
+                            runOk = mCalculator.doPlot3D();
+                            break;
+
                         case LINE:
                             runOk = mCalculator.doLine();
+                            break;
+
+                        case LINE3D:
+                            runOk = mCalculator.doLine3D();
                             break;
 
                         case ERASE:
@@ -915,6 +928,10 @@ public class ScriptEngine {
 
                         case RANGE:
                             runOk = mCalculator.doSetRange();
+                            break;
+
+                        case POV3D:
+                            runOk = mCalculator.doSetPov3D();
                             break;
 
                         case COLOR:

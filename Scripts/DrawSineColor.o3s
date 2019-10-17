@@ -38,7 +38,6 @@ while
 	!x
 	dup
 	0.0
-//debug_break
 	plot
 	0.1
 	+
@@ -57,7 +56,6 @@ while
 	!y
 	0.0
 	swap
-//debug_break
 	plot
 	!y
 	0.1
@@ -82,18 +80,18 @@ color
 
 1.0
 while
-!r
-!x
-25
-*
-+
-!g
-!x
-25.0
-*
--
-!b
-color
+	!r
+	!x
+	25
+	*
+	+
+	!g
+	!x
+	25.0
+	*
+	-
+	!b
+	color
 	drop
 	!x
 	math_call sin
@@ -101,7 +99,6 @@ color
 	swap
 	10.0
 	*
-//debug_break
 	plot
 	!x
 	dup

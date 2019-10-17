@@ -1,0 +1,40 @@
+// while test
+2
+dup
+?a
+while
+	drop
+	2
+	dup
+	?i
+	while
+		drop
+		2
+		dup
+		?j
+		while
+			drop
+			!"shall appear 8 times..
+			!j
+			funcall dec
+			dup
+			?j
+			0
+			>
+		end_while
+		!i
+		funcall dec
+		dup
+		?i
+		0
+		>
+	end_while
+	!a
+	funcall dec
+	dup
+	?a
+	0
+	>
+end_while
+
+!"inner while test done

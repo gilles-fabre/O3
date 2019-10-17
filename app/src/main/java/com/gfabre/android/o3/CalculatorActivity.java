@@ -1356,8 +1356,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tcolor : sets the graphical view drawing color with the r,g,b indexes given by the first three values of the stack.\n", 0, false);
         helpView.appendText("\t\tdot_size : sets the point drawing size to that given by the topmost value of the stack.\n", 0, false);
         helpView.appendText("\t\trange : sets the graphical view virtual orthonormal extent to the xMin, xMax, yMin, yMax given by the first fours values of the stack.\n", 0, false);
+        helpView.appendText("\t\tpov3D : sets the 3D p.oint o.f v.iew at the x, y, z coordinates given by the three topmost values of the stack.\n", 0, false);
         helpView.appendText("\t\tplot : draws a dot with the current color, dot size, at the x, y coordinates given by the two topmost values of the stack.\n", 0, false);
+        helpView.appendText("\t\tplot3D : draws a dot with the current color, dot size, at the x, y, z coordinates given by the three topmost values of the stack.\n", 0, false);
         helpView.appendText("\t\tline : draws a line with the current color, dot size, at the x0, y0, x1, y1 coordinates given by the four topmost values of the stack.\n", 0, false);
+        helpView.appendText("\t\tline3D : draws a line with the current color, dot size, at the x0, y0, z0, x1, y1, z1 coordinates given by the six topmost values of the stack.\n", 0, false);
         helpView.appendText("\t\tmath_call _f : calls the java maths function _f.\n", 0, false);
         helpView.appendText("\t\trun_script _s : runs the script _s.\n", 0, false);
         helpView.appendText("\t\tdebug_break : pops up a modal dialog reading various debugging information. The standard 'step over', 'step in', 'step out' are supported. 'resume' resumes the script execution and ends the debugging session. 'exit' terminates the script..\n", 0, false);
@@ -1416,7 +1419,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        // v1 v2 /
+        // v1 v2 -
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 - v2);
@@ -1429,7 +1432,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        // v1 v2 -
+        // v1 v2 /
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 / v2);
@@ -1478,7 +1481,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        // v1 v2 -
+        // v1 v2 %
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 % v2);
@@ -1491,7 +1494,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        // v1 v2 -
+        // v1 v2 =
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1.doubleValue() == v2.doubleValue() ? 1.0 : 0.0);
@@ -1504,7 +1507,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        // v1 v2 -
+        // v1 v2 !=
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1.doubleValue() != v2.doubleValue() ? 1.0 : 0.0);
@@ -1517,7 +1520,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        // v1 v2 -
+        // v1 v2 <
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 < v2 ? 1.0 : 0.0);
@@ -1530,7 +1533,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        // v1 v2 -
+        // v1 v2 <=
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 <= v2 ? 1.0 : 0.0);
@@ -1543,7 +1546,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        // v1 v2 -
+        // v1 v2 >
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 > v2 ? 1.0 : 0.0);
@@ -1556,7 +1559,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        // v1 v2 -
+        // v1 v2 >=
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 >= v2 ? 1.0 : 0.0);
@@ -1794,6 +1797,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return true;
     }
 
+    public boolean doPlot3D() {
+        if (mStack.size() < 3)
+            return false;
+
+        Double z = mStack.pop();
+        Double y = mStack.pop();
+        Double x = mStack.pop();
+
+        mGraphView.doPlot3D(x, y, z);
+
+        return true;
+    }
+
     public boolean doLine() {
         if (mStack.size() < 4)
             return false;
@@ -1804,6 +1820,22 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double x0 = mStack.pop();
 
         mGraphView.doLine(x0, y0, x1, y1);
+
+        return true;
+    }
+
+    public boolean doLine3D() {
+        if (mStack.size() < 6)
+            return false;
+
+        Double z1 = mStack.pop();
+        Double y1 = mStack.pop();
+        Double x1 = mStack.pop();
+        Double z0 = mStack.pop();
+        Double y0 = mStack.pop();
+        Double x0 = mStack.pop();
+
+        mGraphView.doLine3D(x0, y0, z0, x1, y1, z1);
 
         return true;
     }
@@ -1831,6 +1863,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double xMin = mStack.pop();
 
         mGraphView.setRange(xMin, xMax, yMin, yMax);
+
+        return true;
+    }
+
+     public boolean doSetPov3D() {
+        if (mStack.size() < 3)
+            return false;
+
+        Double z = mStack.pop();
+        Double y = mStack.pop();
+        Double x = mStack.pop();
+
+        mGraphView.doPov3D(x, y, z);
 
         return true;
     }

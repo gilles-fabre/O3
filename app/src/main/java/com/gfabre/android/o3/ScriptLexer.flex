@@ -44,10 +44,13 @@ import java.lang.Double;
                 UPDATE,
                 STACK_SIZE,
                 RANGE,
+                POV3D,
                 COLOR,
                 ERASE,
                 PLOT,
+                PLOT3D,
                 LINE,
+                LINE3D,
                 DOT_SIZE,
                 PUSH_IDENTIFIER,
                 POP_IDENTIFIER,
@@ -180,10 +183,13 @@ Filename = [^\r\n]+
 
 // graphics
 "range"                        { return symbol(sym.RANGE); }
+"pov3D"                        { return symbol(sym.POV3D); }
 "color"                        { return symbol(sym.COLOR); }
 "erase"                        { return symbol(sym.ERASE); }
 "plot"                         { return symbol(sym.PLOT); }
+"plot3D"                       { return symbol(sym.PLOT3D); }
 "line"                         { return symbol(sym.LINE); }
+"line3D"                       { return symbol(sym.LINE3D); }
 "dot_size"                     { return symbol(sym.DOT_SIZE); }
 
 /* literals */

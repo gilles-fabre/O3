@@ -1,5 +1,6 @@
 package com.gfabre.android.o3;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -11,6 +12,7 @@ import android.view.View;
 import android.view.WindowManager;
 
 import com.gfabre.android.utilities.widgets.ScrollImageView;
+import com.gfabre.android.threeD.*;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,6 +26,7 @@ import java.io.IOException;
 public class GraphView extends ScrollImageView {
     static final float            DOT_SIZE = 10f;
     private Double                mMinX, mMaxX, mMinY, mMaxY;
+    private Double                mPovX, mPovY, mPovZ;
     private Canvas				  mBmpCanvas;
     private Bitmap				  mBitmap;
     private Paint                 mPaint;
@@ -53,6 +56,10 @@ public class GraphView extends ScrollImageView {
 
 	    mMaxX = Double.valueOf(mWidth) - 1;
         mMaxY = Double.valueOf(mHeight) - 1;
+
+        mPovX = 0.0;
+        mPovY = 0.0;
+        mPovZ = 0.0;
 
         // create a bitmap of that dimension
         mBitmap = Bitmap.createBitmap(mWidth,
@@ -97,6 +104,42 @@ public class GraphView extends ScrollImageView {
         mBmpCanvas.drawPoint(x.intValue(), y.intValue(), mPaint);
     }
 
+    public void doPlot3D(Double x, Double y, Double z) {
+        // compute screen ratio and origin x,y,z in 'screen' coords (without ratio yet)
+        double dx = (mMaxX - mMinX);
+        double ox = mMinX - 1;
+        double dy = (mMaxY - mMinY);
+        double oy = mMaxY;
+
+        // if range is incorrect, don't draw anything (and don't divide by 0!)
+        if (dx == 0.0 || dy == 0.0)
+            return;
+
+        // convert to projected 3D coordinates
+        Dot dot = new Dot(x, y, z);
+        dot.project(mPovX, mPovY, mPovZ);
+
+        x = dot.getZX();
+        y = dot.getZY();
+
+        // convert orthonormal coordinates to screen coordinates
+        x -= ox;
+        y = oy - y;
+
+        // apply screen ratio
+        x *= Double.valueOf(mWidth) / dx;
+        y *= Double.valueOf(mHeight) / dy;
+
+        // clip x/y to the screen bounds
+        if (x < 0 ||
+            x >= mWidth ||
+            y < 0 ||
+            y >= mHeight)
+            return; // just clip
+
+        mBmpCanvas.drawPoint(x.intValue(), y.intValue(), mPaint);
+    }
+
     public void doLine(Double x0, Double y0, Double x1, Double y1) {
         // compute screen ratio and origin x,y in 'screen' coords (without ratio yet)
         double dx = (mMaxX - mMinX);
@@ -107,6 +150,46 @@ public class GraphView extends ScrollImageView {
         // if range is incorrect, don't draw anything (and don't divide by 0!)
         if (dx == 0.0 || dy == 0.0)
             return;
+
+        // convert orthonormal coordinates to screen coordinates
+        x0 -= ox;
+        y0 = oy - y0;
+        x1 -= ox;
+        y1 = oy - y1;
+
+        // apply screen ratio
+        x0 *= Double.valueOf(mWidth) / dx;
+        y0 *= Double.valueOf(mHeight) / dy;
+        x1 *= Double.valueOf(mWidth) / dx;
+        y1 *= Double.valueOf(mHeight) / dy;
+
+        // TODO : clip line to the screen
+        mBmpCanvas.drawLine(x0.intValue(), y0.intValue(), x1.intValue(), y1.intValue(), mPaint);
+    }
+
+    public void doLine3D(Double x0, Double y0, Double z0, Double x1, Double y1, Double z1) {
+        // compute screen ratio and origin x,y in 'screen' coords (without ratio yet)
+        double dx = (mMaxX - mMinX);
+        double ox = mMinX - 1;
+        double dy = (mMaxY - mMinY);
+        double oy = mMaxY;
+
+        // if range is incorrect, don't draw anything (and don't divide by 0!)
+        if (dx == 0.0 || dy == 0.0)
+            return;
+
+        // convert to projected 3D coordinates
+        Dot dot0 = new Dot(x0, y0, z0);
+        dot0.project(mPovX, mPovY, mPovZ);
+
+        x0 = dot0.getZX();
+        y0 = dot0.getZY();
+
+        Dot dot1 = new Dot(x1, y1, z1);
+        dot1.project(mPovX, mPovY, mPovZ);
+
+        x1 = dot1.getZX();
+        y1 = dot1.getZY();
 
         // convert orthonormal coordinates to screen coordinates
         x0 -= ox;
@@ -160,6 +243,12 @@ public class GraphView extends ScrollImageView {
         }
     }
 
+    public void doPov3D(Double x, Double y, Double z) {
+        mPovX = x;
+        mPovY = y;
+        mPovZ = z;
+    }
+
     public void setColor(Double r, Double g, Double b) {
         mPaint.setARGB(255, r.intValue(), g.intValue(), b.intValue());
     }
@@ -168,6 +257,7 @@ public class GraphView extends ScrollImageView {
         mPaint.setStrokeWidth(s.floatValue());
     }
 
+    @SuppressLint("WrongThread")
     public void saveToPngFile(String filename) throws IOException {
         if (!filename.endsWith(".png") && !filename.endsWith(".PNG"))
             filename += ".png";
