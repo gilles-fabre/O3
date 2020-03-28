@@ -7,6 +7,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -32,7 +35,10 @@ public class GraphView extends ScrollImageView {
     private Paint                 mPaint;
     private int 				  mWidth,
     							  mHeight;
-    
+
+    private static final int      UPDATE_VIEW_MESSAGE = 1;
+    private static final int      PARTIAL_UPDATE_VIEW_MESSAGE = 2;
+
     public GraphView(Context context) {
         super(context);
 
@@ -75,6 +81,26 @@ public class GraphView extends ScrollImageView {
         mPaint.setStrokeCap(Paint.Cap.ROUND);
     }
 
+    /**
+     * All interactions with the UI must be done from the main UI thread, hence
+     * thru a message handler, invoked from the background thread running the scripts.
+     */
+    private Handler mHandler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message inputMessage) {
+            switch (inputMessage.what) {
+                // update the stack
+                case UPDATE_VIEW_MESSAGE:
+                    invalidate();
+                    break;
+
+                case PARTIAL_UPDATE_VIEW_MESSAGE:
+                    invalidate((Rect)inputMessage.obj);
+                    break;
+            }
+        }
+    };
+
     public void doPlot(Double x, Double y) {
         // compute screen ratio and origin x,y in 'screen' coords (without ratio yet)
         double dx = (mMaxX - mMinX);
@@ -101,7 +127,9 @@ public class GraphView extends ScrollImageView {
             y >= mHeight)
         return; // just clip
 
-        mBmpCanvas.drawPoint(x.intValue(), y.intValue(), mPaint);
+        Rect rect = new Rect(x.intValue(), y.intValue(), x.intValue(), y.intValue());
+        mBmpCanvas.drawPoint(rect.left, rect.top, mPaint);
+        mHandler.obtainMessage(UPDATE_VIEW_MESSAGE, rect).sendToTarget();
     }
 
     public void doPlot3D(Double x, Double y, Double z) {
@@ -137,7 +165,9 @@ public class GraphView extends ScrollImageView {
             y >= mHeight)
             return; // just clip
 
-        mBmpCanvas.drawPoint(x.intValue(), y.intValue(), mPaint);
+        Rect rect = new Rect(x.intValue(), y.intValue(), x.intValue(), y.intValue());
+        mBmpCanvas.drawPoint(rect.left, rect.top, mPaint);
+        mHandler.obtainMessage(UPDATE_VIEW_MESSAGE, rect).sendToTarget();
     }
 
     public void doLine(Double x0, Double y0, Double x1, Double y1) {
@@ -164,7 +194,9 @@ public class GraphView extends ScrollImageView {
         y1 *= Double.valueOf(mHeight) / dy;
 
         // TODO : clip line to the screen
-        mBmpCanvas.drawLine(x0.intValue(), y0.intValue(), x1.intValue(), y1.intValue(), mPaint);
+        Rect rect = new Rect(x0.intValue(), y0.intValue(), x1.intValue(), y1.intValue());
+        mBmpCanvas.drawLine(rect.left, rect.top, rect.right, rect.bottom, mPaint);
+        mHandler.obtainMessage(PARTIAL_UPDATE_VIEW_MESSAGE, rect).sendToTarget();
     }
 
     public void doLine3D(Double x0, Double y0, Double z0, Double x1, Double y1, Double z1) {
@@ -204,11 +236,14 @@ public class GraphView extends ScrollImageView {
         y1 *= Double.valueOf(mHeight) / dy;
 
         // TODO : clip line to the screen
-        mBmpCanvas.drawLine(x0.intValue(), y0.intValue(), x1.intValue(), y1.intValue(), mPaint);
+        Rect rect = new Rect(x0.intValue(), y0.intValue(), x1.intValue(), y1.intValue());
+        mBmpCanvas.drawLine(rect.left, rect.top, rect.right, rect.bottom, mPaint);
+        mHandler.obtainMessage(PARTIAL_UPDATE_VIEW_MESSAGE, rect).sendToTarget();
     }
 
     public void doErase(Double r, Double g, Double b) {
         mBitmap.eraseColor(Color.rgb(r.intValue(), g.intValue(), b.intValue()));
+        mHandler.obtainMessage(UPDATE_VIEW_MESSAGE).sendToTarget();
     }
 
     public void setRange(Double xMin, Double xMax, Double yMin, Double yMax) {

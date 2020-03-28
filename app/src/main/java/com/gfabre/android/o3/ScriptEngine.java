@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import java_cup.runtime.Symbol;
 
@@ -517,7 +518,15 @@ public class ScriptEngine {
      *
      * @throws IOException
      */
+    private static final AtomicInteger mCounter = new AtomicInteger(0);
+    static public boolean isRunning() {
+        return mCounter.get() > 0;
+    }
+
     public boolean runScript() throws IOException {
+        // a (new) script is running
+        mCounter.incrementAndGet();
+
         Context newContext;
         Context curContext = mContexts.isEmpty() ? null : mContexts.peek();
 
@@ -766,7 +775,7 @@ public class ScriptEngine {
                             break;
 
                         case UPDATE:
-                            mCalculator.doUpdate();
+                            mCalculator.doUpdateStack();
                             break;
 
                         case DISPLAY_MESSAGE:
@@ -885,7 +894,7 @@ public class ScriptEngine {
                             break;
 
                         case RUN_SCRIPT:
-                            runOk = mCalculator.doRunScriptFile(curLexer.filename);
+                            runOk = mCalculator.doRunInnerScriptFile(curLexer.filename);
                             break;
 
                         case WHILE:
@@ -1026,6 +1035,9 @@ public class ScriptEngine {
         // if debugging, must close the debug dialog on error/exit/end of top most parent script
         if ((!runOk || mContexts.size() == 0) && mDebugView.isShown())
             mDebugView.hide();
+
+        // we're done with (a) script
+        mCounter.decrementAndGet();
 
         return runOk;
     }

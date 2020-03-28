@@ -5,13 +5,16 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.os.Process;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -37,10 +40,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Stack;
+import java.util.concurrent.Semaphore;
 
 /**
  * The main RPN calculator activity. Handles the value input field, the values stack
@@ -69,9 +74,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     private static final int        NUM_FUNC_BUTTONS = 15;
 
+    private static final int        UPDATE_STACK_MESSAGE = 1;
+    private static final int        DISPLAY_MESSAGE = 2;
+    private static final int        PROMPT_MESSAGE = 3;
+
     private static  Method[] mMethods = null;
 
-    private boolean       mInInitScript;                        // no GUI allowed in init scripts...
     private String        mHistory = "";                        // all actions history from beginning of time.
     private Stack<Double> mStack = new Stack<>();               // values stack
     private String        mValue = "";                          // value currently edited
@@ -86,13 +94,69 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private String        mFunctionScripts[] = new String[NUM_FUNC_BUTTONS];
     private String        mFunctionTitles[] = new String[NUM_FUNC_BUTTONS];
 
+
+    /**
+     * This class carries the necessary data to prompt the user with a message
+     * to input data. This is instanciated in the background script engine thread
+     * and passed over to the main UI thread through a message.
+     */
+    class PromptForValue {
+        double      mValue;
+        String      mMessage;
+        Semaphore   mWaitForValue;
+
+        public PromptForValue(String message) {
+            mValue = 0;
+            mMessage = message;
+            mWaitForValue = new Semaphore(0);
+        }
+    }
+
+    /**
+     * All interactions with the UI must be done from the main UI thread, hence
+     * thru a message handler, invoked from the background thread running the scripts.
+     */
+    private Handler       mHandler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message inputMessage) {
+            switch (inputMessage.what) {
+                // update the stack
+                case UPDATE_STACK_MESSAGE:
+                    populateStackView();
+                    mStackView.invalidate();
+                    break;
+
+                case DISPLAY_MESSAGE:
+                    GenericDialog.displayMessage(mActivity, (String)inputMessage.obj);
+                    break;
+
+                case PROMPT_MESSAGE:
+                    PromptForValue prompt = (PromptForValue)inputMessage.obj;
+                    prompt.mValue =
+                    Double.valueOf(GenericDialog.promptMessage(mActivity,
+                                                      InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
+                                                           prompt.mMessage,
+                                                          null));
+
+                    prompt.mWaitForValue.release();
+                    break;
+
+                default:
+                    /*
+                     * Pass along other messages from the UI
+                     */
+                    super.handleMessage(inputMessage);
+            }
+        }
+    };
+
     public boolean hasValueOnStack() {
         return !mStack.isEmpty();
     }
 
     public void pushValueOnStack(Double value) {
         mStack.push(value);
-        populateStackView();
+        doUpdateStack();
     }
 
     public Double popValueFromStack() {
@@ -133,8 +197,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         mStackAdapter.clear();
         int depth = 1;
-        for (int i = mStack.size() - 1; i >= 0; i--) {
-            mStackAdapter.add(depth + ": " + mStack.elementAt(i).toString());
+        Object[] values = mStack.toArray();
+        for (int i = values.length - 1; i >= 0; i--) {
+            mStackAdapter.add(depth + ": " + values[i].toString());
             depth++;
         }
     }
@@ -154,7 +219,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 public boolean onMenuItemClick(MenuItem item) {
                     pushValueOnStack();
                     mHistory += "funcall " + f + "\n";
-                    return ScriptEngine.runFunction((CalculatorActivity)mActivity, f);
+                    ((CalculatorActivity)mActivity).runScript(f);
+                    return true;
                 }
             });
         }
@@ -618,7 +684,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
                 // run the init script
                 try {
-                    new ScriptEngine(this, readFile(mInitScriptName)).runScript();
+                    runScript(readFile(mInitScriptName));
                 } catch (Exception e) {
                     doDisplayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage());
                     mInitScriptName = null;
@@ -730,13 +796,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (mFunctionScripts[_index] != null && !mFunctionScripts[_index].isEmpty()) {
-                    try {
-                        pushValueOnStack();
-                        mHistory += mFunctionScripts[_index] + "\n";
-                        new ScriptEngine((CalculatorActivity) mActivity, mFunctionScripts[_index]).runScript();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    pushValueOnStack();
+                    mHistory += mFunctionScripts[_index] + "\n";
+                    runScript(mFunctionScripts[_index]);
                 }
             }
         });
@@ -981,10 +1043,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     @Override
-    // called after onStart, onCreate, no GUI ready yet
     protected void onResume() {
         super.onResume();
-
         // get the preferences
 
         // init script
@@ -994,13 +1054,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
             // run the init script
             try {
-                mInInitScript = true;
-                new ScriptEngine(this, readFile(mInitScriptName)).runScript();
+                runScript(readFile(mInitScriptName));
             } catch (Exception e) {
-                //doDisplayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage()); can't be run at this stage
-                mInitScriptName = null;
-            } finally {
-                mInInitScript = false;
+                e.printStackTrace();
             }
         }
 
@@ -1163,7 +1219,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             runOk = false;
         } finally {
             // we've eaten the stack anyway...
-            populateStackView();
+            doUpdateStack();
         }
 
         return runOk;
@@ -1409,7 +1465,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 + v2);
-        populateStackView();
+        doUpdateStack();
 
         return true;
 
@@ -1423,7 +1479,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 - v2);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1436,7 +1492,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 / v2);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1449,7 +1505,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 * v2);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1469,7 +1525,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (!mStack.isEmpty()) {
             // or the top of the stack if present
             mStack.push(-mStack.pop());
-            populateStackView();
+            doUpdateStack();
 
             return true;
         }
@@ -1485,7 +1541,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 % v2);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1498,7 +1554,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1.doubleValue() == v2.doubleValue() ? 1.0 : 0.0);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1511,7 +1567,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1.doubleValue() != v2.doubleValue() ? 1.0 : 0.0);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1524,7 +1580,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 < v2 ? 1.0 : 0.0);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1537,7 +1593,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 <= v2 ? 1.0 : 0.0);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1550,7 +1606,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 > v2 ? 1.0 : 0.0);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1563,7 +1619,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 >= v2 ? 1.0 : 0.0);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1589,7 +1645,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         while (!st.isEmpty())
             mStack.push(st.pop());
 
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1599,7 +1655,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         mStack.push(mStack.peek());
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1615,7 +1671,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double val = mStack.peek();
         while (--i >= 0)
             mStack.push(val);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1625,7 +1681,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         mStack.pop();
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1640,7 +1696,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         while (--i >= 0)
             mStack.pop();
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1653,7 +1709,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         mStack.push(v1);
         mStack.push(v2);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
@@ -1670,19 +1726,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.elementAt(i.intValue() - 1);
         mStack.setElementAt(v1, i.intValue() - 1);
         mStack.setElementAt(v2, 0);
-        populateStackView();
+        doUpdateStack();
 
         return true;
     }
 
     public void doClear() {
         mStack = new Stack<>();
-        populateStackView();
+        doUpdateStack();
     }
 
     public void doStackSize() {
         mStack.push(Double.valueOf(mStack.size()));
-        populateStackView();
+        doUpdateStack();
     }
 
     /**
@@ -1691,11 +1747,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param message is the message to be displayed.
      */
     public void doDisplayMessage(String message) {
-        // no GUI allowed in init script
-        if (mInInitScript)
-            return;
-
-        GenericDialog.displayMessage(this, message);
+        mHandler.obtainMessage(DISPLAY_MESSAGE, message).sendToTarget();
+        try {
+            Thread.sleep(250);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -1705,28 +1762,22 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param message is the message to be displayed.
      */
     public void doPromptForValue(String message) {
-        // no GUI allowed in init script
-        if (mInInitScript)
-            return;
-
-        Double value = Double.valueOf(GenericDialog.promptMessage(this,
-                                                         InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
-                                                                   message, null));
-        mStack.push(value);
-        doUpdate();
+        PromptForValue prompt = new PromptForValue(message);
+        mHandler.obtainMessage(PROMPT_MESSAGE, prompt).sendToTarget();
+        try {
+            prompt.mWaitForValue.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        mStack.push(prompt.mValue);
+        doUpdateStack();
     }
 
     /**
      * Updates the Calculator's stack view.
      */
-    public void doUpdate() {
-        // TODO : find why the UI ain't updated here
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mStackView.invalidate();
-            }
-        });
+    public void doUpdateStack() {
+        mHandler.obtainMessage(UPDATE_STACK_MESSAGE).sendToTarget();
     }
 
     /**
@@ -1747,20 +1798,25 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      * @param script is the script text.
      */
-    private void runScript(String script) {
+    public void runScript(String script) {
+        if (ScriptEngine.isRunning()) {
+            doDisplayMessage(mActivity.getString(R.string.script_running));
+            return;
+        }
+
         final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
-                new Runnable(){
-            @Override
-            public void run() {
-                // Moves the current Thread into the background
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                try {
-                    engine.runScript();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }.run();
+                new Thread() {
+                    @Override
+                    public void run() {
+                        // Moves the current Thread into the background
+                        android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_LOWEST);
+                        try {
+                            engine.runScript();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }.start();
     }
 
     /**
@@ -1774,6 +1830,25 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         try {
             String script = readFile(filename);
             runScript(script);
+            found = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return found;
+    }
+
+    /**
+     * Run a script from within another script.
+     *
+     * @param filename is the name of the script file to run
+     * @return true if the file was found, false else.
+     */
+    public boolean doRunInnerScriptFile(String filename) {
+        boolean found = false;
+        try {
+            String script = readFile(filename);
+            new ScriptEngine((CalculatorActivity)mActivity, script).runScript();
             found = true;
         } catch (IOException e) {
             e.printStackTrace();
