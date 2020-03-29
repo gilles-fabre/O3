@@ -1,6 +1,8 @@
 package com.gfabre.android.o3;
 
+import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -9,6 +11,8 @@ import android.widget.ListView;
 import com.gfabre.android.utilities.widgets.GenericDialog;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class provides support for a modal, synchronous, debug dialog which can
@@ -22,7 +26,7 @@ import java.util.ArrayList;
  *  @date December, 2018
  */
 public class DebugView implements GenericDialog.GenericDialogListener {
-    private  static final int DEBUG_DIALOG_ID = R.layout.debug_view;
+    private static final int DEBUG_DIALOG_ID = R.layout.debug_view;
 
     private DebugState          mState;
     private final GenericDialog mDialog;
@@ -33,7 +37,25 @@ public class DebugView implements GenericDialog.GenericDialogListener {
     private int                 mScriptLine;
     private ListView            mScriptList = null;
     private boolean             mIsShown;
-    private boolean             mInInnerLoop;
+
+    private static final AtomicBoolean mInInnerLoop = new AtomicBoolean(false);
+    public static boolean inInnerLoop() {
+        return mInInnerLoop.get();
+    }
+    public static void enterInnerLoop() {
+        mInInnerLoop.set(true);
+        try{
+            Looper.loop();
+        } catch (RuntimeException e) {
+            System.out.println("exiting on" + e.getMessage());
+        }
+    }
+    public static void exitInnerLoop() {
+        if (inInnerLoop()) {
+            mInInnerLoop.set(false);
+            throw new RuntimeException();
+        }
+    }
 
     private ArrayAdapter<String> mStackAdapter = null;
     private ArrayAdapter<String> mScriptAdapter = null;
@@ -51,7 +73,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
         mActivity = activity;
         mDialog = new GenericDialog(DEBUG_DIALOG_ID, null, true, activity.getString(R.string.resume));
         mDialog.setListener(this);
-        mState = DebugState.none;
+        mState = DebugState.step_in;
     }
 
     public void updateDebugInfo(int scriptLine, String script, String variables, String stack) {
@@ -78,11 +100,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
             mScriptList.setSelection(mScriptLine);
             populateListView(mVariablesAdapter, mVariables);
         }
-        try{
-            enterInnerLoop();
-        } catch (RuntimeException e) {
-            System.out.println(mActivity.getString(R.string.exit_show_on) + e.getMessage());
-        }
+        enterInnerLoop();
     }
 
     public void hide() {
@@ -206,24 +224,6 @@ public class DebugView implements GenericDialog.GenericDialogListener {
     public boolean onDialogValidate(int Id, GenericDialog dialog, View view) {
         mState = DebugState.none;
         return true;
-    }
-
-    /**
-     * Enters a GUI thread inner event distribution loop, which makes the dialog 'blocking'
-     */
-    private void enterInnerLoop() {
-        mInInnerLoop = true;
-        Looper.loop();
-    }
-
-    /**
-     * Exits the GUI thread inner event distribution loop, if in there
-     */
-    private void exitInnerLoop() {
-        if (mInInnerLoop) {
-            mDialog.getHandler().sendMessage(mDialog.getHandler().obtainMessage());
-            mInInnerLoop = false;
-        }
     }
 
     /**

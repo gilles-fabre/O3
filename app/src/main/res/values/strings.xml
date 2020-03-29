@@ -19,6 +19,7 @@
     <string name="cancel_init_script">Cancel Init Script</string>
     <string name="edit_script">Edit..</string>
     <string name="run_script">Run..</string>
+    <string name="stop_script">Stop</string>
     <string name="debug_script">Debug..</string>
     <string name="new_script">New..</string>
     <string name="new_script_name">NewScript</string>
@@ -52,4 +53,8 @@
     <string name="init_script_error">Error executing init script : </string>
     <string name="resume">RESUME</string>
     <string name="script_running">A script is running, please retry later.</string>
+    <string name="exiting_script">exiting script..</string>
+    <string name="entering_script">entering script..</string>
+    <string name="preparing_script">preparing script..</string>
+    <string name="empty_string" />
 </resources>

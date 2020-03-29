@@ -25,8 +25,14 @@ import static com.gfabre.android.o3.DebugView.DebugState.step_over;
 public class ScriptEngine {
     // analysis context, this is used to do the syntactical analysis, track the execution
     // and debugging context
-    static private Stack<Context>   mContexts = new Stack<>();
-    static private class Context {
+    private static Stack<Context> mContexts = new Stack<>();
+
+    public static void stop() {
+        if (!mContexts.empty())
+            mContexts.elementAt(0).mStopRequired = true;
+    }
+
+    private static class Context {
         enum State {
             RUNNING,
             FUNDEF_BLOCK_ANALYSIS,
@@ -41,6 +47,7 @@ public class ScriptEngine {
         int                  mBlockEnd;
         ScriptLexer          mLexer;
         DebugView.DebugState mDebugState;
+        volatile boolean     mStopRequired;
 
         Context(State state) {
             mState = state;
@@ -48,6 +55,7 @@ public class ScriptEngine {
             mBlockId = "";
             mLexer = null;
             mDebugState = DebugView.DebugState.none;
+            mStopRequired = false;
         }
     }
 
@@ -58,14 +66,12 @@ public class ScriptEngine {
     private CalculatorActivity   mCalculator;
     private ScriptEngine         mParent = null; // lookup for arrays and vars
 
-    private static DebugView     mDebugView = null;
-
     // variables are 'in-scope' only
     private HashMap<String, Double>     mVariables = new HashMap<>();
     private HashMap<String, ArrayList<Double>>  mArrays = new HashMap<>();
 
     // functions are globally defined
-    static private HashMap<String, String>      mFunctions = new HashMap<>();
+    private static HashMap<String, String>      mFunctions = new HashMap<>();
 
     ScriptEngine(CalculatorActivity calculator, String script) {
         mScript = script;
@@ -73,8 +79,6 @@ public class ScriptEngine {
         mInnerWhile = 0;
         mInnerFundef = 0;
         mCalculator = calculator;
-        if (mDebugView == null)
-            mDebugView = new DebugView(mCalculator);
     }
 
     /**
@@ -270,7 +274,7 @@ public class ScriptEngine {
     /**
      * @return the list of ('defuned') functions.
      */
-    static String[] getFunctions() {
+    public static String[] getFunctions() {
         return mFunctions.keySet().toArray(new String[0]);
     }
 
@@ -410,7 +414,7 @@ public class ScriptEngine {
      *
      * @param offset is the offset of the requested token in the script.
      *
-     * @return the taken string value
+     * @return the token string value
      */
     private String getTokenAtOffset(int offset) {
         if (mParent != null)
@@ -435,9 +439,6 @@ public class ScriptEngine {
         // script..
         // get offset from start of script
         int offset = computeOffsetFromStartOfBlock(curContext.mLexer.yyline(), curContext.mLexer.yycolumn());
-        for (Context c : mContexts)
-            offset += c.mBlockStart;
-        // get line
         int line = computeLineFromStartOfScript(offset);
         String error = mCalculator.getString(R.string.syntax_error) +
                 line + "/" +
@@ -484,8 +485,8 @@ public class ScriptEngine {
                 if (array.get(k) != null)
                     variables.append(pair.getKey()).append("[").append(k).append("] : ").append(array.get(k)).append("\n");
         }
-        mDebugView.updateDebugInfo(mContexts.peek().mLexer.yyline(), mScript, variables.toString(), mCalculator.getStackDebugInfo());
-        mDebugView.show();
+        mCalculator.doUpdateDebugInfo(mContexts.peek().mLexer.yyline(), mScript, variables.toString(), mCalculator.getStackDebugInfo());
+        mCalculator.doShowDebugView();
     }
 
     /**
@@ -505,8 +506,8 @@ public class ScriptEngine {
         mContexts.pop();
 
         // close the debug dialog
-        if (mDebugView.isShown())
-            mDebugView.hide();
+        if (mCalculator.isDebugViewShown())
+            mCalculator.doHideDebugView();
 
         return runOk;
     }
@@ -519,11 +520,14 @@ public class ScriptEngine {
      * @throws IOException
      */
     private static final AtomicInteger mCounter = new AtomicInteger(0);
-    static public boolean isRunning() {
+    public static boolean isRunning() {
         return mCounter.get() > 0;
     }
 
     public boolean runScript() throws IOException {
+        Symbol  symbol;
+        boolean runOk = true, stop = false;
+
         // a (new) script is running
         mCounter.incrementAndGet();
 
@@ -539,6 +543,7 @@ public class ScriptEngine {
         System.out.println("\n\n");
         // ####
         */
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.preparing_script));
 
         // we enter here to either execute a complete script or a script sub-block (if/else/while/funcall)
         newContext = new Context(Context.State.RUNNING);
@@ -562,7 +567,8 @@ public class ScriptEngine {
                 case exit:
                     // do not get any deeper, since last debug dialog
                     // was dismissed with an exit request
-                    return false;
+                    stop = true;
+                    break;
             }
         }
         mContexts.push(newContext);
@@ -576,9 +582,8 @@ public class ScriptEngine {
         System.out.println("\n\n");
         // ####
         */
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.entering_script));
 
-        Symbol symbol;
-        boolean runOk = true, stop = false;
         while (runOk && !stop) {
             curContext = mContexts.peek();
             ScriptLexer curLexer = curContext.mLexer;
@@ -718,6 +723,8 @@ public class ScriptEngine {
                     System.out.println("\n\n\n #### runScript hits : " + ScriptLexer.sym.values()[symbol.sym] + "\n\n\n");
                     // ####
                     */
+                    mCalculator.doDisplayProgressMessage("running script..");
+
                     switch (curContext.mDebugState) {
                         case none:
                             // not in a debug session
@@ -732,7 +739,7 @@ public class ScriptEngine {
                             if (ScriptLexer.sym.values()[symbol.sym] != ScriptLexer.sym.EOF) {
                                 // debug here
                                 displayDebugInfo();
-                                curContext.mDebugState = mDebugView.getDebugState();
+                                curContext.mDebugState = mCalculator.getDebugState();
                                 switch (curContext.mDebugState) {
                                     case exit:
                                         runOk = false;
@@ -740,7 +747,7 @@ public class ScriptEngine {
                                         break;
 
                                     case none:
-                                        mDebugView.hide();
+                                        mCalculator.doHideDebugView();
                                         break;
                                 }
                             }
@@ -967,10 +974,10 @@ public class ScriptEngine {
                             break;
 
                         case DEBUG_BREAK:
-                            if (!mDebugView.isShown()) {
+                            if (!mCalculator.isDebugViewShown()) {
                                 // debug break is ignored if already in debug
                                 displayDebugInfo();
-                                curContext.mDebugState = mDebugView.getDebugState();
+                                curContext.mDebugState = mCalculator.getDebugState();
                                 switch (curContext.mDebugState) {
                                     case exit:
                                         runOk = false;
@@ -978,13 +985,16 @@ public class ScriptEngine {
                                         break;
 
                                     case none:
-                                        mDebugView.hide();
+                                        mCalculator.doHideDebugView();
                                         break;
                                 }
                             }
                             break;
                     }
             }
+
+            // we may need to stop at next iteration if required
+            stop |= mContexts.elementAt(0).mStopRequired;
         }
 
         /*
@@ -996,6 +1006,7 @@ public class ScriptEngine {
         System.out.println("\n\n");
         // ####
         */
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.exiting_script));
 
         // pops the current context
         mContexts.pop();
@@ -1031,10 +1042,11 @@ public class ScriptEngine {
         System.out.println("\n\n");
         // ####
         */
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.empty_string));
 
         // if debugging, must close the debug dialog on error/exit/end of top most parent script
-        if ((!runOk || mContexts.size() == 0) && mDebugView.isShown())
-            mDebugView.hide();
+        if ((!runOk || mContexts.size() == 0) && mCalculator.isDebugViewShown())
+            mCalculator.doHideDebugView();
 
         // we're done with (a) script
         mCounter.decrementAndGet();

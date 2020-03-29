@@ -40,7 +40,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -74,11 +73,20 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     private static final int        NUM_FUNC_BUTTONS = 15;
 
+    private static final int        DISPLAY_PROGRESS_MESSAGE = 0;
     private static final int        UPDATE_STACK_MESSAGE = 1;
     private static final int        DISPLAY_MESSAGE = 2;
     private static final int        PROMPT_MESSAGE = 3;
 
-    private static  Method[] mMethods = null;
+    private static final int        SHOW_DEBUG_VIEW = 4;
+    private static final int        HIDE_DEBUG_VIEW = 5;
+
+    private static final int        SCRIPT_ENGINE_PRIORITY = Process.THREAD_PRIORITY_URGENT_AUDIO;
+    private static final int        UI_YIELD_MILLISEC_DELAY = 3; // needed time for the UI to get scheduled :/
+
+    private static Method[] mMethods = null;
+
+    private static CalculatorActivity mActivity;                // this reference
 
     private String        mHistory = "";                        // all actions history from beginning of time.
     private Stack<Double> mStack = new Stack<>();               // values stack
@@ -86,31 +94,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private EditText      mValueField = null;                   // value edit field
     private ListView      mStackView = null;                    // stack view
     private ArrayAdapter  mStackAdapter = null;                 // stack view adapter
-    private Activity      mActivity;                            // this reference
     private GraphView     mGraphView = null;                    // canvas for graphical functions
-    private Menu          mScriptFunctionsMenu = null;          // dynamic script funtions menu
+    private Menu          mScriptFunctionsMenu = null;          // dynamic script functions menu
     private String        mInitScriptName = null;               // init script, if set, run upon calculator start
 
     private String        mFunctionScripts[] = new String[NUM_FUNC_BUTTONS];
     private String        mFunctionTitles[] = new String[NUM_FUNC_BUTTONS];
-
-
-    /**
-     * This class carries the necessary data to prompt the user with a message
-     * to input data. This is instanciated in the background script engine thread
-     * and passed over to the main UI thread through a message.
-     */
-    class PromptForValue {
-        double      mValue;
-        String      mMessage;
-        Semaphore   mWaitForValue;
-
-        public PromptForValue(String message) {
-            mValue = 0;
-            mMessage = message;
-            mWaitForValue = new Semaphore(0);
-        }
-    }
 
     /**
      * All interactions with the UI must be done from the main UI thread, hence
@@ -120,25 +109,43 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         @Override
         public void handleMessage(Message inputMessage) {
             switch (inputMessage.what) {
-                // update the stack
+                case DISPLAY_PROGRESS_MESSAGE:
+                    // display script progress
+                    mValueField.setText((String)inputMessage.obj);
+                    break;
+
                 case UPDATE_STACK_MESSAGE:
+                    // update the stack
                     populateStackView();
-                    mStackView.invalidate();
+                    //mStackView.invalidate();
                     break;
 
                 case DISPLAY_MESSAGE:
+                    // display a dialog with a message
                     GenericDialog.displayMessage(mActivity, (String)inputMessage.obj);
                     break;
 
                 case PROMPT_MESSAGE:
-                    PromptForValue prompt = (PromptForValue)inputMessage.obj;
+                    // prompt the user to enter a value
+                    PromptForValueMessage prompt = (PromptForValueMessage)inputMessage.obj;
                     prompt.mValue =
-                    Double.valueOf(GenericDialog.promptMessage(mActivity,
-                                                      InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
-                                                           prompt.mMessage,
-                                                          null));
+                            Double.valueOf(GenericDialog.promptMessage(mActivity,
+                                    InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
+                                    prompt.mMessage,
+                                    null));
 
                     prompt.mWaitForValue.release();
+                    break;
+
+                case SHOW_DEBUG_VIEW:
+                    // show the dialog
+                    getDebugView().show();
+                    ((Semaphore)(inputMessage.obj)).release();
+                    break;
+
+                case HIDE_DEBUG_VIEW:
+                    // hide the dialog
+                    getDebugView().hide();
                     break;
 
                 default:
@@ -219,7 +226,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 public boolean onMenuItemClick(MenuItem item) {
                     pushValueOnStack();
                     mHistory += "funcall " + f + "\n";
-                    ((CalculatorActivity)mActivity).runScript(f);
+                    mActivity.runScript(f);
                     return true;
                 }
             });
@@ -275,7 +282,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // saves history in a temporary file
-                new HistoryDialog((CalculatorActivity)mActivity, mHistory);
+                new HistoryDialog(mActivity, mHistory);
                 return true;
             }
         });
@@ -290,7 +297,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 // saves history in a temporary file
                 String historyFile = getFilesDir() + "/" + HISTORY_SCRIPT_NAME;
                 writeFile(historyFile, mHistory);
-                new EditScriptDialog((CalculatorActivity)mActivity, historyFile);
+                new EditScriptDialog(mActivity, historyFile);
                 return true;
             }
         });
@@ -367,7 +374,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 // pops up a dialog to pick a java math func
                 pushValueOnStack();
-                new MathFunctionChooser((CalculatorActivity)mActivity);
+                new MathFunctionChooser(mActivity);
                 return true;
             }
         });
@@ -434,6 +441,18 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         });
 
         /**
+         * Stops the running script (if any)
+         */
+        item = submenu.add(getString(R.string.stop_script));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                ScriptEngine.stop();
+                return true;
+            }
+        });
+
+        /**
          * Pick and edit a script
          */
         item = submenu.add(getString(R.string.edit_script));
@@ -456,7 +475,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
                 File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                new EditScriptDialog((CalculatorActivity) mActivity, dir.getAbsolutePath() + "/" + getString(R.string.new_script_name));
+                new EditScriptDialog(mActivity, dir.getAbsolutePath() + "/" + getString(R.string.new_script_name));
                 return true;
             }
         });
@@ -651,19 +670,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 String script;
                 try {
                     script = readFile(filename);
-                    final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
-                    new Runnable(){
+                    final ScriptEngine engine = new ScriptEngine(mActivity, script);
+                    new Thread() {
                         @Override
                         public void run() {
                             // Moves the current Thread into the background
-                            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                            android.os.Process.setThreadPriority(SCRIPT_ENGINE_PRIORITY);
                             try {
                                 engine.debugScript();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
                         }
-                    }.run();
+                    }.start();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -1749,9 +1768,41 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public void doDisplayMessage(String message) {
         mHandler.obtainMessage(DISPLAY_MESSAGE, message).sendToTarget();
         try {
-            Thread.sleep(250);
+            Thread.sleep(UI_YIELD_MILLISEC_DELAY);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Displays a progress short text in a calculator input field
+     *
+     * @param text is the string to be displayed.
+     */
+    public void doDisplayProgressMessage(String text) {
+        mHandler.obtainMessage(DISPLAY_PROGRESS_MESSAGE, text).sendToTarget();
+        try {
+            Thread.sleep(UI_YIELD_MILLISEC_DELAY);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * This class carries the necessary data to prompt the user with a message
+     * to input data. This is instanciated in the background script engine thread
+     * and passed over to the main UI thread through a message.
+     */
+    class PromptForValueMessage {
+        double      mValue;
+        String      mMessage;
+        Semaphore   mWaitForValue;
+
+        public PromptForValueMessage(String message) {
+            mValue = 0;
+            mMessage = message;
+            mWaitForValue = new Semaphore(0);
         }
     }
 
@@ -1762,7 +1813,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param message is the message to be displayed.
      */
     public void doPromptForValue(String message) {
-        PromptForValue prompt = new PromptForValue(message);
+        PromptForValueMessage prompt = new PromptForValueMessage(message);
         mHandler.obtainMessage(PROMPT_MESSAGE, prompt).sendToTarget();
         try {
             prompt.mWaitForValue.acquire();
@@ -1778,6 +1829,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      */
     public void doUpdateStack() {
         mHandler.obtainMessage(UPDATE_STACK_MESSAGE).sendToTarget();
+        try {
+            Thread.sleep(UI_YIELD_MILLISEC_DELAY);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -1804,12 +1860,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return;
         }
 
-        final ScriptEngine engine = new ScriptEngine((CalculatorActivity)mActivity, script);
+        final ScriptEngine engine = new ScriptEngine(mActivity, script);
                 new Thread() {
                     @Override
                     public void run() {
                         // Moves the current Thread into the background
-                        android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_LOWEST);
+                        android.os.Process.setThreadPriority(SCRIPT_ENGINE_PRIORITY);
                         try {
                             engine.runScript();
                         } catch (IOException e) {
@@ -1848,7 +1904,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         boolean found = false;
         try {
             String script = readFile(filename);
-            new ScriptEngine((CalculatorActivity)mActivity, script).runScript();
+            new ScriptEngine(mActivity, script).runScript();
             found = true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -1978,4 +2034,49 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         return true;
     }
+
+    /* ---------------------------  DEBUG HANDLING -----------------------------------------------*/
+
+    private static DebugView mDebugView = null;
+
+    public DebugView.DebugState getDebugState() {
+        return getDebugView().getDebugState();
+    }
+
+    public void doUpdateDebugInfo(int yyline, String script, String toString, String stackDebugInfo) {
+        getDebugView().updateDebugInfo(yyline, script, toString, stackDebugInfo);
+    }
+
+    public void doShowDebugView() {
+        Semaphore userAction = new Semaphore(0);
+        mHandler.obtainMessage(SHOW_DEBUG_VIEW, userAction).sendToTarget();
+        try {
+            userAction.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void doHideDebugView() {
+        mHandler.obtainMessage(HIDE_DEBUG_VIEW).sendToTarget();
+        while (isDebugViewShown())
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+    }
+
+    public boolean isDebugViewShown() {
+        return getDebugView().isShown();
+    }
+
+    private static DebugView getDebugView() {
+        if (mDebugView == null)
+            mDebugView = new DebugView(mActivity);
+
+        return mDebugView;
+    }
+
+    /* -------------------------------------------------------------------------------------------*/
 }

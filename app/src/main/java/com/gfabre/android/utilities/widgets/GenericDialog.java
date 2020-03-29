@@ -291,9 +291,6 @@ public class GenericDialog extends DialogFragment {
         }
     };
 
-    public Handler getHandler() {
-    	return mHandler;
-	}
     /**
 	 * Utility method to display a modal and SYNCHRONOUS persistent message dialog.
 	 * @param activity is the parent activity
