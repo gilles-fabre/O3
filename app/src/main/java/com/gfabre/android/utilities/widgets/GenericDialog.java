@@ -61,6 +61,19 @@ public class GenericDialog extends DialogFragment {
 		mDialogId = 0;
 		mBundle = new Bundle();
 		setRetainInstance(true); // don't dismiss dialog on rotation.
+
+		try {
+			mHandler = new Handler()
+			{
+				@Override
+				public void handleMessage(Message mesg)
+				{
+					throw new RuntimeException();
+				}
+			};
+		} catch (Exception e) {
+			// nop
+		}
 	}
 
 	public GenericDialog(int layout, String title, boolean singleButton, String ... buttonTexts) {
@@ -78,6 +91,19 @@ public class GenericDialog extends DialogFragment {
 			    mNegativeButtonText = buttonTexts[1];
 		}
 		setRetainInstance(true); // don't dismiss dialog on rotation.
+
+		try {
+			mHandler = new Handler()
+			{
+				@Override
+				public void handleMessage(Message mesg)
+				{
+					throw new RuntimeException();
+				}
+			};
+		} catch (Exception e) {
+			// nop
+		}
 	}
 
 	public GenericDialog(int layout, String title, boolean singleButton) {
@@ -89,6 +115,19 @@ public class GenericDialog extends DialogFragment {
 		mDialogId = layout;
 		mBundle = new Bundle();
 		setRetainInstance(true); // don't dismiss dialog on rotation.
+
+		try {
+			mHandler = new Handler()
+			{
+				@Override
+				public void handleMessage(Message mesg)
+				{
+					throw new RuntimeException();
+				}
+			};
+		} catch (Exception e) {
+			// nop
+		}
 	}
 
 	/**
@@ -282,14 +321,7 @@ public class GenericDialog extends DialogFragment {
      * modal dialogs. The String that receives the user input upon promptMessage.
      */
     private String mUserInput = null;
-    private Handler mHandler = new Handler()
-    {
-        @Override
-        public void handleMessage(Message mesg)
-        {
-            throw new RuntimeException();
-        }
-    };
+    private Handler mHandler = null;
 
     /**
 	 * Utility method to display a modal and SYNCHRONOUS persistent message dialog.

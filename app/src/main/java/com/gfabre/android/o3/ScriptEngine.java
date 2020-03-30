@@ -582,7 +582,7 @@ public class ScriptEngine {
         System.out.println("\n\n");
         // ####
         */
-        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.entering_script));
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.running_script));
 
         while (runOk && !stop) {
             curContext = mContexts.peek();
@@ -723,8 +723,6 @@ public class ScriptEngine {
                     System.out.println("\n\n\n #### runScript hits : " + ScriptLexer.sym.values()[symbol.sym] + "\n\n\n");
                     // ####
                     */
-                    mCalculator.doDisplayProgressMessage("running script..");
-
                     switch (curContext.mDebugState) {
                         case none:
                             // not in a debug session

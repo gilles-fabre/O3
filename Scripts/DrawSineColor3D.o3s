@@ -29,49 +29,30 @@ color
 10.0
 dot_size
 
-!xMin
-?x
-
-1.0
-while
-	drop
-	!x
-	dup
-	0.0
-	plot
-	0.1
-	+
-	dup
-	?x
-	!xMax
-	<
-end_while
-
-!yMin
-?y
-
-1.0
-while
-	drop
-	!y
-	0.0
-	swap
-	plot
-	!y
-	0.1
-	+
-	dup
-	?y
-	!yMax
-	<
-end_while
-
--5
-8
--30
+-10
+10
+-10
 pov3D
 
+// x axis
+-10
 0
+0
+10
+0
+0
+line3D
+
+// y axis
+0
+-10
+0
+0
+10
+0
+line3D
+
+10
 ?z
 1.0
 while
@@ -126,11 +107,10 @@ while
 		<
 	end_while
 	!z
-	funcall inc
+	funcall dec
 	dup
 	?z
-	10
-	<
+	0
+	>
 end_while
 !"done drawing sine
-

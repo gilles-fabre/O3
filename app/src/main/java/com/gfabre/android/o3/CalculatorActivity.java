@@ -117,7 +117,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 case UPDATE_STACK_MESSAGE:
                     // update the stack
                     populateStackView();
-                    //mStackView.invalidate();
                     break;
 
                 case DISPLAY_MESSAGE:
@@ -167,7 +166,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public Double popValueFromStack() {
-        return mStack.isEmpty() ? Double.NaN : mStack.pop();
+        if (mStack.isEmpty())
+            return Double.NaN;
+
+        Double value = mStack.pop();
+        doUpdateStack();
+        return value;
     }
 
     public Double peekValueFromStack() {
@@ -209,6 +213,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             mStackAdapter.add(depth + ": " + values[i].toString());
             depth++;
         }
+        mStackAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -889,6 +894,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         mStackView = findViewById(R.id.stack);
 
         mStackAdapter = new ArrayAdapter<>(this, R.layout.simple_row, new ArrayList<String>());
+        mStackAdapter.setNotifyOnChange(false); // to improve performances
         mStackView.setAdapter(mStackAdapter);
         mStackView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
              @Override
@@ -1004,7 +1010,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 doDiv();
             }
         });
-        button =   findViewById(R.id.button_enter);
+        button = findViewById(R.id.button_enter);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 pushValueOnStack();
@@ -1358,6 +1364,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nScripts/Debug.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be debugged (see .o3s provided examples).\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
         helpView.appendText("\n\nScripts/Run.. menu :\n", 0x008888, true);
         helpView.resetFontSize();
 
@@ -1365,12 +1379,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be run (see .o3s provided examples).\n", 0, false);
         helpView.resetFontSize();
 
+
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
-        helpView.appendText("\n\nScripts/Debug.. menu :\n", 0x008888, true);
+        helpView.appendText("\n\nScripts/Stop :\n", 0x008888, true);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
-        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be debugged (see .o3s provided examples).\n", 0, false);
+        helpView.appendText("\t\tStops the currently running O3 script (if any).\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
