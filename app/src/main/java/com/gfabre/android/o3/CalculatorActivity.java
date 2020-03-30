@@ -1,7 +1,6 @@
 package com.gfabre.android.o3;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -116,7 +115,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
                 case UPDATE_STACK_MESSAGE:
                     // update the stack
-                    populateStackView();
+                    updateStackView();
                     break;
 
                 case DISPLAY_MESSAGE:
@@ -160,21 +159,15 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return !mStack.isEmpty();
     }
 
-    public void pushValueOnStack(Double value) {
+    public void doPushValueOnStack(Double value) {
         mStack.push(value);
-        doUpdateStack();
     }
 
-    public Double popValueFromStack() {
-        if (mStack.isEmpty())
-            return Double.NaN;
-
-        Double value = mStack.pop();
-        doUpdateStack();
-        return value;
+    public Double doPopValueFromStack() {
+        return mStack.isEmpty() ? Double.NaN : mStack.pop();
     }
 
-    public Double peekValueFromStack() {
+    public Double doPeekValueFromStack() {
         return mStack.isEmpty() ? Double.NaN : mStack.peek();
     }
 
@@ -188,8 +181,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         // make sure we're pushing a properly formatted double
         try {
             mHistory += mValue + "\n";
-            Double val = Double.valueOf(mValue);
-            pushValueOnStack(val);
+            mStack.push(Double.valueOf(mValue));
+            updateStackView();
         } catch (Exception e) {
             // there ain't much we can do here
             GenericDialog.displayMessage(mActivity, getString(R.string.invalid_number) + mValue);
@@ -202,7 +195,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     /**
      * Fills the stack view with the values currently held on the computation stack
      */
-    private void populateStackView()  {
+    private void updateStackView()  {
         if (mStackView == null)
             return;
 
@@ -319,7 +312,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 pushValueOnStack();
                 mHistory += "rolln\n";
-                doRollN();
+                rollN(false);
                 return true;
             }
         });
@@ -333,7 +326,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 pushValueOnStack();
                 mHistory += "swapn\n";
-                doSwapN();
+                swapN(false);
                 return true;
             }
         });
@@ -347,7 +340,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 pushValueOnStack();
                 mHistory += "dupn\n";
-                doDupN();
+                dupN(false);
                 return true;
             }
         });
@@ -361,7 +354,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 pushValueOnStack();
                 mHistory += "dropn\n";
-                doDropN();
+                dropN(false);
                 return true;
             }
         });
@@ -595,7 +588,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         }
 
         mValueField.setText(mValue);
-        populateStackView();
+        updateStackView();
 
         // history
         mHistory = savedInstanceState.getString(HISTORY_SCRIPT_KEY);
@@ -983,7 +976,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public void onClick(View v) {
                 pushValueOnStack();
                 mHistory += "+\n";
-                doAdd();
+                add(false);
             }
         });
         button = findViewById(R.id.button_sub);
@@ -991,7 +984,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public void onClick(View v) {
                 pushValueOnStack();
                 mHistory += "-\n";
-                doSub();
+                sub(false);
             }
         });
         button = findViewById(R.id.button_mul);
@@ -999,7 +992,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public void onClick(View v) {
                 pushValueOnStack();
                 mHistory += "*\n";
-                doMul();
+                mul(false);
             }
         });
         button = findViewById(R.id.button_div);
@@ -1007,7 +1000,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public void onClick(View v) {
                 pushValueOnStack();
                 mHistory += "/\n";
-                doDiv();
+                div(false);
             }
         });
         button = findViewById(R.id.button_enter);
@@ -1028,9 +1021,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_neg);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
                 mHistory += "neg\n";
-                doNeg();
+                neg(false);
             }
         });
         button = findViewById(R.id.button_dup);
@@ -1038,7 +1030,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public void onClick(View v) {
                 pushValueOnStack();
                 mHistory += "dup\n";
-                doDup();
+                dup(false);
             }
         });
         button = findViewById(R.id.button_drop);
@@ -1046,7 +1038,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public void onClick(View v) {
                 pushValueOnStack();
                 mHistory += "drop\n";
-                doDrop();
+                drop(false);
             }
         });
         button = findViewById(R.id.button_swap);
@@ -1054,7 +1046,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public void onClick(View v) {
                 pushValueOnStack();
                 mHistory += "swap\n";
-                doSwap();
+                swap(false);
             }
         });
         button = findViewById(R.id.button_clear);
@@ -1062,7 +1054,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public void onClick(View v) {
                 pushValueOnStack();
                 mHistory += "clear\n";
-                doClear();
+                clear(false);
             }
         });
     }
@@ -1215,10 +1207,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean invokeAndHistorizeMathFunction(Method method) {
         pushValueOnStack();
         mHistory += "math_call " + method.getName() + "\n";
-        return invokeMathFunction(method);
+        return invokeMathMethod(method, false);
     }
 
-    private boolean invokeMathFunction(Method method) {
+    private boolean invokeMathMethod(Method method, boolean fromEngine) {
         // invoke the selected function
 
         // first make sure we have the appropriate number of elements
@@ -1244,7 +1236,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             runOk = false;
         } finally {
             // we've eaten the stack anyway...
-            doUpdateStack();
+            if (!fromEngine)
+                updateStackView();
         }
 
         return runOk;
@@ -1478,7 +1471,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         for (int i = 0; i < methods.length; i++) {
             Method m = methods[i];
             if (function.equals(m.getName()))
-                return invokeMathFunction(m);
+                return invokeMathMethod(m, true);
         }
 
         // the function was not found
@@ -1492,6 +1485,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      */
     public boolean doAdd() {
+        return add(true);
+    }
+    private boolean add(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1499,13 +1495,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 + v2);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
-
     }
 
     public boolean doSub() {
+        return sub(true);
+    }
+    private boolean sub(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1513,12 +1512,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 - v2);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doDiv() {
+        return div(true);
+    }
+    private boolean div(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1526,12 +1529,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 / v2);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doMul() {
+        return mul(true);
+    }
+    private boolean mul(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1539,12 +1546,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 * v2);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doNeg() {
+        return neg(true);
+    }
+    private boolean neg(boolean fromEngine) {
         // either neg the edited value if any
         if (!mValue.isEmpty()) {
             if (mValue.startsWith("-"))
@@ -1559,7 +1570,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (!mStack.isEmpty()) {
             // or the top of the stack if present
             mStack.push(-mStack.pop());
-            doUpdateStack();
+            if (!fromEngine)
+                updateStackView();
 
             return true;
         }
@@ -1568,6 +1580,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doModulo() {
+        return modulo(true);
+    }
+    private boolean modulo(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1575,12 +1590,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 % v2);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doEqual() {
+        return equal(true);
+    }
+    private boolean equal(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1588,12 +1607,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1.doubleValue() == v2.doubleValue() ? 1.0 : 0.0);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doNotEqual() {
+        return notEqual(true);
+    }
+    private boolean notEqual(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1601,12 +1624,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1.doubleValue() != v2.doubleValue() ? 1.0 : 0.0);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doLessThan() {
+        return lessThan(true);
+    }
+    private boolean lessThan(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1614,12 +1641,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 < v2 ? 1.0 : 0.0);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doLessThanOrEqual() {
+        return lessThanOrEqual(true);
+    }
+    private boolean lessThanOrEqual(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1627,12 +1658,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 <= v2 ? 1.0 : 0.0);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doGreaterThan() {
+        return greaterThan(true);
+    }
+    private boolean greaterThan(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1640,12 +1675,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 > v2 ? 1.0 : 0.0);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doGreaterThanOrEqual() {
+        return greaterThanOrEqual(true);
+    }
+    private boolean greaterThanOrEqual(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1653,7 +1692,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         Double v1 = mStack.pop();
         mStack.push(v1 >= v2 ? 1.0 : 0.0);
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
@@ -1663,6 +1703,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      */
     public boolean doRollN() {
+        return rollN(true);
+    }
+    private boolean rollN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
@@ -1679,22 +1722,30 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         while (!st.isEmpty())
             mStack.push(st.pop());
 
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doDup() {
+        return dup(true);
+    }
+    private  boolean dup(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
         mStack.push(mStack.peek());
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doDupN() {
+        return dupN(true);
+    }
+    private boolean dupN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
@@ -1705,22 +1756,31 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double val = mStack.peek();
         while (--i >= 0)
             mStack.push(val);
-        doUpdateStack();
+
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doDrop() {
+        return drop(true);
+    }
+    private boolean drop(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
         mStack.pop();
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doDropN() {
+        return dropN(true);
+    }
+    private boolean dropN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
@@ -1730,12 +1790,17 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         while (--i >= 0)
             mStack.pop();
-        doUpdateStack();
+
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doSwap() {
+        return swap(true);
+    }
+    private boolean swap(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -1743,12 +1808,17 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.pop();
         mStack.push(v1);
         mStack.push(v2);
-        doUpdateStack();
+
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
     public boolean doSwapN() {
+        return swapN(true);
+    }
+    private boolean swapN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
@@ -1760,19 +1830,33 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Double v2 = mStack.elementAt(i.intValue() - 1);
         mStack.setElementAt(v1, i.intValue() - 1);
         mStack.setElementAt(v2, 0);
-        doUpdateStack();
+
+        if (!fromEngine)
+            updateStackView();
 
         return true;
     }
 
-    public void doClear() {
+    public boolean doClear() {
+        return clear(true);
+    }
+    private boolean clear(boolean fromEngine) {
         mStack = new Stack<>();
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
+
+        return true;
     }
 
-    public void doStackSize() {
+    public boolean doStackSize() {
+        return stackSize(true);
+    }
+    private boolean stackSize(boolean fromEngine) {
         mStack.push(Double.valueOf(mStack.size()));
-        doUpdateStack();
+        if (!fromEngine)
+            updateStackView();
+
+        return true;
     }
 
     /**
@@ -1836,7 +1920,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             e.printStackTrace();
         }
         mStack.push(prompt.mValue);
-        doUpdateStack();
+        updateStackView();
     }
 
     /**

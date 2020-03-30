@@ -21,37 +21,6 @@ dup
 ?yMax
 range
 
-// draw x,y axis points in white
-255.0
-255.0
-255.0
-color
-10.0
-dot_size
-
--10
-10
--10
-pov3D
-
-// x axis
--10
-0
-0
-10
-0
-0
-line3D
-
-// y axis
-0
--10
-0
-0
-10
-0
-line3D
-
 10
 ?z
 1.0
@@ -110,7 +79,7 @@ while
 	funcall dec
 	dup
 	?z
-	0
+	5
 	>
 end_while
 !"done drawing sine

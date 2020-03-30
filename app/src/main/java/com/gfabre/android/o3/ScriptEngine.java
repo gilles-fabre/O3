@@ -291,7 +291,7 @@ public class ScriptEngine {
 
         // run the function in the context of a new engine
         try {
-            if (mCalculator.peekValueFromStack() != 0.0)
+            if (mCalculator.doPeekValueFromStack() != 0.0)
                 return new ScriptEngine(this, mCalculator, block).runScript();
         } catch (IOException e) {
             // ignored on purpose
@@ -314,7 +314,7 @@ public class ScriptEngine {
 
         // run the if/else block in the context of a new engine
         try {
-            if (mCalculator.peekValueFromStack() == 0.0)
+            if (mCalculator.doPeekValueFromStack() == 0.0)
                 // run the the else block
                 return new ScriptEngine(this, mCalculator, elseBlock).runScript();
             else {
@@ -342,7 +342,7 @@ public class ScriptEngine {
         // run the while block in the context of a new engine
         boolean runOk = true;
         try {
-            while (mCalculator.hasValueOnStack() && mCalculator.peekValueFromStack() != 0.0) {
+            while (mCalculator.hasValueOnStack() && mCalculator.doPeekValueFromStack() != 0.0) {
                 if (!(runOk = new ScriptEngine(this, mCalculator, block).runScript()))
                     break;
             }
@@ -760,23 +760,23 @@ public class ScriptEngine {
 
                     switch (ScriptLexer.sym.values()[symbol.sym]) {
                         case DOUBLE_LITERAL:
-                            mCalculator.pushValueOnStack(curLexer.doubleValue);
+                            mCalculator.doPushValueOnStack(curLexer.doubleValue);
                             break;
 
                         case PUSH_ARRAY_VALUE:
-                            mCalculator.pushValueOnStack(getArrayValue(curLexer.identifier, mCalculator.popValueFromStack().intValue()));
+                            mCalculator.doPushValueOnStack(getArrayValue(curLexer.identifier, mCalculator.doPopValueFromStack().intValue()));
                             break;
 
                         case PUSH_IDENTIFIER:
-                            mCalculator.pushValueOnStack(getVariableValue(curLexer.identifier));
+                            mCalculator.doPushValueOnStack(getVariableValue(curLexer.identifier));
                             break;
 
                         case POP_ARRAY_VALUE:
-                            setArrayValue(curLexer.identifier, mCalculator.popValueFromStack().intValue(), mCalculator.popValueFromStack());
+                            setArrayValue(curLexer.identifier, mCalculator.doPopValueFromStack().intValue(), mCalculator.doPopValueFromStack());
                             break;
 
                         case POP_IDENTIFIER:
-                            setVariableValue(curLexer.identifier, mCalculator.popValueFromStack());
+                            setVariableValue(curLexer.identifier, mCalculator.doPopValueFromStack());
                             break;
 
                         case UPDATE:
@@ -1045,6 +1045,10 @@ public class ScriptEngine {
         // if debugging, must close the debug dialog on error/exit/end of top most parent script
         if ((!runOk || mContexts.size() == 0) && mCalculator.isDebugViewShown())
             mCalculator.doHideDebugView();
+
+        // update the stack when exiting the topmost script
+        if (mContexts.size() == 0)
+            mCalculator.doUpdateStack();
 
         // we're done with (a) script
         mCounter.decrementAndGet();
