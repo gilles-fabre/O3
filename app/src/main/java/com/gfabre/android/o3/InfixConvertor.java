@@ -2,17 +2,22 @@ package com.gfabre.android.o3;
 
 import java.util.Stack;
 
-public class InfixEvaluator {
-    String              mInfix = "";
-    String              mPostfix = "";
-    CalculatorActivity  mCalculator;
+public class InfixConvertor {
+    String mInfix;           // sanitized infixed expression
+    String mPostfix;         // post fixed
+    String mRpnScript;       // rpn script (with \n after each operand/operator)
 
 
-    public InfixEvaluator(CalculatorActivity calculator) {
-        mCalculator = calculator;
+    public InfixConvertor(String infix) {
+        mInfix = infix;
+        Sanitize();
+        mPostfix = "";
+        convertToPostfixed();
+        mRpnScript = "";
+        convertToRpnScript();
     }
 
-    private void insertSpaces() {
+    private void Sanitize() {
         if (mInfix.isEmpty())
             return;
 
@@ -20,21 +25,28 @@ public class InfixEvaluator {
         for (int i = 0; i < mInfix.length(); i++) {
             char c = mInfix.charAt(i);
             if (c == '(' ||
-                c == ')' ||
-                c == '+' ||
-                c == '-' ||
-                c == '/' ||
-                c == '%' ||
-                c == '*' ||
-                c == '^') {
+                    c == ')' ||
+                    c == '+' ||
+                    c == '-' ||
+                    c == '/' ||
+                    c == '%' ||
+                    c == '*' ||
+                    c == '^') {
                 // insert space before and after operator
                 result += " " + c + " ";
-            }
-            else
+            } else
                 result += c;
         }
 
-        mInfix = result;
+        mInfix = "";
+        mInfix += result.charAt(0);
+        for (int i = 1; i < result.length(); i++) {
+            char c = result.charAt(i);
+            if (c != ' ')
+                mInfix += c;
+            else if (result.charAt(i - 1) != ' ')
+                mInfix += c; // only first white space added, other skipped
+        }
     }
 
     private int preced(char c) {
@@ -61,13 +73,14 @@ public class InfixEvaluator {
         return preced(i) > 0;
     }
 
-    private void convert() {
+    private void convertToPostfixed() {
+        if (mInfix.isEmpty())
+            return;
+
         String postfix = "";
         Stack<Character> operator = new Stack<>();
         char popped;
 
-        if (mInfix.isEmpty())
-            return;
 
         for (int i = 0; i < mInfix.length(); i++) {
             char c = mInfix.charAt(i);
@@ -92,26 +105,19 @@ public class InfixEvaluator {
         mPostfix = postfix;
     }
 
-    public boolean evaluate(String infix) {
-        mInfix = infix;
-        if (mInfix.isEmpty())
-            return false;
-
-        insertSpaces();
-        convert();
-
+    private void convertToRpnScript() {
         if (mPostfix.isEmpty())
-            return false;
+            return;
 
         // script engine needs one line per operand/operator
-        mPostfix = mPostfix.replaceAll("(\\s)+", "\n") + "\n";
+        mRpnScript = mPostfix.replaceAll("(\\s)+", "\n") + "\n";
+    }
 
-        // display the postfix expression
-        mCalculator.doDisplayMessage(mCalculator.getString(R.string.evaluating_label) + "\n" + mPostfix);
+    public String getPostfix() {
+        return mPostfix;
+    }
 
-        // and run it
-        mCalculator.runScript(mPostfix);
-
-        return true;
+    public String getRpnScript() {
+        return mRpnScript;
     }
 }

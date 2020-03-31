@@ -451,9 +451,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                                 getString(R.string.input_infixed),
                                 null);
 
-                InfixEvaluator evaluator = new InfixEvaluator(mActivity);
-                evaluator.evaluate(infixed);
+                InfixConvertor ctor = new InfixConvertor(infixed);
 
+                // display the postfix expression
+                doDisplayMessage(getString(R.string.evaluating_label) + "\n" + ctor.getPostfix());
+
+                // and run it
+                runScript(ctor.getRpnScript());
                 return true;
             }
         });
@@ -1392,6 +1396,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be run (see .o3s provided examples).\n", 0, false);
         helpView.resetFontSize();
 
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nScripts/Evaluate Infixed.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tPops up a dialog where one can enter an infixed expression to be evaluated (with proper operator precedence).\n", 0, false);
+        helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
         helpView.appendText("\n\nScripts/Stop :\n", 0x008888, true);
@@ -1451,6 +1462,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tfuncall _f : calls the script function _f.\n", 0, false);
         helpView.appendText("\t\t!\"_message : displays _message in a blocking modal dialog.\n", 0, false);
         helpView.appendText("\t\t?\"_prompt : displays _prompt message in a value prompting & blocking modal dialog. Pushes the value entered by the user on the stack.\n", 0, false);
+        helpView.appendText("\t\tinfixed\"_expression : converts and evaluates the provided infixed _expression. The debugger can step into the evaluation.\n", 0, false);
         helpView.appendText("\t\t?_variable : pops the topmost value off the stack into the given _variable.\n", 0, false);
         helpView.appendText("\t\t!_variable : pushes the given _variable's value onto the stack.\n", 0, false);
         helpView.appendText("\t\t?[]_array : pops the 2nd value off the stack into the given _array at the index given by the 1st value.\n", 0, false);
@@ -2014,7 +2026,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     /**
-     * Run a script from within another script.
+     * Run (synchronously) a script from within another script.
      *
      * @param filename is the name of the script file to run
      * @return true if the file was found, false else.

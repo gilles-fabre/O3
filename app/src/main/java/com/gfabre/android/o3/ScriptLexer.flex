@@ -59,6 +59,7 @@ import java.lang.Double;
                 DOUBLE_LITERAL,
                 DISPLAY_MESSAGE,
                 PROMPT_MESSAGE,
+                INFIXED,
                 SUB,
                 ADD,
                 DIV,
@@ -85,6 +86,7 @@ import java.lang.Double;
   final static int POP_ARRAY_LEN = new String("?[]").length();
   final static int DISPLAY_MESSAGE_LEN = new String("!\"").length();
   final static int PROMPT_MESSAGE_LEN = new String("?\"").length();
+  final static int INFIXED_LEN = new String("infixed\"").length();
 
   String identifier = null;
   String filename = null;
@@ -145,6 +147,9 @@ DisplayMessage = "!"\"{InputCharacter}+
 
 /* prompt a message */
 PromptMessage = "?"\"{InputCharacter}+
+
+/* evaluate infixed expression */
+Infixed = "infixed"\"{InputCharacter}+
 
 /* call */
 FunDef = "fundef"(" "|\t)+{Identifier}
@@ -207,6 +212,7 @@ Filename = [^\r\n]+
 
 {DisplayMessage}               { identifier = yytext().substring(DISPLAY_MESSAGE_LEN).trim(); return symbol(sym.DISPLAY_MESSAGE); }
 {PromptMessage}                { identifier = yytext().substring(PROMPT_MESSAGE_LEN).trim(); return symbol(sym.PROMPT_MESSAGE); }
+{Infixed}                      { identifier = yytext().substring(INFIXED_LEN).trim(); return symbol(sym.INFIXED); }
 
 /* operators */
 "-"{WhiteSpace}                { return symbol(sym.SUB); }

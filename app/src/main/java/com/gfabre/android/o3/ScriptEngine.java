@@ -791,6 +791,11 @@ public class ScriptEngine {
                             mCalculator.doPromptForValue(curLexer.identifier);
                             break;
 
+                        case INFIXED:
+                            InfixConvertor ctor = new InfixConvertor(curLexer.identifier);
+                            runOk = new ScriptEngine(this, mCalculator, ctor.getRpnScript()).runScript();
+                            break;
+
                         case ADD:
                             runOk = mCalculator.doAdd();
                             break;
