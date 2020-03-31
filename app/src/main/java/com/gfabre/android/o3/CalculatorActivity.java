@@ -439,6 +439,26 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         });
 
         /**
+         * Evaluate an infixed expression
+         */
+        item = submenu.add(getString(R.string.evaluate_infixed));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                // prompt the user to enter a value
+                String infixed = GenericDialog.promptMessage(mActivity,
+                                InputType.TYPE_CLASS_TEXT,
+                                getString(R.string.input_infixed),
+                                null);
+
+                InfixEvaluator evaluator = new InfixEvaluator(mActivity);
+                evaluator.evaluate(infixed);
+
+                return true;
+            }
+        });
+
+        /**
          * Stops the running script (if any)
          */
         item = submenu.add(getString(R.string.stop_script));

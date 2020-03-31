@@ -19,6 +19,7 @@
     <string name="cancel_init_script">Cancel Init Script</string>
     <string name="edit_script">Edit..</string>
     <string name="run_script">Run..</string>
+    <string name="evaluate_infixed">Evaluate Infixed..</string>
     <string name="stop_script">Stop</string>
     <string name="debug_script">Debug..</string>
     <string name="new_script">New..</string>
@@ -57,4 +58,6 @@
     <string name="running_script">running script..</string>
     <string name="exiting_script">exiting script..</string>
     <string name="empty_string" />
+    <string name="input_infixed">Input infixed</string>
+    <string name="evaluating_label">evaluating:</string>
 </resources>
