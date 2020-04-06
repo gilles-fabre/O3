@@ -457,6 +457,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 doDisplayMessage(getString(R.string.evaluating_label) + "\n" + ctor.getPostfix());
 
                 // and run it
+                mHistory += "infixed\"" + infixed + "\n";
                 runScript(ctor.getRpnScript());
                 return true;
             }
