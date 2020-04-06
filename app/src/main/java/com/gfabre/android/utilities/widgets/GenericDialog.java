@@ -1,5 +1,6 @@
 package com.gfabre.android.utilities.widgets;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -76,6 +77,7 @@ public class GenericDialog extends DialogFragment {
 		}
 	}
 
+	@SuppressLint("ValidFragment")
 	public GenericDialog(int layout, String title, boolean singleButton, String ... buttonTexts) {
 		super();		
 		mFragment = this;
@@ -106,6 +108,7 @@ public class GenericDialog extends DialogFragment {
 		}
 	}
 
+	@SuppressLint("ValidFragment")
 	public GenericDialog(int layout, String title, boolean singleButton) {
 		super();		
 		mFragment = this;
