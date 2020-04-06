@@ -223,8 +223,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
                     pushValueOnStack();
-                    mHistory += "funcall " + f + "\n";
-                    mActivity.runScript(f);
+                    String funcall = "funcall " + f + "\n";
+                    mHistory += funcall;
+                    mActivity.runScript(funcall);
                     return true;
                 }
             });
@@ -457,7 +458,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 doDisplayMessage(getString(R.string.evaluating_label) + "\n" + ctor.getPostfix());
 
                 // and run it
-                mHistory += "infixed\"" + infixed + "\n";
+                mHistory += "infixed " + infixed + "\n";
                 runScript(ctor.getRpnScript());
                 return true;
             }
@@ -1402,7 +1403,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
-        helpView.appendText("\t\tPops up a dialog where one can enter an infixed expression to be evaluated (with proper operator precedence).\n", 0, false);
+        helpView.appendText("\t\tPops up a dialog where one can enter an infixed expression to be evaluated (with proper operator precedence). Don't prefix the expression with 'infixed '.\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
@@ -1463,7 +1464,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tfuncall _f : calls the script function _f.\n", 0, false);
         helpView.appendText("\t\t!\"_message : displays _message in a blocking modal dialog.\n", 0, false);
         helpView.appendText("\t\t?\"_prompt : displays _prompt message in a value prompting & blocking modal dialog. Pushes the value entered by the user on the stack.\n", 0, false);
-        helpView.appendText("\t\tinfixed\"_expression : converts and evaluates the provided infixed _expression. The debugger can step into the evaluation. variables (!_v) can be used in infixed expressions. prefix function calls with fc@ and math calls with mc@ (eg : infixed\"fc@logN(2,mc@pow(2, 8)))\n", 0, false);
+        helpView.appendText("\t\tinfixed _expression : converts and evaluates the provided infixed _expression. The debugger can step into the evaluation. variables (!_v) can be used in infixed expressions. prefix function calls with fc@ and math calls with mc@ (eg : infixed fc@logN(2,mc@pow(2, 8)))\n", 0, false);
         helpView.appendText("\t\t?_variable : pops the topmost value off the stack into the given _variable.\n", 0, false);
         helpView.appendText("\t\t!_variable : pushes the given _variable's value onto the stack.\n", 0, false);
         helpView.appendText("\t\t?[]_array : pops the 2nd value off the stack into the given _array at the index given by the 1st value.\n", 0, false);

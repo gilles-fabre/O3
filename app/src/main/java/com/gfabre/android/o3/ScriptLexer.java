@@ -444,7 +444,7 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
     "\1\307\61\0\1\310\57\0\1\311\45\0\1\312\57\0"+
     "\1\313\67\0\1\314\15\0\1\315\60\0\1\303\6\0"+
     "\1\316\14\0\2\316\2\0\30\316\1\0\1\304\6\0"+
-    "\1\317\14\0\2\317\2\0\30\317\7\0\1\320\115\0"+
+    "\1\317\14\0\2\317\2\0\30\317\1\0\1\320\123\0"+
     "\1\321\56\0\1\322\60\0\1\323\54\0\1\324\60\0"+
     "\1\325\60\0\1\326\23\0\1\315\6\0\1\327\14\0"+
     "\2\327\2\0\30\327\1\316\7\0\1\316\6\0\2\316"+
@@ -661,11 +661,12 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
   final static int POP_ARRAY_LEN = new String("?[]").length();
   final static int DISPLAY_MESSAGE_LEN = new String("!\"").length();
   final static int PROMPT_MESSAGE_LEN = new String("?\"").length();
-  final static int INFIXED_LEN = new String("infixed\"").length();
+  final static int INFIXED_LEN = new String("infixed").length();
 
   String identifier = null;
   String filename = null;
   Double doubleValue = null;
+  String expression = null;
 
   public int yyline() {
       return yyline;
@@ -1335,7 +1336,7 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
             // fall through
           case 102: break;
           case 49:
-            { identifier = yytext().substring(INFIXED_LEN).trim(); return symbol(sym.INFIXED);
+            { expression = yytext().substring(INFIXED_LEN).trim(); return symbol(sym.INFIXED);
             }
             // fall through
           case 103: break;

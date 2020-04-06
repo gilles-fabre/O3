@@ -86,11 +86,12 @@ import java.lang.Double;
   final static int POP_ARRAY_LEN = new String("?[]").length();
   final static int DISPLAY_MESSAGE_LEN = new String("!\"").length();
   final static int PROMPT_MESSAGE_LEN = new String("?\"").length();
-  final static int INFIXED_LEN = new String("infixed\"").length();
+  final static int INFIXED_LEN = new String("infixed").length();
 
   String identifier = null;
   String filename = null;
   Double doubleValue = null;
+  String expression = null;
 
   public int yyline() {
       return yyline;
@@ -149,7 +150,7 @@ DisplayMessage = "!"\"{InputCharacter}+
 PromptMessage = "?"\"{InputCharacter}+
 
 /* evaluate infixed expression */
-Infixed = "infixed"\"{InputCharacter}+
+Infixed = "infixed"(" "|\t)+{Expression}+
 
 /* call */
 FunDef = "fundef"(" "|\t)+{Identifier}
@@ -157,6 +158,9 @@ FunDel = "fundel"(" "|\t)+{Identifier}
 FunCall = "funcall"(" "|\t)+{Identifier}
 JavaMathCall = "math_call"(" "|\t)+{Identifier}
 RunScript = "run_script"(" "|\t)+{Filename}
+
+/* to evaluate an infixed expression */
+Expression = [^\r\n]+
 
 /* to call a script */
 Filename = [^\r\n]+
@@ -212,7 +216,7 @@ Filename = [^\r\n]+
 
 {DisplayMessage}               { identifier = yytext().substring(DISPLAY_MESSAGE_LEN).trim(); return symbol(sym.DISPLAY_MESSAGE); }
 {PromptMessage}                { identifier = yytext().substring(PROMPT_MESSAGE_LEN).trim(); return symbol(sym.PROMPT_MESSAGE); }
-{Infixed}                      { identifier = yytext().substring(INFIXED_LEN).trim(); return symbol(sym.INFIXED); }
+{Infixed}                      { expression = yytext().substring(INFIXED_LEN).trim(); return symbol(sym.INFIXED); }
 
 /* operators */
 "-"{WhiteSpace}                { return symbol(sym.SUB); }

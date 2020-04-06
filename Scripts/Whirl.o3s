@@ -40,8 +40,8 @@ dot_size
 1
 while
     drop
-	infixed"mc@sin(!t)*!t
-	infixed"mc@cos(!t)*!t
+	infixed mc@sin(!t)*!t
+	infixed mc@cos(!t)*!t
     plot
     !t
     !t_step

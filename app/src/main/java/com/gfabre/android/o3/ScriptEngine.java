@@ -792,7 +792,7 @@ public class ScriptEngine {
                             break;
 
                         case INFIXED:
-                            InfixConvertor ctor = new InfixConvertor(curLexer.identifier);
+                            InfixConvertor ctor = new InfixConvertor(curLexer.expression);
                             runOk = new ScriptEngine(this, mCalculator, ctor.getRpnScript()).runScript();
                             break;
 
