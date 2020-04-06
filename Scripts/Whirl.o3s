@@ -13,24 +13,6 @@
 0.00625
 ?t_step
 
-// factorized parametric equation
-
-// fun(x) = sin(t) * t
-fundef x_func_of_t
-    !t
-    math_call sin
-    !t
-    *
-end_fundef
-
-// fun(y) = cos(t) * t
-fundef y_func_of_t
-    !t
-    math_call cos
-    !t
-    *
-end_fundef
-
 // erase background
 0
 2
@@ -58,8 +40,8 @@ dot_size
 1
 while
     drop
-    funcall x_func_of_t
-    funcall y_func_of_t
+	infixed"mc@sin(!t)*!t
+	infixed"mc@cos(!t)*!t
     plot
     !t
     !t_step
@@ -70,10 +52,6 @@ while
     funcall lte
 end_while
 drop
-
-// get rid of local functions
-fundel x_func_of_t
-fundel y_func_of_t
 
 // display message to the user
 !"done drawing whirl
