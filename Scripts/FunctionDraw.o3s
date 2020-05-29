@@ -1,0 +1,76 @@
+fundef fun_of_x
+     //infixed mc@sin(2*mc@cos(!x))
+     //infixed (1/!x) - (2/4-!x)
+    infixed (3 * mc@pow(!x, 2)) - (4 * !x)
+end_fundef
+
+fundef inc_x
+    !x
+    0.025
+    +
+    ?x
+end_fundef
+
+!"will get it
+?"enter min x
+!"got it
+
+dup
+?min_x
+?x
+
+?"enter max x
+?max_x
+
+?"enter min y
+?min_y
+
+?"enter max y
+?max_y
+
+0
+0
+0
+erase
+255
+255
+255
+color
+
+!min_x
+!max_x
+!min_y
+!max_y
+range
+
+!min_x
+0
+!max_x
+0
+line
+0
+!min_y
+0
+!max_y
+line
+
+255
+0
+0
+color
+
+!x
+while
+    drop
+    funcall fun_of_x
+    !x
+    swap
+    plot
+    funcall inc_x
+    !x
+    !max_x
+    <=
+end_while
+
+fundel fun_of_x
+fundel inc_x

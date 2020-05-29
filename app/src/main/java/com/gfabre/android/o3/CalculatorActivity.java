@@ -119,8 +119,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                     break;
 
                 case DISPLAY_MESSAGE:
-                    // display a dialog with a message
-                    GenericDialog.displayMessage(mActivity, (String)inputMessage.obj);
+                    // presents the user a message to read
+                    DisplayMessage message = (DisplayMessage)inputMessage.obj;
+                    GenericDialog.displayMessage(mActivity,
+                                    message.mMessage);
+
+                    message.mWaitForRead.release();
                     break;
 
                 case PROMPT_MESSAGE:
@@ -1894,14 +1898,29 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     /**
+     * This class carries the necessary data to present the user a message
+     * to read. This is instanciated in the background script engine thread
+     * and passed over to the main UI thread through a message.
+     */
+    class DisplayMessage {
+        String      mMessage;
+        Semaphore   mWaitForRead;
+
+        public DisplayMessage(String message) {
+            mMessage = message;
+            mWaitForRead = new Semaphore(0);
+        }
+    }
+    /**
      * Displays a message in an application modal (blocking) dialog
      *
      * @param message is the message to be displayed.
      */
     public void doDisplayMessage(String message) {
-        mHandler.obtainMessage(DISPLAY_MESSAGE, message).sendToTarget();
+        DisplayMessage displayMessage = new DisplayMessage(message);
+        mHandler.obtainMessage(DISPLAY_MESSAGE, displayMessage).sendToTarget();
         try {
-            Thread.sleep(UI_YIELD_MILLISEC_DELAY);
+            displayMessage.mWaitForRead.acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -1954,7 +1973,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             e.printStackTrace();
         }
         mStack.push(prompt.mValue);
-        updateStackView();
     }
 
     /**
