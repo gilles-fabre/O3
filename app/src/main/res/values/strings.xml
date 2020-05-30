@@ -25,6 +25,7 @@
     <string name="new_script">New..</string>
     <string name="new_script_name">NewScript</string>
     <string name="graph">Graph View</string>
+    <string name="draw_function">Draw Function..</string>
     <string name="show_graph">Show..</string>
     <string name="save_graph">Save..</string>
     <string name="select">Select</string>
@@ -60,4 +61,9 @@
     <string name="empty_string" />
     <string name="input_infixed">Input infixed</string>
     <string name="evaluating_label">evaluating:</string>
+    <string name="infixed_expression">infixed expression (of !x):</string>
+    <string name="min_x">mininum x value:</string>
+    <string name="max_x">maximum x value:</string>
+    <string name="min_y">mininum y value:</string>
+    <string name="max_y">maximum y value:</string>
 </resources>

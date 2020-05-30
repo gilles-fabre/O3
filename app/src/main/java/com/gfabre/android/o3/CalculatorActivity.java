@@ -54,63 +54,62 @@ import java.util.concurrent.Semaphore;
  */
 public class CalculatorActivity extends AppCompatActivity implements GenericDialog.GenericDialogListener {
 
-    private static final int        RUN_SCRIPT_DIALOG_ID = 1;
-    private static final int        DEBUG_SCRIPT_DIALOG_ID = 2;
-    private static final int        EDIT_SCRIPT_DIALOG_ID = 3;
-    private static final int        INIT_SCRIPT_DIALOG_ID = 6;
-    private static final int        HELP_DIALOG_ID = R.layout.log_view;
-    private static final int        GRAPH_DIALOG_ID = R.layout.graph_view;
-    private static final String     SCRIPT_EXTENSIONS = ".o3s .txt";
-    private static final String     INIT_SCRIPT_NAME = "InitScriptFilename";
+    private static final int RUN_SCRIPT_DIALOG_ID = 1;
+    private static final int DEBUG_SCRIPT_DIALOG_ID = 2;
+    private static final int EDIT_SCRIPT_DIALOG_ID = 3;
+    private static final int INIT_SCRIPT_DIALOG_ID = 6;
+    private static final int HELP_DIALOG_ID = R.layout.log_view;
+    private static final int GRAPH_DIALOG_ID = R.layout.graph_view;
+    private static final String SCRIPT_EXTENSIONS = ".o3s .txt";
+    private static final String INIT_SCRIPT_NAME = "InitScriptFilename";
 
-    private static final String     FUNCTION_SCRIPTS_KEY = "FunctionScripts";
-    private static final String     FUNCTION_TITLES_KEY = "FunctionTitles";
-    private static final String     STACK_CONTENT_KEY = "StackContent";
-    private static final String     EDITED_VALUE_KEY = "EditedValue";
-    private static final String     HISTORY_SCRIPT_KEY = "HistoryScript";
-    private static final String     HISTORY_SCRIPT_NAME = "HistoryScript.o3s";
+    private static final String FUNCTION_SCRIPTS_KEY = "FunctionScripts";
+    private static final String FUNCTION_TITLES_KEY = "FunctionTitles";
+    private static final String STACK_CONTENT_KEY = "StackContent";
+    private static final String EDITED_VALUE_KEY = "EditedValue";
+    private static final String HISTORY_SCRIPT_KEY = "HistoryScript";
+    private static final String HISTORY_SCRIPT_NAME = "HistoryScript.o3s";
 
-    private static final int        NUM_FUNC_BUTTONS = 15;
+    private static final int NUM_FUNC_BUTTONS = 15;
 
-    private static final int        DISPLAY_PROGRESS_MESSAGE = 0;
-    private static final int        UPDATE_STACK_MESSAGE = 1;
-    private static final int        DISPLAY_MESSAGE = 2;
-    private static final int        PROMPT_MESSAGE = 3;
+    private static final int DISPLAY_PROGRESS_MESSAGE = 0;
+    private static final int UPDATE_STACK_MESSAGE = 1;
+    private static final int DISPLAY_MESSAGE = 2;
+    private static final int PROMPT_MESSAGE = 3;
+    private static final int SHOW_DEBUG_VIEW_MESSAGE = 4;
+    private static final int HIDE_DEBUG_VIEW_MESSAGE = 5;
 
-    private static final int        SHOW_DEBUG_VIEW = 4;
-    private static final int        HIDE_DEBUG_VIEW = 5;
-
-    private static final int        SCRIPT_ENGINE_PRIORITY = Process.THREAD_PRIORITY_URGENT_AUDIO;
-    private static final int        UI_YIELD_MILLISEC_DELAY = 3; // needed time for the UI to get scheduled :/
+    private static final int SCRIPT_ENGINE_PRIORITY = Process.THREAD_PRIORITY_URGENT_AUDIO;
+    private static final int UI_YIELD_MILLISEC_DELAY = 3; // needed time for the UI to get scheduled :/
 
     private static Method[] mMethods = null;
 
     private static CalculatorActivity mActivity;                // this reference
 
-    private String        mHistory = "";                        // all actions history from beginning of time.
+    private String mHistory = "";                        // all actions history from beginning of time.
     private Stack<Double> mStack = new Stack<>();               // values stack
-    private String        mValue = "";                          // value currently edited
-    private EditText      mValueField = null;                   // value edit field
-    private ListView      mStackView = null;                    // stack view
-    private ArrayAdapter  mStackAdapter = null;                 // stack view adapter
-    private GraphView     mGraphView = null;                    // canvas for graphical functions
-    private Menu          mScriptFunctionsMenu = null;          // dynamic script functions menu
-    private String        mInitScriptName = null;               // init script, if set, run upon calculator start
+    private String mValue = "";                          // value currently edited
+    private EditText mValueField = null;                   // value edit field
+    private ListView mStackView = null;                    // stack view
+    private ArrayAdapter mStackAdapter = null;                 // stack view adapter
+    private GraphView mGraphView = null;                    // canvas for graphical functions
+    private Menu mScriptFunctionsMenu = null;          // dynamic script functions menu
+    private String mInitScriptName = null;               // init script, if set, run upon calculator start
 
-    private String        mFunctionScripts[] = new String[NUM_FUNC_BUTTONS];
-    private String        mFunctionTitles[] = new String[NUM_FUNC_BUTTONS];
+    private String mFunctionScripts[] = new String[NUM_FUNC_BUTTONS];
+    private String mFunctionTitles[] = new String[NUM_FUNC_BUTTONS];
 
     /**
      * All interactions with the UI must be done from the main UI thread, hence
      * thru a message handler, invoked from the background thread running the scripts.
      */
-    private Handler       mHandler = new Handler(Looper.getMainLooper()) {
+    private Handler mHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message inputMessage) {
             switch (inputMessage.what) {
                 case DISPLAY_PROGRESS_MESSAGE:
                     // display script progress
-                    mValueField.setText((String)inputMessage.obj);
+                    mValueField.setText((String) inputMessage.obj);
                     break;
 
                 case UPDATE_STACK_MESSAGE:
@@ -120,16 +119,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
                 case DISPLAY_MESSAGE:
                     // presents the user a message to read
-                    DisplayMessage message = (DisplayMessage)inputMessage.obj;
+                    DisplayMessage message = (DisplayMessage) inputMessage.obj;
                     GenericDialog.displayMessage(mActivity,
-                                    message.mMessage);
+                            message.mMessage);
 
                     message.mWaitForRead.release();
                     break;
 
                 case PROMPT_MESSAGE:
                     // prompt the user to enter a value
-                    PromptForValueMessage prompt = (PromptForValueMessage)inputMessage.obj;
+                    PromptForValueMessage prompt = (PromptForValueMessage) inputMessage.obj;
                     prompt.mValue =
                             Double.valueOf(GenericDialog.promptMessage(mActivity,
                                     InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
@@ -139,13 +138,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                     prompt.mWaitForValue.release();
                     break;
 
-                case SHOW_DEBUG_VIEW:
+                case SHOW_DEBUG_VIEW_MESSAGE:
                     // show the dialog
                     getDebugView().show();
-                    ((Semaphore)(inputMessage.obj)).release();
+                    ((Semaphore) (inputMessage.obj)).release();
                     break;
 
-                case HIDE_DEBUG_VIEW:
+                case HIDE_DEBUG_VIEW_MESSAGE:
                     // hide the dialog
                     getDebugView().hide();
                     break;
@@ -199,7 +198,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     /**
      * Fills the stack view with the values currently held on the computation stack
      */
-    private void updateStackView()  {
+    private void updateStackView() {
         if (mStackView == null)
             return;
 
@@ -241,7 +240,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     /**
      * Creates the application's menu, sets the listeners and eventually handle
      * the associated user actions.
-     *
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -339,7 +337,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         /**
          * DUPLICATEs the top value N times on the stack
          */
-        item = submenu.add(getString(R.string.dupn_stack) );
+        item = submenu.add(getString(R.string.dupn_stack));
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -452,9 +450,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 // prompt the user to enter a value
                 String infixed = GenericDialog.promptMessage(mActivity,
-                                InputType.TYPE_CLASS_TEXT,
-                                getString(R.string.input_infixed),
-                                null);
+                        InputType.TYPE_CLASS_TEXT,
+                        getString(R.string.input_infixed),
+                        null);
 
                 InfixConvertor ctor = new InfixConvertor(infixed);
 
@@ -528,6 +526,23 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         submenu = menu.addSubMenu(R.string.graph);
 
         /**
+         * Draws a user defined function
+         */
+        item = submenu.add(getString(R.string.draw_function));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                String expression = GenericDialog.promptMessage(mActivity,
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
+                        getString(R.string.infixed_expression), null);
+
+                if (!expression.isEmpty())
+                    drawFunction(expression);
+                return true;
+            }
+        });
+
+        /**
          * Displays the graph view
          */
         item = submenu.add(getString(R.string.show_graph));
@@ -548,8 +563,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 String filename = GenericDialog.promptMessage(mActivity,
-                                                              InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
-                                                               getString(R.string.enter_png_filename), null);
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
+                        getString(R.string.enter_png_filename), null);
 
                 File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                 try {
@@ -626,8 +641,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     /**
      * Read a complete file into a String and return it.
-     * @param fileName is the name of the file to be loaded
      *
+     * @param fileName is the name of the file to be loaded
      * @return the content of the given file as a String.
      * @throws IOException
      */
@@ -659,7 +674,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * Write a string as the full content of the given file.
      *
      * @param fileName is the file to be (over)written
-     * @param content is the new file content
+     * @param content  is the new file content
      * @return true if the operation was successful, false else.
      */
     public boolean writeFile(String fileName, String content) {
@@ -681,7 +696,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     @Override
     public void onDialogPositiveClick(int Id, GenericDialog dialog, View view) {
         switch (Id) {
-            case RUN_SCRIPT_DIALOG_ID : {
+            case RUN_SCRIPT_DIALOG_ID: {
                 // run the selected script
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
                 pushValueOnStack();
@@ -690,7 +705,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
             break;
 
-            case DEBUG_SCRIPT_DIALOG_ID : {
+            case DEBUG_SCRIPT_DIALOG_ID: {
                 // run the selected script
                 pushValueOnStack();
                 // no history here, we're debugging
@@ -717,14 +732,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
             break;
 
-            case EDIT_SCRIPT_DIALOG_ID :  {
+            case EDIT_SCRIPT_DIALOG_ID: {
                 // edit the selected script
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
                 new EditScriptDialog(this, filename);
             }
             break;
 
-            case INIT_SCRIPT_DIALOG_ID : {
+            case INIT_SCRIPT_DIALOG_ID: {
                 // saves the init script name in the preferences
                 // it'll be run every time the program starts
                 mInitScriptName = dialog.getBundle().getString(FileChooser.FILENAME);
@@ -748,14 +763,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     @Override
     public void onDialogInitialize(int Id, GenericDialog dialog, View view) {
         switch (Id) {
-            case HELP_DIALOG_ID : {
-                TextView textView = (TextView)dialog.getField(R.id.color_log_view);
+            case HELP_DIALOG_ID: {
+                TextView textView = (TextView) dialog.getField(R.id.color_log_view);
                 if (textView != null)
                     setHelpText(textView);
             }
             break;
 
-            case GRAPH_DIALOG_ID : {
+            case GRAPH_DIALOG_ID: {
                 FrameLayout layout = (FrameLayout) dialog.getField(R.id.graphView);
                 if (layout != null) {
                     if (mGraphView.getParent() != null)
@@ -832,15 +847,15 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * Sets the given function call button's listeners and associated script and name.
      *
      * @param button is the button to be set.
-     * @param index is the button index.
+     * @param index  is the button index.
      */
     private void setFunctionButton(Button button, int index) {
         final int _index = index;
 
         if (mFunctionTitles[_index] != null &&
-            !mFunctionTitles[_index].isEmpty())
+                !mFunctionTitles[_index].isEmpty())
             button.setText(mFunctionTitles[_index]);
-            button.setOnClickListener(new View.OnClickListener() {
+        button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (mFunctionScripts[_index] != null && !mFunctionScripts[_index].isEmpty()) {
                     pushValueOnStack();
@@ -863,9 +878,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
                 // reset by user?
                 if (mFunctionTitles[_index] == null ||
-                    mFunctionTitles[_index].isEmpty() ||
-                    mFunctionScripts[_index] == null ||
-                    mFunctionScripts[_index].isEmpty()) {
+                        mFunctionTitles[_index].isEmpty() ||
+                        mFunctionScripts[_index] == null ||
+                        mFunctionScripts[_index].isEmpty()) {
                     mFunctionScripts[_index] = null;
                     mFunctionTitles[_index] = getString(R.string.undefined_button);
                 }
@@ -920,12 +935,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         mStackAdapter.setNotifyOnChange(false); // to improve performances
         mStackView.setAdapter(mStackAdapter);
         mStackView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-             @Override
-             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 mValue = mStack.get(mStack.size() - position - 1).toString();
                 mValueField.setText(mValue);
-             }
-         });
+            }
+        });
 
         // restore potential stack and edited value
         onRestoreInstanceState(savedInstanceState);
@@ -1153,7 +1168,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @return on object corresponding to the passed  className
      */
     private Object castDoubleToType(String classname, Double value) {
-        switch(classname) {
+        switch (classname) {
             case "Long":
             case "long":
                 return Long.valueOf(value.longValue());
@@ -1181,30 +1196,30 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @return on object corresponding to the passed  className
      */
     private Double castTypeToDouble(String classname, Object value) {
-        switch(classname) {
+        switch (classname) {
             case "Long":
-                return Double.valueOf((Long)value);
+                return Double.valueOf((Long) value);
 
             case "long":
-                return Double.valueOf((long)value);
+                return Double.valueOf((long) value);
 
             case "Integer":
-                return Double.valueOf((Integer)value);
+                return Double.valueOf((Integer) value);
 
             case "int":
-                return Double.valueOf((int)value);
+                return Double.valueOf((int) value);
 
             case "Float":
-                return Double.valueOf((Float)value);
+                return Double.valueOf((Float) value);
 
             case "float":
-                return Double.valueOf((float)value);
+                return Double.valueOf((float) value);
 
             case "Double":
-                return (Double)value;
+                return (Double) value;
 
             case "double":
-                return Double.valueOf((double)value);
+                return Double.valueOf((double) value);
         }
 
         return null;
@@ -1251,7 +1266,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // prepare the parameters.
-        Object []argObjects = new Object[numParams];
+        Object[] argObjects = new Object[numParams];
         while (--numParams >= 0)
             argObjects[numParams] = castDoubleToType(params[numParams].toString(), mStack.pop());
 
@@ -1271,6 +1286,89 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         }
 
         return runOk;
+    }
+
+    /**
+     * Draws a function of x.
+     *
+     * @param expression is a mathematical funtion of x (expressed as an infixed expression).
+     */
+    void drawFunction(String expression) {
+        String script =
+                "fundef fun_of_x\n" +
+                        "    infixed " + expression + "\n" +
+                        "end_fundef\n" +
+                        "\n" +
+                        "fundef inc_x\n" +
+                        "    !x\n" +
+                        "    0.025\n" +
+                        "    +\n" +
+                        "    ?x\n" +
+                        "end_fundef\n" +
+                        "\n" +
+                        "?\"" + getString(R.string.min_x) + "\n" +
+                        "dup\n" +
+                        "?min_x\n" +
+                        "?x\n" +
+                        "\n" +
+                        "?\"" + getString(R.string.max_x) + "\n" +
+                        "?max_x\n" +
+                        "\n" +
+                        "?\"" + getString(R.string.min_y) + "\n" +
+                        "?min_y\n" +
+                        "\n" +
+                        "?\"" + getString(R.string.max_y) + "\n" +
+                        "?max_y\n" +
+                        "\n" +
+                        "0\n" +
+                        "0\n" +
+                        "0\n" +
+                        "erase\n" +
+                        "\n" +
+                        "255\n" +
+                        "255\n" +
+                        "255\n" +
+                        "color\n" +
+                        "\n" +
+                        "!min_x\n" +
+                        "!max_x\n" +
+                        "!min_y\n" +
+                        "!max_y\n" +
+                        "range\n" +
+                        "\n" +
+                        "!min_x\n" +
+                        "0\n" +
+                        "!max_x\n" +
+                        "0\n" +
+                        "line\n" +
+                        "0\n" +
+                        "!min_y\n" +
+                        "0\n" +
+                        "!max_y\n" +
+                        "line\n" +
+                        "\n" +
+                        "255\n" +
+                        "0\n" +
+                        "0\n" +
+                        "color\n" +
+                        "\n" +
+                        "!x\n" +
+                        "while\n" +
+                        "    drop\n" +
+                        "    funcall fun_of_x\n" +
+                        "    !x\n" +
+                        "    swap\n" +
+                        "    plot\n" +
+                        "    funcall inc_x\n" +
+                        "    !x\n" +
+                        "    !max_x\n" +
+                        "    <=\n" +
+                        "end_while\n" +
+                        "\n" +
+                        "fundel fun_of_x\n" +
+                        "fundel inc_x\n";
+
+        runScript(script);
     }
 
     /**
@@ -1407,7 +1505,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
-        helpView.appendText("\t\tPops up a dialog where one can enter an infixed expression to be evaluated (with proper operator precedence). Don't prefix the expression with 'infixed '.\n", 0, false);
+        helpView.appendText("\t\tPops up a dialog where one can enter an infixed expression to be evaluated (with proper operator precedence). Don't prefix the expression with 'infixed'.\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
@@ -1432,6 +1530,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
         helpView.appendText("\t\tPops up a dialog where one can edit a new O3 script, then save it under a new name.\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nGraph View/Draw Function.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tDraws an infixed expression (with proper operator precedence), between the given min x, max x, min y and max y. Don't prefix the expression with 'infixed'.\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
@@ -1492,11 +1598,15 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
     }
 
+    /* ------------------------------------- SCRIPT ACTIONS  ---------------------------------------
+        AONLY methods starting with 'do' can safely be called from the script engine thread, since
+        they interact with the GUI through messages.
+    */
+
     /**
      * Calls the given java math function if existing
      *
      * @param function is the function to be called.
-     *
      * @return true if the function was found, false else.
      */
     public boolean doJavaMathCall(String function) {
@@ -1520,11 +1630,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     /**
      * Public Basic Maths Functions
-     *
      */
     public boolean doAdd() {
         return add(true);
     }
+
     private boolean add(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1542,6 +1652,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doSub() {
         return sub(true);
     }
+
     private boolean sub(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1559,6 +1670,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doDiv() {
         return div(true);
     }
+
     private boolean div(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1576,6 +1688,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doMul() {
         return mul(true);
     }
+
     private boolean mul(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1593,6 +1706,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doNeg() {
         return neg(true);
     }
+
     private boolean neg(boolean fromEngine) {
         // either neg the edited value if any
         if (!mValue.isEmpty()) {
@@ -1620,6 +1734,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doModulo() {
         return modulo(true);
     }
+
     private boolean modulo(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1637,6 +1752,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doEqual() {
         return equal(true);
     }
+
     private boolean equal(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1654,6 +1770,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doNotEqual() {
         return notEqual(true);
     }
+
     private boolean notEqual(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1671,6 +1788,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doLessThan() {
         return lessThan(true);
     }
+
     private boolean lessThan(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1688,6 +1806,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doLessThanOrEqual() {
         return lessThanOrEqual(true);
     }
+
     private boolean lessThanOrEqual(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1705,6 +1824,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doGreaterThan() {
         return greaterThan(true);
     }
+
     private boolean greaterThan(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1722,6 +1842,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doGreaterThanOrEqual() {
         return greaterThanOrEqual(true);
     }
+
     private boolean greaterThanOrEqual(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1738,11 +1859,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     /**
      * Public Basic Stack Functions
-     *
      */
     public boolean doRollN() {
         return rollN(true);
     }
+
     private boolean rollN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
@@ -1769,7 +1890,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doDup() {
         return dup(true);
     }
-    private  boolean dup(boolean fromEngine) {
+
+    private boolean dup(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
@@ -1783,6 +1905,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doDupN() {
         return dupN(true);
     }
+
     private boolean dupN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
@@ -1804,6 +1927,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doDrop() {
         return drop(true);
     }
+
     private boolean drop(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
@@ -1818,6 +1942,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doDropN() {
         return dropN(true);
     }
+
     private boolean dropN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
@@ -1838,6 +1963,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doSwap() {
         return swap(true);
     }
+
     private boolean swap(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
@@ -1856,6 +1982,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doSwapN() {
         return swapN(true);
     }
+
     private boolean swapN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
@@ -1878,6 +2005,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doClear() {
         return clear(true);
     }
+
     private boolean clear(boolean fromEngine) {
         mStack = new Stack<>();
         if (!fromEngine)
@@ -1889,6 +2017,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     public boolean doStackSize() {
         return stackSize(true);
     }
+
     private boolean stackSize(boolean fromEngine) {
         mStack.push(Double.valueOf(mStack.size()));
         if (!fromEngine)
@@ -1903,14 +2032,15 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * and passed over to the main UI thread through a message.
      */
     class DisplayMessage {
-        String      mMessage;
-        Semaphore   mWaitForRead;
+        String mMessage;
+        Semaphore mWaitForRead;
 
         public DisplayMessage(String message) {
             mMessage = message;
             mWaitForRead = new Semaphore(0);
         }
     }
+
     /**
      * Displays a message in an application modal (blocking) dialog
      *
@@ -1940,16 +2070,15 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         }
     }
 
-
     /**
      * This class carries the necessary data to prompt the user with a message
      * to input data. This is instanciated in the background script engine thread
      * and passed over to the main UI thread through a message.
      */
     class PromptForValueMessage {
-        double      mValue;
-        String      mMessage;
-        Semaphore   mWaitForValue;
+        double mValue;
+        String mMessage;
+        Semaphore mWaitForValue;
 
         public PromptForValueMessage(String message) {
             mValue = 0;
@@ -1988,19 +2117,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     /**
-     * Returns a string containing the stack content.
-     *
-     * @return the stack content.
-     */
-    public String getStackDebugInfo() {
-        StringBuilder stack = new StringBuilder();
-        for (int i = mStack.size() - 1; i >= 0; i--)
-            stack.append("stack(").append(i).append(") : ").append(mStack.get(i)).append("\n");
-
-        return stack.toString();
-    }
-
-    /**
      * Runs the given script.
      *
      * @param script is the script text.
@@ -2012,18 +2128,18 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         }
 
         final ScriptEngine engine = new ScriptEngine(mActivity, script);
-                new Thread() {
-                    @Override
-                    public void run() {
-                        // Moves the current Thread into the background
-                        android.os.Process.setThreadPriority(SCRIPT_ENGINE_PRIORITY);
-                        try {
-                            engine.runScript();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }.start();
+        new Thread() {
+            @Override
+            public void run() {
+                // Moves the current Thread into the background
+                android.os.Process.setThreadPriority(SCRIPT_ENGINE_PRIORITY);
+                try {
+                    engine.runScript();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
 
     /**
@@ -2149,7 +2265,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return true;
     }
 
-     public boolean doSetPov3D() {
+    public boolean doSetPov3D() {
         if (mStack.size() < 3)
             return false;
 
@@ -2190,6 +2306,19 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     private static DebugView mDebugView = null;
 
+    /**
+     * Returns a string containing the stack content.
+     *
+     * @return the stack content.
+     */
+    public String getStackDebugInfo() {
+        StringBuilder stack = new StringBuilder();
+        for (int i = mStack.size() - 1; i >= 0; i--)
+            stack.append("stack(").append(i).append(") : ").append(mStack.get(i)).append("\n");
+
+        return stack.toString();
+    }
+
     public DebugView.DebugState getDebugState() {
         return getDebugView().getDebugState();
     }
@@ -2200,7 +2329,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     public void doShowDebugView() {
         Semaphore userAction = new Semaphore(0);
-        mHandler.obtainMessage(SHOW_DEBUG_VIEW, userAction).sendToTarget();
+        mHandler.obtainMessage(SHOW_DEBUG_VIEW_MESSAGE, userAction).sendToTarget();
         try {
             userAction.acquire();
         } catch (InterruptedException e) {
@@ -2209,7 +2338,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public void doHideDebugView() {
-        mHandler.obtainMessage(HIDE_DEBUG_VIEW).sendToTarget();
+        mHandler.obtainMessage(HIDE_DEBUG_VIEW_MESSAGE).sendToTarget();
         while (isDebugViewShown())
             try {
                 Thread.sleep(250);

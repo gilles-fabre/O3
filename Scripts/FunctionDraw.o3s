@@ -11,10 +11,9 @@ fundef inc_x
     ?x
 end_fundef
 
-!"will get it
-?"enter min x
-!"got it
+!"you'll be asked to enter min_x, max_x, min_y, max_y and the function will be drawn
 
+?"enter min x
 dup
 ?min_x
 ?x
@@ -28,14 +27,15 @@ dup
 ?"enter max y
 ?max_y
 
-0
-0
-0
-erase
 255
 255
 255
 color
+
+0
+0
+0
+erase
 
 !min_x
 !max_x
