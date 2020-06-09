@@ -28,8 +28,7 @@ public class ScriptEngine {
     private static Stack<Context> mContexts = new Stack<>();
 
     public static void stop() {
-        if (!mContexts.empty())
-            mContexts.elementAt(0).mStopRequired = true;
+        mStopRequired = true;
     }
 
     private static class Context {
@@ -47,7 +46,6 @@ public class ScriptEngine {
         int                  mBlockEnd;
         ScriptLexer          mLexer;
         DebugView.DebugState mDebugState;
-        volatile boolean     mStopRequired;
 
         Context(State state) {
             mState = state;
@@ -55,7 +53,6 @@ public class ScriptEngine {
             mBlockId = "";
             mLexer = null;
             mDebugState = DebugView.DebugState.none;
-            mStopRequired = false;
         }
     }
 
@@ -65,13 +62,20 @@ public class ScriptEngine {
     private int                  mInnerFundef;
     private CalculatorActivity   mCalculator;
     private ScriptEngine         mParent = null; // lookup for arrays and vars
+    private static volatile boolean mStopRequired;
 
     // variables are 'in-scope' only
     private HashMap<String, Double>     mVariables = new HashMap<>();
     private HashMap<String, ArrayList<Double>>  mArrays = new HashMap<>();
 
     // functions are globally defined
-    private static HashMap<String, String>      mFunctions = new HashMap<>();
+    private static HashMap<String, String>                     mFunctions = new HashMap<>();
+    private static HashMap<String, ArrayList<ScriptOperation>> mCompiledFunctions = new HashMap<>(); // compiled counterparts
+
+    // the compiled code (lambda) expression contract
+    private interface ScriptOperation {
+        boolean execute();
+    }
 
     ScriptEngine(CalculatorActivity calculator, String script) {
         mScript = script;
@@ -79,6 +83,7 @@ public class ScriptEngine {
         mInnerWhile = 0;
         mInnerFundef = 0;
         mCalculator = calculator;
+        mStopRequired = false;
     }
 
     /**
@@ -237,12 +242,39 @@ public class ScriptEngine {
 
         // run the function in the context of a new engine
         try {
-            runOk = new ScriptEngine(this, mCalculator, mFunctions.get(function)).runScript();
+            runOk = new ScriptEngine(this, mCalculator, mFunctions.get(function)).interpretScript();
         } catch (IOException e) {
             // ignored on purpose
         }
 
         return runOk;
+    }
+
+    // compiled counterpat
+    private boolean compileCallFunction(String function, ArrayList<ScriptOperation> lambdaCode) {
+        boolean compileOk = false;
+
+        if (!mFunctions.containsKey(function)) {
+            mCalculator.doDisplayMessage(mCalculator.getString(R.string.undefined_function) + function);
+            return false;
+        }
+
+        // if not done yet, compile the function in the context of a new engine
+        ArrayList<ScriptOperation> functionLambdaCode = new ArrayList<>();
+        try {
+            if (!mCompiledFunctions.containsKey(function) &&
+                (compileOk = new ScriptEngine(this, mCalculator, mFunctions.get(function)).compileScript(functionLambdaCode)))
+                mCompiledFunctions.put(function, functionLambdaCode);
+
+            lambdaCode.add(() -> {
+                executeScript(mCompiledFunctions.get(function));
+                return true;
+            });
+        } catch (IOException e) {
+            // ignored on purpose
+        }
+
+        return compileOk;
     }
 
     /**
@@ -253,17 +285,17 @@ public class ScriptEngine {
      *
      * @return the block execution result or false if the function doesn't exist
      */
-    public static boolean runFunction(CalculatorActivity calculator, String function) {
+    public static boolean interpretFunction(CalculatorActivity calculator, String function) {
         boolean runOk = false;
 
         if (!mFunctions.containsKey(function)) {
             calculator.doDisplayMessage(calculator.getString(R.string.undefined_function) + function);
-            return runOk;
+            return false;
         }
 
         // run the function in the context of a new engine
         try {
-            runOk = new ScriptEngine(calculator, mFunctions.get(function)).runScript();
+            runOk = new ScriptEngine(calculator, mFunctions.get(function)).interpretScript();
         } catch (IOException e) {
             // ignored on purpose
         }
@@ -285,16 +317,40 @@ public class ScriptEngine {
      *
      * @return the block execution result
      */
-    private boolean runIfBlock(String block) {
+    private boolean interpretIfBlock(String block) {
         if (!mCalculator.hasValueOnStack())
             return false;
 
-        // run the function in the context of a new engine
+        // run the if block in the context of a new engine
         try {
             if (mCalculator.doPeekValueFromStack() != 0.0)
-                return new ScriptEngine(this, mCalculator, block).runScript();
+                return new ScriptEngine(this, mCalculator, block).interpretScript();
         } catch (IOException e) {
             // ignored on purpose
+        }
+
+        return true;
+    }
+
+    // compiled counterpart
+    private boolean compileIfBlock(String block, ArrayList<ScriptOperation> lambdaCode) {
+        // compile the if block in the context of a new engine
+        ArrayList<ScriptOperation> ifBlockLambdaCode = new ArrayList<>();
+        try {
+            new ScriptEngine(this, mCalculator, block).compileScript(ifBlockLambdaCode);
+
+            lambdaCode.add(() ->
+            {
+                if (!mCalculator.hasValueOnStack())
+                    return false;
+
+                if (mCalculator.doPeekValueFromStack() != 0.0)
+                    return executeScript(ifBlockLambdaCode);
+
+                return true;
+            });
+        } catch (IOException e) {
+            // ignore on purpose
         }
 
         return true;
@@ -308,7 +364,7 @@ public class ScriptEngine {
      *
      * @return the block execution result
      */
-    private boolean runIfElseBlock(String ifBlock, String elseBlock) {
+    private boolean interpretIfElseBlock(String ifBlock, String elseBlock) {
         if (!mCalculator.hasValueOnStack())
             return false;
 
@@ -316,13 +372,39 @@ public class ScriptEngine {
         try {
             if (mCalculator.doPeekValueFromStack() == 0.0)
                 // run the the else block
-                return new ScriptEngine(this, mCalculator, elseBlock).runScript();
+                return new ScriptEngine(this, mCalculator, elseBlock).interpretScript();
             else {
                 // run the if block
-                return new ScriptEngine(this, mCalculator, ifBlock).runScript();
+                return new ScriptEngine(this, mCalculator, ifBlock).interpretScript();
             }
         } catch (IOException e) {
             // ignored on purpose
+        }
+
+        return true;
+    }
+
+    // compiled counterpart
+    private boolean compileIfElseBlock(String ifBlock, String elseBlock, ArrayList<ScriptOperation> lambdaCode) {
+        // compile the if else blocks in the context of a new engine
+        ArrayList<ScriptOperation> ifBlockLambdaCode = new ArrayList<>();
+        ArrayList<ScriptOperation> elseBlockLambdaCode = new ArrayList<>();
+        try {
+            new ScriptEngine(this, mCalculator, ifBlock).compileScript(ifBlockLambdaCode);
+            new ScriptEngine(this, mCalculator, elseBlock).compileScript(elseBlockLambdaCode);
+
+            lambdaCode.add(() ->
+            {
+                if (!mCalculator.hasValueOnStack())
+                    return false;
+
+                if (mCalculator.doPeekValueFromStack() != 0.0)
+                    return executeScript(ifBlockLambdaCode);
+                else
+                    return executeScript(elseBlockLambdaCode);
+            });
+        } catch (IOException e) {
+            // ignore on purpose
         }
 
         return true;
@@ -335,15 +417,15 @@ public class ScriptEngine {
      *
      * @return the block execution result
      */
-    private boolean runWhileBlock(String block) {
+    private boolean interpretWhileBlock(String block) {
         if (!mCalculator.hasValueOnStack())
             return false;
 
         // run the while block in the context of a new engine
         boolean runOk = true;
         try {
-            while (mCalculator.hasValueOnStack() && mCalculator.doPeekValueFromStack() != 0.0) {
-                if (!(runOk = new ScriptEngine(this, mCalculator, block).runScript()))
+            while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPeekValueFromStack() != 0.0) {
+                if (!(runOk = new ScriptEngine(this, mCalculator, block).interpretScript()))
                     break;
             }
         } catch (IOException e) {
@@ -351,6 +433,29 @@ public class ScriptEngine {
         }
 
         return runOk;
+    }
+
+    // compiled counterpart
+    private boolean compileWhileBlock(String block, ArrayList<ScriptOperation> lambdaCode) {
+        // compile the if block in the context of a new engine
+        ArrayList<ScriptOperation> whileBlockLambdaCode = new ArrayList<>();
+        try {
+            new ScriptEngine(this, mCalculator, block).compileScript(whileBlockLambdaCode);
+
+            lambdaCode.add(() ->
+            {
+                boolean runOk;
+                while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPeekValueFromStack() != 0.0) {
+                    if (!(runOk = executeScript(whileBlockLambdaCode)))
+                        break;
+                }
+                return runOk;
+            });
+        } catch (IOException e) {
+            // ignore on purpose
+        }
+
+        return true;
     }
 
     /**
@@ -364,6 +469,7 @@ public class ScriptEngine {
             return;
 
         mFunctions.remove(function);
+        mCompiledFunctions.remove(function);
     }
 
     /**
@@ -502,7 +608,7 @@ public class ScriptEngine {
         newContext.mDebugState = DebugView.DebugState.step_in;
 
         mContexts.push(newContext);
-        boolean runOk = runScript();
+        boolean runOk = interpretScript();
         mContexts.pop();
 
         // close the debug dialog
@@ -524,7 +630,7 @@ public class ScriptEngine {
         return mCounter.get() > 0;
     }
 
-    public boolean runScript() throws IOException {
+    public boolean interpretScript() throws IOException {
         Symbol  symbol;
         boolean runOk = true, stop = false;
 
@@ -536,7 +642,7 @@ public class ScriptEngine {
 
         /*
         // #### debug contexts
-        System.out.println("\n\n\n >>>> on runScript PREPARE entry: ");
+        System.out.println("\n\n\n >>>> on interpretScript PREPARE entry: ");
         System.out.println("\n\t contexts : " + mContexts.size() + "\n");
         for (Context c : mContexts)
             System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
@@ -575,14 +681,14 @@ public class ScriptEngine {
 
         /*
         // #### debug contexts
-        System.out.println("\n\n\n >>>> on runScript entry: ");
+        System.out.println("\n\n\n >>>> on interpretScript entry: ");
         System.out.println("\n\t contexts : " + mContexts.size() + "\n");
         for (Context c : mContexts)
             System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
         System.out.println("\n\n");
         // ####
         */
-        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.running_script));
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.interpreting_script));
 
         while (runOk && !stop) {
             curContext = mContexts.peek();
@@ -623,7 +729,7 @@ public class ScriptEngine {
                             if (mInnerIf == 0) {
                                 mContexts.pop(); // closes and executes inner most if/else block
                                 curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
-                                runOk = runIfBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+                                runOk = interpretIfBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
                             } else
                                 --mInnerIf;
                             break;
@@ -654,7 +760,7 @@ public class ScriptEngine {
                                 String elseBlock = mScript.substring(curContext.mBlockStart, computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()));
                                 curContext = mContexts.pop();
                                 String ifBlock = mScript.substring(curContext.mBlockStart, curContext.mBlockEnd);
-                                runOk = runIfElseBlock(ifBlock, elseBlock);
+                                runOk = interpretIfElseBlock(ifBlock, elseBlock);
                             } else
                                 --mInnerIf;
                             break;
@@ -682,7 +788,7 @@ public class ScriptEngine {
                             if (mInnerWhile == 0) {
                                 mContexts.pop(); // closes and executes inner most while block
                                 curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
-                                runOk = runWhileBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+                                runOk = interpretWhileBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
                             } else
                                 --mInnerWhile;
                             break;
@@ -720,7 +826,7 @@ public class ScriptEngine {
                 case RUNNING:
                     /*
                     // #### debug contexts
-                    System.out.println("\n\n\n #### runScript hits : " + ScriptLexer.sym.values()[symbol.sym] + "\n\n\n");
+                    System.out.println("\n\n\n #### interpretScript hits : " + ScriptLexer.sym.values()[symbol.sym] + "\n\n\n");
                     // ####
                     */
                     switch (curContext.mDebugState) {
@@ -793,7 +899,7 @@ public class ScriptEngine {
 
                         case INFIXED:
                             InfixConvertor ctor = new InfixConvertor(curLexer.expression);
-                            runOk = new ScriptEngine(this, mCalculator, ctor.getRpnScript()).runScript();
+                            runOk = new ScriptEngine(this, mCalculator, ctor.getRpnScript()).interpretScript();
                             break;
 
                         case ADD:
@@ -904,7 +1010,7 @@ public class ScriptEngine {
                             break;
 
                         case RUN_SCRIPT:
-                            runOk = mCalculator.doRunInnerScriptFile(curLexer.filename);
+                            runOk = mCalculator.doInterpretInnerScriptFile(curLexer.filename);
                             break;
 
                         case WHILE:
@@ -997,12 +1103,12 @@ public class ScriptEngine {
             }
 
             // we may need to stop at next iteration if required
-            stop |= mContexts.elementAt(0).mStopRequired;
+            stop |= mStopRequired;
         }
 
         /*
         // #### debug contexts
-        System.out.println("\n\n\n <<<< on runScript PREPARE exit: ");
+        System.out.println("\n\n\n <<<< on interpretScript PREPARE exit: ");
         System.out.println("\n\t contexts : " + mContexts.size() + "\n");
         for (Context c : mContexts)
             System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
@@ -1038,7 +1144,7 @@ public class ScriptEngine {
 
         /*
         // #### debug contexts
-        System.out.println("\n\n\n <<<< on runScript exit: ");
+        System.out.println("\n\n\n <<<< on interpretScript exit: ");
         System.out.println("\n\t contexts : " + mContexts.size() + "\n");
         for (Context c : mContexts)
             System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
@@ -1059,5 +1165,523 @@ public class ScriptEngine {
         mCounter.decrementAndGet();
 
         return runOk;
+    }
+
+    // compiled counterpart
+    public boolean executeScript() throws IOException {
+        // a (new) script is running
+        mCounter.incrementAndGet();
+
+        boolean result;
+
+        ArrayList<ScriptOperation> lambdaCode = new ArrayList<>();
+        if ((result = compileScript(lambdaCode)))
+            result = executeScript(lambdaCode);
+
+        // we're done with (a) script
+        mCounter.decrementAndGet();
+
+        return result;
+    }
+    private boolean compileScript(ArrayList<ScriptOperation> lambdaCode) throws IOException {
+        Symbol  symbol;
+        boolean compileOk = true;
+        boolean stop = false;
+
+        Context newContext;
+        Context curContext = mContexts.isEmpty() ? null : mContexts.peek();
+
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.preparing_script));
+
+        // we enter here to compile a complete script or a script sub-block (if/else/while/funcall)
+        newContext = new Context(Context.State.RUNNING);
+        newContext.mLexer = new ScriptLexer(new StringReader(mScript));
+        mContexts.push(newContext);
+
+        /*
+        // #### debug contexts
+        System.out.println("\n\n\n >>>> on compileScript entry: ");
+        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
+        for (Context c : mContexts)
+            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
+        System.out.println("\n\n");
+        // ####
+        */
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.compiling_script));
+
+        while (compileOk && !stop) {
+            curContext = mContexts.peek();
+            ScriptLexer curLexer = curContext.mLexer;
+            symbol = curLexer.next_token();
+            switch (curContext.mState) {
+                case IF_BLOCK_ANALYSIS:
+                    // anything except ELSE_BLOCK_ANALYSIS and END will be saved
+                    // anything except END will be saved
+                    switch (ScriptLexer.sym.values()[symbol.sym]) {
+                        case SYNTAX_ERROR:
+                            syntaxError(curContext);
+                            // fall into
+
+                        case EOF:
+                            mContexts.pop();
+                            compileOk = false; // unexpected EOF
+                            break;
+
+                        case ELSE:
+                            // the if block stops here :)
+                            curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
+
+                            // must stack this code, and execute upon end if calc's stack top value is 0
+                            newContext = new Context(Context.State.ELSE_BLOCK_ANALYSIS);
+                            newContext.mBlockId = curLexer.yytext();
+                            newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
+                            newContext.mLexer = curLexer;
+                            mContexts.push(newContext);
+                            break;
+
+                        case IF:
+                            // skip inner if's end_if
+                            ++mInnerIf;
+                            break;
+
+                        case END_IF:
+                            if (mInnerIf == 0) {
+                                mContexts.pop(); // closes and executes inner most if/else block
+                                curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
+                                compileOk = compileIfBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd), lambdaCode);
+                            } else
+                                --mInnerIf;
+                            break;
+                    }
+                    break;
+
+                case ELSE_BLOCK_ANALYSIS:
+                    // anything except END will be saved
+                    switch (ScriptLexer.sym.values()[symbol.sym]) {
+                        case SYNTAX_ERROR:
+                            syntaxError(curContext);
+                            // fall into
+
+                        case EOF:
+                            mContexts.pop(); // if and else_if contexts were stacked
+                            mContexts.pop();
+                            compileOk = false; // unexpected EOF
+                            break;
+
+                        case IF:
+                            // skip inner if's end_if
+                            ++mInnerIf;
+                            break;
+
+                        case END_IF:
+                            if (mInnerIf == 0) {
+                                mContexts.pop(); // closes and executes inner most if/else block
+                                String elseBlock = mScript.substring(curContext.mBlockStart, computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()));
+                                curContext = mContexts.pop();
+                                String ifBlock = mScript.substring(curContext.mBlockStart, curContext.mBlockEnd);
+                                compileOk = compileIfElseBlock(ifBlock, elseBlock, lambdaCode);
+                            } else
+                                --mInnerIf;
+                            break;
+                    }
+                    break;
+
+                case WHILE_BLOCK_ANALYSIS:
+                    // anything except END will be saved
+                    switch (ScriptLexer.sym.values()[symbol.sym]) {
+                        case SYNTAX_ERROR:
+                            syntaxError(curContext);
+                            // fall into
+
+                        case EOF:
+                            mContexts.pop();
+                            compileOk = false; // unexpected EOF
+                            break;
+
+                        case WHILE:
+                            // skip inner while's end_while
+                            ++mInnerWhile;
+                            break;
+
+                        case END_WHILE:
+                            if (mInnerWhile == 0) {
+                                mContexts.pop(); // closes and executes inner most while block
+                                curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
+                                compileOk = compileWhileBlock(mScript.substring(curContext.mBlockStart, curContext.mBlockEnd), lambdaCode);
+                            } else
+                                --mInnerWhile;
+                            break;
+                    }
+                    break;
+
+                case FUNDEF_BLOCK_ANALYSIS:
+                    // anything except FUNDEF and END_FUNDEF will be saved
+                    switch (ScriptLexer.sym.values()[symbol.sym]) {
+                        case SYNTAX_ERROR:
+                            syntaxError(curContext);
+                            // fall into
+
+                        case EOF:
+                            mContexts.pop();
+                            compileOk = false; // unexpected EOF
+                            break;
+
+                        case FUNDEF:
+                            // skip inner fundef's end_fundef
+                            ++mInnerFundef;
+                            break;
+
+                        case END_FUNDEF:
+                            if (mInnerFundef == 0) {
+                                mContexts.pop();
+                                curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
+                                saveFunction(curContext.mBlockId, mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+                            } else
+                                --mInnerFundef;
+                            break;
+                    }
+                    break;
+
+                case RUNNING:
+                    /*
+                    // #### debug contexts
+                    System.out.println("\n\n\n #### compileScript hits : " + ScriptLexer.sym.values()[symbol.sym] + "\n\n\n");
+                    // ####
+                    */
+                    switch (ScriptLexer.sym.values()[symbol.sym]) {
+                        case DOUBLE_LITERAL: {
+                            Double value = curLexer.doubleValue;
+                            lambdaCode.add(() -> {
+                                mCalculator.doPushValueOnStack(value);
+                                return true;
+                            });
+                        }
+                        break;
+
+                        case PUSH_ARRAY_VALUE: {
+                                String id = curLexer.identifier;
+                                lambdaCode.add(() -> {
+                                    mCalculator.doPushValueOnStack(getArrayValue(id, mCalculator.doPopValueFromStack().intValue()));
+                                    return true;
+                                });
+                            }
+                            break;
+
+                        case PUSH_IDENTIFIER: {
+                            String id = curLexer.identifier;
+                            lambdaCode.add(() -> {
+                                mCalculator.doPushValueOnStack(getVariableValue(id));
+                                return true;
+                            });
+                        }
+                        break;
+
+                        case POP_ARRAY_VALUE: {
+                                String id = curLexer.identifier;
+                                lambdaCode.add(() -> {
+                                    setArrayValue(id, mCalculator.doPopValueFromStack().intValue(), mCalculator.doPopValueFromStack());
+                                    return true;
+                                });
+                            }
+                            break;
+
+                        case POP_IDENTIFIER: {
+                            String id = curLexer.identifier;
+                            lambdaCode.add(() -> {
+                                setVariableValue(id, mCalculator.doPopValueFromStack());
+                                return true;
+                            });
+                        }
+                        break;
+
+                        case UPDATE:
+                            lambdaCode.add(() -> {
+                                mCalculator.doUpdateStack();
+                                return true;
+                            });
+                            break;
+
+                        case DISPLAY_MESSAGE: {
+                                String id = curLexer.identifier;
+                                lambdaCode.add(() -> {
+                                    mCalculator.doDisplayMessage(id);
+                                    return true;
+                                });
+                            }
+                            break;
+
+                        case PROMPT_MESSAGE: {
+                                String id = curLexer.identifier;
+                                lambdaCode.add(() -> {
+                                    mCalculator.doPromptForValue(id);
+                                    return true;
+                                });
+                            }
+                            break;
+
+                        case INFIXED:
+                            InfixConvertor ctor = new InfixConvertor(curLexer.expression);
+                            compileOk = new ScriptEngine(this, mCalculator, ctor.getRpnScript()).compileScript(lambdaCode);
+                            break;
+
+                        case ADD:
+                            lambdaCode.add(() -> mCalculator.doAdd());
+                            break;
+
+                        case SUB:
+                            lambdaCode.add(() -> mCalculator.doSub());
+                            break;
+
+                        case DIV:
+                            lambdaCode.add(() -> mCalculator.doDiv());
+                            break;
+
+                        case MOD:
+                            lambdaCode.add(() -> mCalculator.doModulo());
+                            break;
+
+                        case EQ:
+                            lambdaCode.add(() -> mCalculator.doEqual());
+                            break;
+
+                        case NEQ:
+                            lambdaCode.add(() -> mCalculator.doNotEqual());
+                            break;
+
+                        case LT:
+                            lambdaCode.add(() -> mCalculator.doLessThan());
+                            break;
+
+                        case LTE:
+                            lambdaCode.add(() -> mCalculator.doLessThanOrEqual());
+                            break;
+
+                        case GT:
+                            lambdaCode.add(() -> mCalculator.doGreaterThan());
+                            break;
+
+                        case GTE:
+                            lambdaCode.add(() -> mCalculator.doGreaterThanOrEqual());
+                            break;
+
+                        case MUL:
+                            lambdaCode.add(() -> mCalculator.doMul());
+                            break;
+
+                        case NEG:
+                            lambdaCode.add(() -> mCalculator.doNeg());
+                            break;
+
+                        case DUP:
+                            lambdaCode.add(() -> mCalculator.doDup());
+                            break;
+
+                        case DUPN:
+                            lambdaCode.add(() -> mCalculator.doDupN());
+                            break;
+
+                        case DROP:
+                            lambdaCode.add(() -> mCalculator.doDrop());
+                            break;
+
+                        case DROPN:
+                            lambdaCode.add(() -> mCalculator.doDropN());
+                            break;
+
+                        case SWAP:
+                            lambdaCode.add(() -> mCalculator.doSwap());
+                            break;
+
+                        case SWAPN:
+                            lambdaCode.add(() -> mCalculator.doSwapN());
+                            break;
+
+                        case ROLLN:
+                            lambdaCode.add(() -> mCalculator.doRollN());
+                            break;
+
+                        case STACK_SIZE:
+                            lambdaCode.add(() -> mCalculator.doStackSize());
+                            break;
+
+                        case CLEAR:
+                            lambdaCode.add(() -> mCalculator.doClear());
+                            break;
+
+                        case FUNDEF:
+                            //  all lines until END_FUNDEF are save into the functions hashmap
+                            newContext = new Context(Context.State.FUNDEF_BLOCK_ANALYSIS);
+                            newContext.mBlockId = curLexer.identifier;
+                            newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
+                            newContext.mLexer = curLexer;
+                            mContexts.push(newContext);
+                            break;
+
+                        case FUNDEL: {
+                                String id = curLexer.identifier;
+                                // the given function is removed from the functions hashmap
+                                lambdaCode.add(() -> {
+                                    mFunctions.remove(id);
+                                    return true;
+                                });
+                            }
+                            break;
+
+                        case FUNCALL:
+                            // interprets the given script, from the functions hashmap, using a new engine
+                            compileOk = compileCallFunction(curLexer.identifier, lambdaCode);
+                            break;
+
+                        case JAVA_MATH_CALL: {
+                                String id = curLexer.identifier;
+                                lambdaCode.add(() -> mCalculator.doJavaMathCall(id));
+                            }
+                            break;
+
+                        case RUN_SCRIPT:{
+                                String id = curLexer.filename;
+                                lambdaCode.add(() -> mCalculator.doExecuteInnerScriptFile(id));
+                            }
+                            break;
+
+                        case WHILE:
+                            // must stack this code, and execute upon end if calc's stack top value ain't 0
+                            newContext = new Context(Context.State.WHILE_BLOCK_ANALYSIS);
+                            newContext.mBlockId = curLexer.yytext();
+                            newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
+                            newContext.mLexer = curLexer;
+                            mContexts.push(newContext);
+                            break;
+
+                        case IF:
+                            // must stack this code, and execute upon end if calc's stack top value ain't 0
+                            newContext = new Context(Context.State.IF_BLOCK_ANALYSIS);
+                            newContext.mBlockId = curLexer.yytext();
+                            newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
+                            newContext.mLexer = curLexer;
+                            mContexts.push(newContext);
+                            break;
+
+                        case PLOT:
+                            lambdaCode.add(() -> mCalculator.doPlot());
+                            break;
+
+                        case PLOT3D:
+                            lambdaCode.add(() -> mCalculator.doPlot3D());
+                            break;
+
+                        case LINE:
+                            lambdaCode.add(() -> mCalculator.doLine());
+                            break;
+
+                        case LINE3D:
+                            lambdaCode.add(() -> mCalculator.doLine3D());
+                            break;
+
+                        case ERASE:
+                            lambdaCode.add(() -> mCalculator.doErase());
+                            break;
+
+                        case RANGE:
+                            lambdaCode.add(() -> mCalculator.doSetRange());
+                            break;
+
+                        case POV3D:
+                            lambdaCode.add(() -> mCalculator.doSetPov3D());
+                            break;
+
+                        case COLOR:
+                            lambdaCode.add(() -> mCalculator.doSetColor());
+                            break;
+
+                        case DOT_SIZE:
+                            lambdaCode.add(() -> mCalculator.doSetDotSize());
+                            break;
+
+                        case ELSE:
+                        case END_IF:
+                        case END_WHILE:
+                        case END_FUNDEF:
+                        case SYNTAX_ERROR:
+                            syntaxError(curContext);
+                            compileOk = false; // get outa here!
+                            // fall into
+
+                        case EXIT:
+                        case EOF:
+                            // normal end of script (either implicit or explicit)
+                            stop = true;
+                            break;
+
+                        case DEBUG_BREAK:
+                            // nop
+                            break;
+                    }
+            }
+
+            // we may need to stop at next iteration if required
+            stop |= mStopRequired;
+        }
+
+        /*
+        // #### debug contexts
+        System.out.println("\n\n\n <<<< on compileScript PREPARE exit: ");
+        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
+        for (Context c : mContexts)
+            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
+        System.out.println("\n\n");
+        // ####
+        */
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.exiting_script));
+
+        // pops the current context
+        mContexts.pop();
+        Context parentContext = mContexts.isEmpty() ? null : mContexts.peek();
+        if (parentContext != null) {
+            switch (curContext.mDebugState) {
+                case exit:
+                    // force parent script to exit too
+                    parentContext.mDebugState = exit;
+                    compileOk = false;
+                    break;
+
+                case none:
+                    // resume
+                    parentContext.mDebugState = none;
+                    break;
+            }
+        }
+
+        /*
+        // #### debug contexts
+        System.out.println("\n\n\n <<<< on compileScript exit: ");
+        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
+        for (Context c : mContexts)
+            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
+        System.out.println("\n\n");
+        // ####
+        */
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.empty_string));
+
+        // update the stack when exiting the topmost script
+        if (mContexts.size() == 0)
+            lambdaCode.add(() -> {
+                mCalculator.doUpdateStack();
+                return true;
+            });
+
+        return compileOk;
+    }
+
+    private boolean executeScript(ArrayList<ScriptOperation> lambdaCode) {
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.executing_script));
+
+        for (ScriptOperation o : lambdaCode)
+            if (!o.execute() || mStopRequired)
+                return false;
+
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.empty_string));
+
+        return true;
     }
 }

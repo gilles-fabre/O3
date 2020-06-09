@@ -228,7 +228,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                     pushValueOnStack();
                     String funcall = "funcall " + f + "\n";
                     mHistory += funcall;
-                    mActivity.runScript(funcall);
+                    mActivity.executeScript(funcall);
                     return true;
                 }
             });
@@ -270,7 +270,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 if (mHistory.isEmpty())
                     return true;
 
-                runScript(mHistory);
+                executeScript(mHistory);
                 return true;
             }
         });
@@ -461,7 +461,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
                 // and run it
                 mHistory += "infixed " + infixed + "\n";
-                runScript(ctor.getRpnScript());
+                interpretScript(ctor.getRpnScript());
                 return true;
             }
         });
@@ -701,7 +701,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
                 pushValueOnStack();
                 mHistory += "run_script " + filename + "\n";
-                doRunScriptFile(filename);
+                doExecuteScriptFile(filename);
             }
             break;
 
@@ -746,7 +746,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
                 // run the init script
                 try {
-                    runScript(readFile(mInitScriptName));
+                    executeScript(readFile(mInitScriptName));
                 } catch (Exception e) {
                     doDisplayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage());
                     mInitScriptName = null;
@@ -860,7 +860,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 if (mFunctionScripts[_index] != null && !mFunctionScripts[_index].isEmpty()) {
                     pushValueOnStack();
                     mHistory += mFunctionScripts[_index] + "\n";
-                    runScript(mFunctionScripts[_index]);
+                    executeScript(mFunctionScripts[_index]);
                 }
             }
         });
@@ -1116,7 +1116,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
             // run the init script
             try {
-                runScript(readFile(mInitScriptName));
+                executeScript(readFile(mInitScriptName));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1368,7 +1368,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                         "fundel fun_of_x\n" +
                         "fundel inc_x\n";
 
-        runScript(script);
+        executeScript(script);
     }
 
     /**
@@ -2121,7 +2121,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      * @param script is the script text.
      */
-    public void runScript(String script) {
+    public void interpretScript(String script) {
         if (ScriptEngine.isRunning()) {
             doDisplayMessage(mActivity.getString(R.string.script_running));
             return;
@@ -2134,7 +2134,33 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 // Moves the current Thread into the background
                 android.os.Process.setThreadPriority(SCRIPT_ENGINE_PRIORITY);
                 try {
-                    engine.runScript();
+                    engine.interpretScript();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
+    /**
+     * Compiles and execute the given script.
+     *
+     * @param script is the script text.
+     */
+    public void executeScript(String script) {
+        if (ScriptEngine.isRunning()) {
+            doDisplayMessage(mActivity.getString(R.string.script_running));
+            return;
+        }
+
+        final ScriptEngine engine = new ScriptEngine(mActivity, script);
+        new Thread() {
+            @Override
+            public void run() {
+                // Moves the current Thread into the background
+                android.os.Process.setThreadPriority(SCRIPT_ENGINE_PRIORITY);
+                try {
+                    engine.executeScript();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -2148,11 +2174,30 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param filename is the fully qualified script filename.
      * @return the script was found and spawned.
      */
-    public boolean doRunScriptFile(String filename) {
+    public boolean doInterpretScriptFile(String filename) {
         boolean found = false;
         try {
             String script = readFile(filename);
-            runScript(script);
+            interpretScript(script);
+            found = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return found;
+    }
+
+    /**
+     * Runs the given script file
+     *
+     * @param filename is the fully qualified script filename.
+     * @return the script was found and spawned.
+     */
+    public boolean doExecuteScriptFile(String filename) {
+        boolean found = false;
+        try {
+            String script = readFile(filename);
+            executeScript(script);
             found = true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -2167,11 +2212,30 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param filename is the name of the script file to run
      * @return true if the file was found, false else.
      */
-    public boolean doRunInnerScriptFile(String filename) {
+    public boolean doInterpretInnerScriptFile(String filename) {
         boolean found = false;
         try {
             String script = readFile(filename);
-            new ScriptEngine(mActivity, script).runScript();
+            new ScriptEngine(mActivity, script).interpretScript();
+            found = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return found;
+    }
+
+    /**
+     * Run (synchronously) a script from within another script.
+     *
+     * @param filename is the name of the script file to run
+     * @return true if the file was found, false else.
+     */
+    public boolean doExecuteInnerScriptFile(String filename) {
+        boolean found = false;
+        try {
+            String script = readFile(filename);
+            new ScriptEngine(mActivity, script).executeScript();
             found = true;
         } catch (IOException e) {
             e.printStackTrace();

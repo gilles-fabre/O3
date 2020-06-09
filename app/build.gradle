@@ -6,8 +6,8 @@ android {
         applicationId "com.gfabre.android.o3"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 195
-        versionName "1.95"
+        versionCode 200
+        versionName "2.00"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     lintOptions {
@@ -22,6 +22,10 @@ android {
     productFlavors {
     }
     buildToolsVersion = '28.0.3'
+    compileOptions {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
 }
 
 dependencies {
