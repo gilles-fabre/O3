@@ -54,7 +54,6 @@
     <string name="java_math_inspection_error">Error retrieving java math functions : </string>
     <string name="init_script_error">Error executing init script : </string>
     <string name="resume">RESUME</string>
-    <string name="script_running">A script is running, please retry later.</string>
     <string name="preparing_script">preparing script..</string>
     <string name="compiling_script">compiling script..</string>
     <string name="executing_script">executing script..</string>

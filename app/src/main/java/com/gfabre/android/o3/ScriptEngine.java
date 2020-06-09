@@ -262,7 +262,7 @@ public class ScriptEngine {
         // if not done yet, compile the function in the context of a new engine
         ArrayList<ScriptOperation> functionLambdaCode = new ArrayList<>();
         try {
-            if (!mCompiledFunctions.containsKey(function) &&
+            if (!(compileOk = mCompiledFunctions.containsKey(function)) &&
                 (compileOk = new ScriptEngine(this, mCalculator, mFunctions.get(function)).compileScript(functionLambdaCode)))
                 mCompiledFunctions.put(function, functionLambdaCode);
 
@@ -1678,7 +1678,7 @@ public class ScriptEngine {
 
         for (ScriptOperation o : lambdaCode)
             if (!o.execute() || mStopRequired)
-                return false;
+                break;
 
         mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.empty_string));
 

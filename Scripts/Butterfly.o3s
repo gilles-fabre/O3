@@ -56,9 +56,14 @@ dupn
 erase
 
 // butterfly color
-255
-2
+0
+6
 dupn
+?r
+70
++
+?g
+?b
 color
 
 // drawing range : -5 < x < 5, -5 < y < 5
@@ -77,8 +82,22 @@ dot_size
 while
     drop
     funcall x_func_of_t
+    dup
+    math_call abs
+    50
+    *
+    ?r
     funcall y_func_of_t
+    dup
+    math_call abs
+    50
+    *
+    ?b
     plot
+    !r
+    !g
+    !b
+    color
     !t
     !t_step
     +

@@ -2122,10 +2122,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param script is the script text.
      */
     public void interpretScript(String script) {
-        if (ScriptEngine.isRunning()) {
-            doDisplayMessage(mActivity.getString(R.string.script_running));
+        if (ScriptEngine.isRunning())
             return;
-        }
 
         final ScriptEngine engine = new ScriptEngine(mActivity, script);
         new Thread() {
@@ -2148,10 +2146,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param script is the script text.
      */
     public void executeScript(String script) {
-        if (ScriptEngine.isRunning()) {
-            doDisplayMessage(mActivity.getString(R.string.script_running));
+        if (ScriptEngine.isRunning())
             return;
-        }
 
         final ScriptEngine engine = new ScriptEngine(mActivity, script);
         new Thread() {
