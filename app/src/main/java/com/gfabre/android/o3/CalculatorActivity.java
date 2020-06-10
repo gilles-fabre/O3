@@ -84,16 +84,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     private static Method[] mMethods = null;
 
-    private static CalculatorActivity mActivity;                // this reference
+    private static CalculatorActivity mActivity;         // this reference
 
     private String mHistory = "";                        // all actions history from beginning of time.
-    private Stack<Double> mStack = new Stack<>();               // values stack
+    private Stack<Double> mStack = new Stack<>();        // values stack
     private String mValue = "";                          // value currently edited
-    private EditText mValueField = null;                   // value edit field
-    private ListView mStackView = null;                    // stack view
-    private ArrayAdapter mStackAdapter = null;                 // stack view adapter
-    private GraphView mGraphView = null;                    // canvas for graphical functions
-    private Menu mScriptFunctionsMenu = null;          // dynamic script functions menu
+    private EditText mValueField = null;                 // value edit field
+    private ListView mStackView = null;                  // stack view
+    private ArrayAdapter mStackAdapter = null;           // stack view adapter
+    private GraphView mGraphView = null;                 // canvas for graphical functions
+    private Menu mScriptFunctionsMenu = null;            // dynamic script functions menu
     private String mInitScriptName = null;               // init script, if set, run upon calculator start
 
     private String mFunctionScripts[] = new String[NUM_FUNC_BUTTONS];
@@ -707,28 +707,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
             case DEBUG_SCRIPT_DIALOG_ID: {
                 // run the selected script
+                String filename = dialog.getBundle().getString(FileChooser.FILENAME);
                 pushValueOnStack();
                 // no history here, we're debugging
-                String filename = dialog.getBundle().getString(FileChooser.FILENAME);
-                String script;
-                try {
-                    script = readFile(filename);
-                    final ScriptEngine engine = new ScriptEngine(mActivity, script);
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            // Moves the current Thread into the background
-                            android.os.Process.setThreadPriority(SCRIPT_ENGINE_PRIORITY);
-                            try {
-                                engine.debugScript();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }.start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                doDebugScriptFile(filename);
             }
             break;
 
@@ -2162,6 +2144,49 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 }
             }
         }.start();
+    }
+
+    /**
+     *Debugs the given script.
+     *
+     * @param script is the script text.
+     */
+    public void debugScript(String script) {
+        if (ScriptEngine.isRunning())
+            return;
+
+        final ScriptEngine engine = new ScriptEngine(mActivity, script);
+        new Thread() {
+            @Override
+            public void run() {
+                // Moves the current Thread into the background
+                android.os.Process.setThreadPriority(SCRIPT_ENGINE_PRIORITY);
+                try {
+                    engine.debugScript();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
+    /**
+     * Debugs the given script file
+     *
+     * @param filename is the fully qualified script filename.
+     * @return the script was found and spawned.
+     */
+    public boolean doDebugScriptFile(String filename) {
+        boolean found = false;
+        try {
+            String script = readFile(filename);
+            debugScript(script);
+            found = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return found;
     }
 
     /**

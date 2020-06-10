@@ -507,7 +507,7 @@ public class ScriptEngine {
         int line = 1;
         int o = 0;
         while (o < offset && o < mScript.length()) {
-            Character c = mScript.charAt(o++);
+            char c = mScript.charAt(o++);
             if (c == '\n' || c == '\r')
                 ++line;
         }
@@ -1198,15 +1198,6 @@ public class ScriptEngine {
         newContext.mLexer = new ScriptLexer(new StringReader(mScript));
         mContexts.push(newContext);
 
-        /*
-        // #### debug contexts
-        System.out.println("\n\n\n >>>> on compileScript entry: ");
-        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
-        for (Context c : mContexts)
-            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
-        System.out.println("\n\n");
-        // ####
-        */
         mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.compiling_script));
 
         while (compileOk && !stop) {
@@ -1343,11 +1334,6 @@ public class ScriptEngine {
                     break;
 
                 case RUNNING:
-                    /*
-                    // #### debug contexts
-                    System.out.println("\n\n\n #### compileScript hits : " + ScriptLexer.sym.values()[symbol.sym] + "\n\n\n");
-                    // ####
-                    */
                     switch (ScriptLexer.sym.values()[symbol.sym]) {
                         case DOUBLE_LITERAL: {
                             Double value = curLexer.doubleValue;
@@ -1623,15 +1609,6 @@ public class ScriptEngine {
             stop |= mStopRequired;
         }
 
-        /*
-        // #### debug contexts
-        System.out.println("\n\n\n <<<< on compileScript PREPARE exit: ");
-        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
-        for (Context c : mContexts)
-            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
-        System.out.println("\n\n");
-        // ####
-        */
         mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.exiting_script));
 
         // pops the current context
@@ -1652,15 +1629,6 @@ public class ScriptEngine {
             }
         }
 
-        /*
-        // #### debug contexts
-        System.out.println("\n\n\n <<<< on compileScript exit: ");
-        System.out.println("\n\t contexts : " + mContexts.size() + "\n");
-        for (Context c : mContexts)
-            System.out.println("\t\t context debug state : " + c.mDebugState + "\n");
-        System.out.println("\n\n");
-        // ####
-        */
         mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.empty_string));
 
         // update the stack when exiting the topmost script
@@ -1674,6 +1642,9 @@ public class ScriptEngine {
     }
 
     private boolean executeScript(ArrayList<ScriptOperation> lambdaCode) {
+        if (lambdaCode == null)
+            return false;
+
         mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.executing_script));
 
         for (ScriptOperation o : lambdaCode)

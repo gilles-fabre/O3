@@ -13,3 +13,4 @@ app/release/output.json
 *.java~
 app/release/o3.apk
 *.trace
+.idea/inspectionProfiles/Project_Default.xml
