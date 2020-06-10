@@ -39,6 +39,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -62,6 +64,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final int GRAPH_DIALOG_ID = R.layout.graph_view;
     private static final String SCRIPT_EXTENSIONS = ".o3s .txt";
     private static final String INIT_SCRIPT_NAME = "InitScriptFilename";
+    private static final String DEFAULT_INIT_SCRIPT_NAME = "InitScript.o3s";
 
     private static final String FUNCTION_SCRIPTS_KEY = "FunctionScripts";
     private static final String FUNCTION_TITLES_KEY = "FunctionTitles";
@@ -237,6 +240,21 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return true;
     }
 
+
+    /**
+     *
+     * @return the default path where scripts shouls go.
+     */
+    private String getDefaultScriptsPath() {
+        File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        return dir == null ? "/" : dir.getPath();
+    }
+
+    private String getDefaultScriptsAbsolutePath() {
+        File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        return dir == null ? "/" : dir.getAbsolutePath();
+    }
+
     /**
      * Creates the application's menu, sets the listeners and eventually handle
      * the associated user actions.
@@ -394,8 +412,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                new FileChooser(INIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, dir == null ? "/" : dir.getPath());
+                new FileChooser(INIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, getDefaultScriptsPath());
                 return true;
             }
         });
@@ -420,8 +437,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                new FileChooser(DEBUG_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, dir == null ? "/" : dir.getPath());
+                new FileChooser(DEBUG_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, getDefaultScriptsPath());
                 return true;
             }
         });
@@ -435,8 +451,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
                 pushValueOnStack();
-                File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                new FileChooser(RUN_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, dir == null ? "/" : dir.getPath());
+                new FileChooser(RUN_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, getDefaultScriptsPath());
                 return true;
             }
         });
@@ -486,8 +501,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                new FileChooser(EDIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, dir == null ? "/" : dir.getPath());
+                new FileChooser(EDIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, getDefaultScriptsPath());
                 return true;
             }
         });
@@ -500,8 +514,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                new EditScriptDialog(mActivity, dir.getAbsolutePath() + "/" + getString(R.string.new_script_name));
+                new EditScriptDialog(mActivity, getDefaultScriptsAbsolutePath() + "/" + getString(R.string.new_script_name));
                 return true;
             }
         });
@@ -566,9 +579,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
                         getString(R.string.enter_png_filename), null);
 
-                File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                 try {
-                    filename = dir.getAbsolutePath() + "/" + filename;
+                    filename = getDefaultScriptsAbsolutePath() + "/" + filename;
                     mGraphView.saveToPngFile(filename);
                     doDisplayMessage(getString(R.string.saved_png) + filename);
                 } catch (IOException e) {
@@ -1084,6 +1096,30 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 clear(false);
             }
         });
+
+        // create the init script out of the ressources if it doesn't exist yet
+        String filename = getDefaultScriptsAbsolutePath() + "/" + DEFAULT_INIT_SCRIPT_NAME;
+        if (!new File(filename).exists()) {
+            try {
+                mInitScriptName = filename;
+                InputStream is = getResources().openRawResource(R.raw.functions);
+                InputStreamReader isr = new InputStreamReader(is);
+                String s = "";
+                int c;
+                while ((c = isr.read()) != -1)
+                    s += (char)c;
+                writeFile(filename, s);
+
+                // run the init script
+                try {
+                    executeScript(readFile(mInitScriptName));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -1455,7 +1491,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
-        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be run upon o3 start.\n", 0, false);
+        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be run upon o3 start. When o3 was first launched, a script named InitScript.o3s was generated. It contains a few useful functions. You can give it a try!\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
