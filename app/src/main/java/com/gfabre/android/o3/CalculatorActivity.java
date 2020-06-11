@@ -411,6 +411,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                // generate a default init script if none exists
+                generateDefaultInitScript();
+
                 // path to the external download directory if available, internal one else.
                 new FileChooser(INIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, getDefaultScriptsPath());
                 return true;
@@ -1096,30 +1099,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 clear(false);
             }
         });
-
-        // create the init script out of the ressources if it doesn't exist yet
-        String filename = getDefaultScriptsAbsolutePath() + "/" + DEFAULT_INIT_SCRIPT_NAME;
-        if (!new File(filename).exists()) {
-            try {
-                mInitScriptName = filename;
-                InputStream is = getResources().openRawResource(R.raw.functions);
-                InputStreamReader isr = new InputStreamReader(is);
-                String s = "";
-                int c;
-                while ((c = isr.read()) != -1)
-                    s += (char)c;
-                writeFile(filename, s);
-
-                // run the init script
-                try {
-                    executeScript(readFile(mInitScriptName));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     @Override
@@ -1387,6 +1366,25 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                         "fundel inc_x\n";
 
         executeScript(script);
+    }
+
+    private void generateDefaultInitScript() {
+        // create the init script out of the ressources if it doesn't exist yet
+        String filename = getDefaultScriptsAbsolutePath() + "/" + DEFAULT_INIT_SCRIPT_NAME;
+        if (!new File(filename).exists()) {
+            try {
+                mInitScriptName = filename;
+                InputStream is = getResources().openRawResource(R.raw.functions);
+                InputStreamReader isr = new InputStreamReader(is);
+                String s = "";
+                int c;
+                while ((c = isr.read()) != -1)
+                    s += (char) c;
+                writeFile(filename, s);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
