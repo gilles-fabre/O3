@@ -1,0 +1,34 @@
+// x^y
+
+//debug_break
+
+// create counter and result var
+?y
+?x
+
+1.0
+?r
+
+// iterates until counter reaches 0
+!y
+while
+	// dec counter
+	funcall dec
+	?y
+
+	// r <- r * x
+	!x
+	!r
+	*
+	?r
+
+	// push counter
+	!y
+end_while
+
+// drop counter
+drop
+
+// result
+!r
+

@@ -1,3 +1,5 @@
+// this is the init script, it defines a few useful functions
+
 fundef stackExchange
     // exchange elements at i,j in the stack
     ?i

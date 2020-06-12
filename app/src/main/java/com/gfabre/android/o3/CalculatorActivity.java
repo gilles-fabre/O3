@@ -62,16 +62,30 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final int INIT_SCRIPT_DIALOG_ID = 6;
     private static final int HELP_DIALOG_ID = R.layout.log_view;
     private static final int GRAPH_DIALOG_ID = R.layout.graph_view;
-    private static final String SCRIPT_EXTENSIONS = ".o3s .txt";
+    private static final String SCRIPT_EXTENSION = ".o3s";
     private static final String INIT_SCRIPT_NAME = "InitScriptFilename";
-    private static final String DEFAULT_INIT_SCRIPT_NAME = "InitScript.o3s";
+    private static final String DEFAULT_INIT_SCRIPT_NAME = "InitScript";
+    private static final String ARRAY_TEST_SCRIPT_NAME = "ArrayTest";
+    private static final String BUTTERFLY_SCRIPT_NAME  = "Butterfly";
+    private static final String DECREMENT_SPEED_TEST_SCRIPT_NAME  = "DecrementSpeedTest";
+    private static final String DRAW_CIRCLES_SCRIPT_NAME = "DrawCircles";
+    private static final String DRAW_LOG2_SCRIPT_NAME = "DrawLog2";
+    private static final String DRAW_POLYGON_SCRIPT_NAME = "DrawPolygon";
+    private static final String DRAW_POW2_SCRIPT_NAME = "DrawPow2";
+    private static final String DRAW_SINE_SCRIPT_NAME = "DrawSine";
+    private static final String DRAW_SINE_COLOR_SCRIPT_NAME = "DrawSineColor";
+    private static final String DRAW_SINE_COLOR3D_SCRIPT_NAME = "DrawSineColor3D";
+    private static final String INNER_WHILE_TEST_SCRIPT_NAME = "InnerWhileTest";
+    private static final String RAND_PLOT_SCRIPT_NAME = "RandPlot";
+    private static final String WHIRL_SCRIPT_NAME = "Whirl";
+    private static final String X_POW_Y_SCRIPT_NAME = "x^y";
 
     private static final String FUNCTION_SCRIPTS_KEY = "FunctionScripts";
     private static final String FUNCTION_TITLES_KEY = "FunctionTitles";
     private static final String STACK_CONTENT_KEY = "StackContent";
     private static final String EDITED_VALUE_KEY = "EditedValue";
     private static final String HISTORY_SCRIPT_KEY = "HistoryScript";
-    private static final String HISTORY_SCRIPT_NAME = "HistoryScript.o3s";
+    private static final String HISTORY_SCRIPT_NAME = "HistoryScript";
 
     private static final int NUM_FUNC_BUTTONS = 15;
 
@@ -314,7 +328,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // saves history in a temporary file
-                String historyFile = getFilesDir() + "/" + HISTORY_SCRIPT_NAME;
+                String historyFile = getFilesDir() + "/" + HISTORY_SCRIPT_NAME + SCRIPT_EXTENSION;
                 writeFile(historyFile, mHistory);
                 new EditScriptDialog(mActivity, historyFile);
                 return true;
@@ -415,7 +429,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 generateDefaultInitScript();
 
                 // path to the external download directory if available, internal one else.
-                new FileChooser(INIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, getDefaultScriptsPath());
+                new FileChooser(INIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultScriptsPath());
                 return true;
             }
         });
@@ -440,7 +454,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                new FileChooser(DEBUG_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, getDefaultScriptsPath());
+                new FileChooser(DEBUG_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultScriptsPath());
                 return true;
             }
         });
@@ -454,7 +468,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
                 pushValueOnStack();
-                new FileChooser(RUN_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, getDefaultScriptsPath());
+                new FileChooser(RUN_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultScriptsPath());
                 return true;
             }
         });
@@ -504,7 +518,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                new FileChooser(EDIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSIONS, getDefaultScriptsPath());
+                new FileChooser(EDIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultScriptsPath());
                 return true;
             }
         });
@@ -532,6 +546,18 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 String samplesUrl = "https://github.com/gilles-fabre/O3/tree/master/Scripts";
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(samplesUrl));
                 mActivity.startActivity(intent);
+                return true;
+            }
+        });
+
+        /**
+         * Generate sample scripts
+         */
+        item = submenu.add(getString(R.string.generate_samples));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                generateSampleScripts();
                 return true;
             }
         });
@@ -1368,13 +1394,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         executeScript(script);
     }
 
-    private void generateDefaultInitScript() {
-        // create the init script out of the ressources if it doesn't exist yet
-        String filename = getDefaultScriptsAbsolutePath() + "/" + DEFAULT_INIT_SCRIPT_NAME;
+    private void generateScript(int Id, String filename) {
         if (!new File(filename).exists()) {
             try {
                 mInitScriptName = filename;
-                InputStream is = getResources().openRawResource(R.raw.functions);
+                InputStream is = getResources().openRawResource(Id);
                 InputStreamReader isr = new InputStreamReader(is);
                 String s = "";
                 int c;
@@ -1385,6 +1409,31 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 e.printStackTrace();
             }
         }
+    }
+
+    private void generateDefaultInitScript() {
+        // create the init script out of the resources if it doesn't exist yet
+        generateScript(R.raw.functions, getDefaultScriptsAbsolutePath() + "/" + DEFAULT_INIT_SCRIPT_NAME + SCRIPT_EXTENSION);
+    }
+
+    private void generateSampleScripts() {
+        // generate all the samples if they do not exist yet
+        generateScript(R.raw.array_test, getDefaultScriptsAbsolutePath() + "/" + ARRAY_TEST_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.butterfly, getDefaultScriptsAbsolutePath() + "/" + BUTTERFLY_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.decrement_speed_test, getDefaultScriptsAbsolutePath() + "/" + DECREMENT_SPEED_TEST_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_circles, getDefaultScriptsAbsolutePath() + "/" + DRAW_CIRCLES_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_log2, getDefaultScriptsAbsolutePath() + "/" + DRAW_LOG2_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_polygon, getDefaultScriptsAbsolutePath() + "/" + DRAW_POLYGON_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_pow2, getDefaultScriptsAbsolutePath() + "/" + DRAW_POW2_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_sine, getDefaultScriptsAbsolutePath() + "/" + DRAW_SINE_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_sine_color, getDefaultScriptsAbsolutePath() + "/" + DRAW_SINE_COLOR_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_sine_color3d, getDefaultScriptsAbsolutePath() + "/" + DRAW_SINE_COLOR3D_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.inner_while_test, getDefaultScriptsAbsolutePath() + "/" + INNER_WHILE_TEST_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.rand_plot, getDefaultScriptsAbsolutePath() + "/" + RAND_PLOT_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.whirl, getDefaultScriptsAbsolutePath() + "/" + WHIRL_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.x_pow_y, getDefaultScriptsAbsolutePath() + "/" + X_POW_Y_SCRIPT_NAME + SCRIPT_EXTENSION);
+
+        GenericDialog.displayMessage(mActivity, getString(R.string.scripts_generated));
     }
 
     /**
@@ -1525,7 +1574,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
-        helpView.appendText("\n\nScripts/Stop :\n", 0x008888, true);
+        helpView.appendText("\n\nScripts/Stop menu :\n", 0x008888, true);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
@@ -1546,6 +1595,22 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
         helpView.appendText("\t\tPops up a dialog where one can edit a new O3 script, then save it under a new name.\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nScripts/Show Samples.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tOpens a web browser on the o3 scripts pages on github.\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nScripts/Generate Samples.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tGenerates sample scripts on the phone so you can play with them (try debugging them).\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
