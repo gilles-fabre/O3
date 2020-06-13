@@ -64,9 +64,11 @@
     <string name="input_infixed">Input infixed</string>
     <string name="evaluating_label">evaluating:</string>
     <string name="infixed_expression">infixed expression (of !x):</string>
-    <string name="min_x">mininum x value:</string>
-    <string name="max_x">maximum x value:</string>
-    <string name="min_y">mininum y value:</string>
-    <string name="max_y">maximum y value:</string>
+    <string name="min_x">mininum x value :</string>
+    <string name="max_x">maximum x value :</string>
+    <string name="min_y">mininum y value :</string>
+    <string name="max_y">maximum y value :</string>
+    <string name="read_help_first">This graphic programming RPN calculator is highly configurable, read help first to better understand how to use it. \nThanks</string>
+    <string name="button_help">Assign a function : \n\nlong press, then, when prompted, enter the math (eg \"math_call sqrt\") \nor user defined function (eg \"funcall average\"), then the button title.</string>
     <string name="scripts_generated">Scripts generated. WARNING : they require functions defined in the init script...</string>
 </resources>

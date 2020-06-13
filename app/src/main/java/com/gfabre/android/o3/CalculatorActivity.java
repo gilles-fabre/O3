@@ -33,6 +33,7 @@ import android.widget.TextView;
 import com.gfabre.android.utilities.widgets.ColorLogView;
 import com.gfabre.android.utilities.widgets.FileChooser;
 import com.gfabre.android.utilities.widgets.GenericDialog;
+import com.gfabre.android.utilities.widgets.MessageDisplayer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -80,6 +81,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final String WHIRL_SCRIPT_NAME = "Whirl";
     private static final String X_POW_Y_SCRIPT_NAME = "x^y";
 
+    private static final String READ_HELP_FIRST_FLAG = "ReadHelpFirst";
     private static final String FUNCTION_SCRIPTS_KEY = "FunctionScripts";
     private static final String FUNCTION_TITLES_KEY = "FunctionTitles";
     private static final String STACK_CONTENT_KEY = "StackContent";
@@ -819,6 +821,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         // save the init script into the preferences
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
+
+        // notice about help was shown, do not present it again
+        editor.putBoolean(READ_HELP_FIRST_FLAG, true);
+
+        // save the init script
         editor.putString(INIT_SCRIPT_NAME, mInitScriptName);
 
         // save the function buttons
@@ -876,7 +883,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         final int _index = index;
 
         if (mFunctionTitles[_index] != null &&
-                !mFunctionTitles[_index].isEmpty())
+            !mFunctionTitles[_index].isEmpty())
             button.setText(mFunctionTitles[_index]);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -884,6 +891,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                     pushValueOnStack();
                     mHistory += mFunctionScripts[_index] + "\n";
                     executeScript(mFunctionScripts[_index]);
+                } else {
+                    // display a message explaining how to set a button function
+                    new MessageDisplayer(mActivity, getString(R.string.button_help), -1).run();
                 }
             }
         });
@@ -1125,15 +1135,22 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 clear(false);
             }
         });
+
+        // get the preferences
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+
+        // initial dialog proposing to read the doc:
+        if (!prefs.contains(READ_HELP_FIRST_FLAG))
+            new MessageDisplayer(mActivity, getString(R.string.read_help_first), -1).run();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         // get the preferences
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
 
         // init script
-        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
         if (prefs.contains(INIT_SCRIPT_NAME)) {
             mInitScriptName = prefs.getString(INIT_SCRIPT_NAME, null);
 
@@ -1488,7 +1505,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\t'DUP' pushes on the stack a copy of its topmost value\n", 0, false);
         helpView.appendText("\t\t'DROP' drops the topmost value off the stack\n", 0, false);
         helpView.appendText("\t\t'CLEAR' clears the whole stack\n", 0, false);
-        helpView.appendText("\t\t'...' buttons can be programmed (long press) to call a script, a java math or script function, via a single line script.\n", 0, false);
+        helpView.appendText("\t\t'...' buttons can be programmed (long press) to call a script, a java math (eg math_call sqrt) or script function (eg funcall average) , via a single line script.\n", 0, false);
         helpView.appendText("\nNOTE: all of the these actions, except 'N', first push the edited value (if present) on the stack. Selecting a value in the stack copies it to the edit value field.\n", 0, true);
         helpView.resetFontSize();
 
@@ -1538,7 +1555,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
-        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be run upon o3 start. When o3 was first launched, a script named InitScript.o3s was generated. It contains a few useful functions. You can give it a try!\n", 0, false);
+        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be run upon o3 start. A script named InitScript.o3s was automatically generated. It contains a few useful functions. You can give it a try!\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);

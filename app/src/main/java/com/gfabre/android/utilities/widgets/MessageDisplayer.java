@@ -1,6 +1,7 @@
 package com.gfabre.android.utilities.widgets;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.widget.Toast;
 
 /**
@@ -33,6 +34,6 @@ public class MessageDisplayer implements Runnable {
 		if (mDuration >= 0 )
 			Toast.makeText(mActivity, mMessage, mDuration == 0 ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show();
 		else
-			GenericDialog.displayMessage(mActivity, mMessage);
+			new AlertDialog.Builder(mActivity).setMessage(mMessage).create().show();
 	}
 }

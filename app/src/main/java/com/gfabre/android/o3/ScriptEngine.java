@@ -3,6 +3,7 @@ package com.gfabre.android.o3;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -304,10 +305,12 @@ public class ScriptEngine {
     }
 
     /**
-     * @return the list of ('defuned') functions.
+     * @return the sorted list of ('defuned') functions in ascending order.
      */
     public static String[] getFunctions() {
-        return mFunctions.keySet().toArray(new String[0]);
+        String []functions = mFunctions.keySet().toArray(new String[0]);;
+        Arrays.sort(functions);
+        return functions;
     }
 
     /**
