@@ -89,7 +89,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final String HISTORY_SCRIPT_KEY = "HistoryScript";
     private static final String HISTORY_SCRIPT_NAME = "HistoryScript";
 
-    private static final int NUM_FUNC_BUTTONS = 15;
+    private static final int NUM_FUNC_BUTTONS = 35;
 
     private static final int DISPLAY_PROGRESS_MESSAGE = 0;
     private static final int UPDATE_STACK_MESSAGE = 1;
@@ -1199,6 +1199,47 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         setFunctionButton(button, 13);
         button = findViewById(R.id.button_fn15);
         setFunctionButton(button, 14);
+        button = findViewById(R.id.button_fn16);
+        setFunctionButton(button, 15);
+        button = findViewById(R.id.button_fn17);
+        setFunctionButton(button, 16);
+        button = findViewById(R.id.button_fn18);
+        setFunctionButton(button, 17);
+        button = findViewById(R.id.button_fn19);
+        setFunctionButton(button, 18);
+        button = findViewById(R.id.button_fn20);
+        setFunctionButton(button, 19);
+        button = findViewById(R.id.button_fn21);
+        setFunctionButton(button, 20);
+        button = findViewById(R.id.button_fn22);
+        setFunctionButton(button, 21);
+        button = findViewById(R.id.button_fn23);
+        setFunctionButton(button, 22);
+        button = findViewById(R.id.button_fn24);
+        setFunctionButton(button, 23);
+        button = findViewById(R.id.button_fn25);
+        setFunctionButton(button, 24);
+        button = findViewById(R.id.button_fn26);
+        setFunctionButton(button, 25);
+        button = findViewById(R.id.button_fn27);
+        setFunctionButton(button, 26);
+        button = findViewById(R.id.button_fn28);
+        setFunctionButton(button, 27);
+        button = findViewById(R.id.button_fn29);
+        setFunctionButton(button, 28);
+        button = findViewById(R.id.button_fn30);
+        setFunctionButton(button, 29);
+        button = findViewById(R.id.button_fn31);
+        setFunctionButton(button, 30);
+        button = findViewById(R.id.button_fn32);
+        setFunctionButton(button, 31);
+        button = findViewById(R.id.button_fn33);
+        setFunctionButton(button, 32);
+        button = findViewById(R.id.button_fn34);
+        setFunctionButton(button, 33);
+        button = findViewById(R.id.button_fn35);
+        setFunctionButton(button, 34);
+
     }
 
     /**
