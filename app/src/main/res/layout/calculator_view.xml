@@ -81,7 +81,7 @@
             android:layout_marginEnd="0dp"
             android:layout_marginBottom="0dp"
             android:layout_marginTop="0dp"
-            app:layout_constraintEnd_toEndOf="@+id/padPanel"
+            app:layout_constraintEnd_toEndOf="@+id/rightPanel"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="parent"
             android:id="@+id/buttonsScroll">
@@ -671,7 +671,7 @@
         </ScrollView>
 
         <TableLayout
-            android:id="@+id/padPanel"
+            android:id="@+id/rightPanel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
