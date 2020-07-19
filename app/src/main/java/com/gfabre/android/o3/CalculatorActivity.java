@@ -148,12 +148,15 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 case PROMPT_MESSAGE:
                     // prompt the user to enter a value
                     PromptForValueMessage prompt = (PromptForValueMessage) inputMessage.obj;
-                    prompt.mValue =
-                            Double.valueOf(GenericDialog.promptMessage(mActivity,
-                                    InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
-                                    prompt.mMessage,
-                                    null));
-
+                    try {
+                        prompt.mValue =
+                                Double.valueOf(GenericDialog.promptMessage(mActivity,
+                                        InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
+                                        prompt.mMessage,
+                                        null));
+                    } catch (NumberFormatException e) {
+                        GenericDialog.displayMessage(mActivity, getString(R.string.invalid_number) + e.getMessage());
+                    }
                     prompt.mWaitForValue.release();
                     break;
 
