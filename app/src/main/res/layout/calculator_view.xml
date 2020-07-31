@@ -92,6 +92,7 @@
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="8dp"
                 android:background="#eee"
+                android:stretchColumns="*"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -577,7 +578,7 @@
                         android:gravity="center"
                         android:text="@string/undefined_button"
                         android:textAppearance="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small"
-                        android:textSize="12sp"
+                        android:textSize="16dp"
                         tools:layout_editor_absoluteX="89dp"
                         tools:layout_editor_absoluteY="259dp" />
 
@@ -676,20 +677,21 @@
             android:layout_marginEnd="4dp"
             android:layout_marginBottom="4dp"
             android:background="#eee"
+            android:stretchColumns="*"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/buttonsScroll">
 
             <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
                 <Button
                     android:id="@+id/button_swap"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="SWAP"
@@ -702,8 +704,8 @@
                 <Button
                     android:id="@+id/button_7"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="60dp"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="7"
@@ -715,8 +717,8 @@
                 <Button
                     android:id="@+id/button_8"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="62dp"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="8"
@@ -729,7 +731,7 @@
                     android:id="@+id/button_9"
                     style="@style/Widget.AppCompat.Button.Small"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="9"
@@ -741,13 +743,13 @@
                 <Button
                     android:id="@+id/button_div"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="67dp"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="/"
                     android:textColor="@android:color/black"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     tools:layout_editor_absoluteX="89dp"
                     tools:layout_editor_absoluteY="259dp" />
             </TableRow>
@@ -759,8 +761,7 @@
                 <Button
                     android:id="@+id/button_dup"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="DUP"
@@ -772,8 +773,7 @@
                 <Button
                     android:id="@+id/button_4"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="4"
@@ -785,8 +785,7 @@
                 <Button
                     android:id="@+id/button_5"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="5"
@@ -798,8 +797,7 @@
                 <Button
                     android:id="@+id/button_6"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="6"
@@ -811,8 +809,7 @@
                 <Button
                     android:id="@+id/button_mul"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="x"
@@ -824,14 +821,13 @@
             </TableRow>
 
             <TableRow
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent">
 
                 <Button
                     android:id="@+id/button_drop"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="DROP"
@@ -843,7 +839,6 @@
                 <Button
                     android:id="@+id/button_1"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
@@ -857,7 +852,7 @@
                     android:id="@+id/button_2"
                     style="@style/Widget.AppCompat.Button.Small"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="2"
@@ -869,8 +864,7 @@
                 <Button
                     android:id="@+id/button_3"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="3"
@@ -882,26 +876,24 @@
                 <Button
                     android:id="@+id/button_sub"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="-"
                     android:textColor="@android:color/black"
-                    android:textSize="14sp"
+                    android:textSize="20sp"
                     tools:layout_editor_absoluteX="89dp"
                     tools:layout_editor_absoluteY="259dp" />
             </TableRow>
 
             <TableRow
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent">
 
                 <Button
                     android:id="@+id/button_clear"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="CLEAR"
@@ -913,8 +905,7 @@
                 <Button
                     android:id="@+id/button_0"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="0"
@@ -924,8 +915,8 @@
                     tools:layout_editor_absoluteY="259dp" />
 
                 <LinearLayout
-                    android:layout_width="18dp"
-                    android:layout_height="wrap_content"
+                    android:layout_width="56dp"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:orientation="horizontal">
 
@@ -933,10 +924,11 @@
                         android:id="@+id/button_neg"
                         style="@style/Widget.AppCompat.Button.Small"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
                         android:text="n"
+                        android:textAllCaps="false"
                         android:textColor="#008800"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -947,12 +939,12 @@
                         android:id="@+id/button_dot"
                         style="@style/Widget.AppCompat.Button.Small"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text=","
+                        android:text="."
                         android:textColor="#008800"
-                        android:textSize="12sp"
+                        android:textSize="14sp"
                         android:textStyle="bold"
                         tools:layout_editor_absoluteX="89dp"
                         tools:layout_editor_absoluteY="259dp" />
@@ -961,8 +953,7 @@
                 <Button
                     android:id="@+id/button_enter"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="enter"
@@ -974,13 +965,12 @@
                 <Button
                     android:id="@+id/button_add"
                     style="@style/Widget.AppCompat.Button.Small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="+"
                     android:textColor="@android:color/black"
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     tools:layout_editor_absoluteX="89dp"
                     tools:layout_editor_absoluteY="259dp" />
             </TableRow>
