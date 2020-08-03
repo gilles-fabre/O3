@@ -55,11 +55,9 @@
     <string name="java_math_inspection_error">Error retrieving java math functions : </string>
     <string name="init_script_error">Error executing init script : </string>
     <string name="resume">RESUME</string>
-    <string name="preparing_script">preparing script..</string>
     <string name="compiling_script">compiling script..</string>
     <string name="executing_script">executing script..</string>
     <string name="interpreting_script">interpreting script..</string>
-    <string name="exiting_script">exiting script..</string>
     <string name="empty_string" />
     <string name="input_infixed">Input infixed</string>
     <string name="evaluating_label">evaluating:</string>

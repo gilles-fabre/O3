@@ -139,8 +139,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 case DISPLAY_MESSAGE:
                     // presents the user a message to read
                     DisplayMessage message = (DisplayMessage) inputMessage.obj;
-                    GenericDialog.displayMessage(mActivity,
-                            message.mMessage);
+                    displayMessage(message.mMessage);
 
                     message.mWaitForRead.release();
                     break;
@@ -155,7 +154,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                                         prompt.mMessage,
                                         null));
                     } catch (NumberFormatException e) {
-                        GenericDialog.displayMessage(mActivity, getString(R.string.invalid_number) + e.getMessage());
+                        displayMessage(getString(R.string.invalid_number) + e.getMessage());
                     }
                     prompt.mWaitForValue.release();
                     break;
@@ -210,7 +209,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             updateStackView();
         } catch (Exception e) {
             // there ain't much we can do here
-            GenericDialog.displayMessage(mActivity, getString(R.string.invalid_number) + mValue);
+            displayMessage(getString(R.string.invalid_number) + mValue);
         } finally {
             mValue = "";
             mValueField.setText(mValue);
@@ -494,7 +493,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 InfixConvertor ctor = new InfixConvertor(infixed);
 
                 // display the postfix expression
-                doDisplayMessage(getString(R.string.evaluating_label) + "\n" + ctor.getPostfix());
+                displayMessage(getString(R.string.evaluating_label) + "\n" + ctor.getPostfix());
 
                 // and run it
                 mHistory += "infixed " + infixed + "\n";
@@ -616,9 +615,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 try {
                     filename = getDefaultScriptsAbsolutePath() + "/" + filename;
                     mGraphView.saveToPngFile(filename);
-                    doDisplayMessage(getString(R.string.saved_png) + filename);
+                    displayMessage(getString(R.string.saved_png) + filename);
                 } catch (IOException e) {
-                    doDisplayMessage(getString(R.string.error_saving_png) + e.getLocalizedMessage());
+                    displayMessage(getString(R.string.error_saving_png) + e.getLocalizedMessage());
                 }
                 return true;
             }
@@ -729,7 +728,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             fw.write(content);
             fw.close();
         } catch (Exception e) {
-            doDisplayMessage(e.getMessage());
+            displayMessage(e.getMessage());
             return false;
         }
 
@@ -776,7 +775,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 try {
                     executeScript(readFile(mInitScriptName));
                 } catch (Exception e) {
-                    doDisplayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage());
+                    displayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage());
                     mInitScriptName = null;
                 }
             }
@@ -1321,7 +1320,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 math = Class.forName("java.lang.Math");
                 mMethods = math.getMethods();
             } catch (ClassNotFoundException e) {
-                doDisplayMessage(getString(R.string.java_math_inspection_error) + e.getLocalizedMessage());
+                displayMessage(getString(R.string.java_math_inspection_error) + e.getLocalizedMessage());
             }
         }
 
@@ -1361,7 +1360,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             if (result != null)
                 mStack.push(castTypeToDouble(method.getGenericReturnType().toString(), result));
         } catch (Exception e) {
-            GenericDialog.displayMessage(this, getString(R.string.function_call_err) + e.getMessage());
+            displayMessage(getString(R.string.function_call_err) + e.getMessage());
             runOk = false;
         } finally {
             // we've eaten the stack anyway...
@@ -1379,78 +1378,70 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      */
     void drawFunction(String expression) {
         String script =
-                "fundef fun_of_x\n" +
-                        "    infixed " + expression + "\n" +
-                        "end_fundef\n" +
-                        "\n" +
-                        "fundef inc_x\n" +
-                        "    !x\n" +
-                        "    0.025\n" +
-                        "    +\n" +
-                        "    ?x\n" +
-                        "end_fundef\n" +
-                        "\n" +
-                        "?\"" + getString(R.string.min_x) + "\n" +
-                        "dup\n" +
-                        "?min_x\n" +
-                        "?x\n" +
-                        "\n" +
-                        "?\"" + getString(R.string.max_x) + "\n" +
-                        "?max_x\n" +
-                        "\n" +
-                        "?\"" + getString(R.string.min_y) + "\n" +
-                        "?min_y\n" +
-                        "\n" +
-                        "?\"" + getString(R.string.max_y) + "\n" +
-                        "?max_y\n" +
-                        "\n" +
-                        "0\n" +
-                        "0\n" +
-                        "0\n" +
-                        "erase\n" +
-                        "\n" +
-                        "255\n" +
-                        "255\n" +
-                        "255\n" +
-                        "color\n" +
-                        "\n" +
-                        "!min_x\n" +
-                        "!max_x\n" +
-                        "!min_y\n" +
-                        "!max_y\n" +
-                        "range\n" +
-                        "\n" +
-                        "!min_x\n" +
-                        "0\n" +
-                        "!max_x\n" +
-                        "0\n" +
-                        "line\n" +
-                        "0\n" +
-                        "!min_y\n" +
-                        "0\n" +
-                        "!max_y\n" +
-                        "line\n" +
-                        "\n" +
-                        "255\n" +
-                        "0\n" +
-                        "0\n" +
-                        "color\n" +
-                        "\n" +
-                        "!x\n" +
-                        "while\n" +
-                        "    drop\n" +
-                        "    funcall fun_of_x\n" +
-                        "    !x\n" +
-                        "    swap\n" +
-                        "    plot\n" +
-                        "    funcall inc_x\n" +
-                        "    !x\n" +
-                        "    !max_x\n" +
-                        "    <=\n" +
-                        "end_while\n" +
-                        "\n" +
-                        "fundel fun_of_x\n" +
-                        "fundel inc_x\n";
+                    "?\"" + getString(R.string.min_x) + "\n" +
+                    "dup\n" +
+                    "?min_x\n" +
+                    "?x\n" +
+                    "\n" +
+                    "?\"" + getString(R.string.max_x) + "\n" +
+                    "?max_x\n" +
+                    "\n" +
+                    "?\"" + getString(R.string.min_y) + "\n" +
+                    "?min_y\n" +
+                    "\n" +
+                    "?\"" + getString(R.string.max_y) + "\n" +
+                    "?max_y\n" +
+                    "\n" +
+                    "0\n" +
+                    "0\n" +
+                    "0\n" +
+                    "erase\n" +
+                    "\n" +
+                    "255\n" +
+                    "255\n" +
+                    "255\n" +
+                    "color\n" +
+                    "\n" +
+                    "!min_x\n" +
+                    "!max_x\n" +
+                    "!min_y\n" +
+                    "!max_y\n" +
+                    "range\n" +
+                    "\n" +
+                    "!min_x\n" +
+                    "0\n" +
+                    "!max_x\n" +
+                    "0\n" +
+                    "line\n" +
+                    "0\n" +
+                    "!min_y\n" +
+                    "0\n" +
+                    "!max_y\n" +
+                    "line\n" +
+                    "\n" +
+                    "255\n" +
+                    "0\n" +
+                    "0\n" +
+                    "color\n" +
+                    "\n" +
+                    "!x\n" +
+                    "!max_x\n" +
+                    "<=\n" +
+                    "while\n" +
+                    "    drop\n" +
+                    "    infixed " + expression + "\n" +
+                    "    !x\n" +
+                    "    swap\n" +
+                    "    plot\n" +
+                    "    !x\n" +
+                    "    0.025\n" +
+                    "    +\n" +
+                    "    dup\n" +
+                    "    ?x\n" +
+                    "    !max_x\n" +
+                    "    <=\n" +
+                    "end_while\n" +
+                    "drop\n";
 
         executeScript(script);
     }
@@ -1494,7 +1485,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         generateScript(R.raw.whirl, getDefaultScriptsAbsolutePath() + "/" + WHIRL_SCRIPT_NAME + SCRIPT_EXTENSION);
         generateScript(R.raw.x_pow_y, getDefaultScriptsAbsolutePath() + "/" + X_POW_Y_SCRIPT_NAME + SCRIPT_EXTENSION);
 
-        GenericDialog.displayMessage(mActivity, getString(R.string.scripts_generated));
+        displayMessage(getString(R.string.scripts_generated));
     }
 
     /**
@@ -1765,7 +1756,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         }
 
         // the function was not found
-        doDisplayMessage(getString(R.string.undefined_function) + function);
+        displayMessage(getString(R.string.undefined_function) + function);
 
         return false;
     }
@@ -2184,7 +2175,20 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     /**
-     * Displays a message in an application modal (blocking) dialog
+     * CALL FROM UI or NON UI thread : Displays a message in an application modal (blocking) dialog
+     *
+     * @param message is the message to be displayed.
+     */
+    private void displayMessage(String message) {
+        if (Looper.getMainLooper().isCurrentThread()) {
+            GenericDialog.displayMessage(this, message);
+        } else {
+            doDisplayMessage(message);
+        }
+    }
+
+    /**
+     * DO NOT CALL FROM UI THREAD : Displays a message in an application modal (blocking) dialog.
      *
      * @param message is the message to be displayed.
      */

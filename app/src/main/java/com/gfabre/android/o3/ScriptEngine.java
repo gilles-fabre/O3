@@ -637,6 +637,8 @@ public class ScriptEngine {
         Symbol  symbol;
         boolean runOk = true, stop = false;
 
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.interpreting_script));
+
         // a (new) script is running
         mCounter.incrementAndGet();
 
@@ -652,7 +654,6 @@ public class ScriptEngine {
         System.out.println("\n\n");
         // ####
         */
-        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.preparing_script));
 
         // we enter here to either execute a complete script or a script sub-block (if/else/while/funcall)
         newContext = new Context(Context.State.RUNNING);
@@ -691,7 +692,6 @@ public class ScriptEngine {
         System.out.println("\n\n");
         // ####
         */
-        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.interpreting_script));
 
         while (runOk && !stop) {
             curContext = mContexts.peek();
@@ -990,7 +990,7 @@ public class ScriptEngine {
                             break;
 
                         case FUNDEF:
-                            //  all lines until END_FUNDEF are save into the functions hashmap
+                            //  all lines until END_FUNDEF are saved into the functions hashmap
                             newContext = new Context(Context.State.FUNDEF_BLOCK_ANALYSIS);
                             newContext.mBlockId = curLexer.identifier;
                             newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
@@ -1118,7 +1118,6 @@ public class ScriptEngine {
         System.out.println("\n\n");
         // ####
         */
-        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.exiting_script));
 
         // pops the current context
         mContexts.pop();
@@ -1191,17 +1190,15 @@ public class ScriptEngine {
         boolean compileOk = true;
         boolean stop = false;
 
+        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.compiling_script));
+
         Context newContext;
         Context curContext = mContexts.isEmpty() ? null : mContexts.peek();
-
-        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.preparing_script));
 
         // we enter here to compile a complete script or a script sub-block (if/else/while/funcall)
         newContext = new Context(Context.State.RUNNING);
         newContext.mLexer = new ScriptLexer(new StringReader(mScript));
         mContexts.push(newContext);
-
-        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.compiling_script));
 
         while (compileOk && !stop) {
             curContext = mContexts.peek();
@@ -1498,7 +1495,7 @@ public class ScriptEngine {
                             break;
 
                         case FUNDEF:
-                            //  all lines until END_FUNDEF are save into the functions hashmap
+                            //  all lines until END_FUNDEF are saved into the functions hashmap
                             newContext = new Context(Context.State.FUNDEF_BLOCK_ANALYSIS);
                             newContext.mBlockId = curLexer.identifier;
                             newContext.mBlockStart = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn()) + curLexer.yylength();
@@ -1611,8 +1608,6 @@ public class ScriptEngine {
             // we may need to stop at next iteration if required
             stop |= mStopRequired;
         }
-
-        mCalculator.doDisplayProgressMessage(mCalculator.getString(R.string.exiting_script));
 
         // pops the current context
         mContexts.pop();
