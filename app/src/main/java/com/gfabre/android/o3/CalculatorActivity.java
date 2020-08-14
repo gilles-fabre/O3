@@ -1606,7 +1606,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
-        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be debugged (see .o3s provided examples).\n", 0, false);
+        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be debugged (see .o3s provided examples). Functions defined (fundef) in debug mode can't be used outside of the debugged script (they're volatile).\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
@@ -1723,7 +1723,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\tline3D : draws a line with the current color, dot size, at the x0, y0, z0, x1, y1, z1 coordinates given by the six topmost values of the stack.\n", 0, false);
         helpView.appendText("\t\tmath_call _f : calls the java maths function _f.\n", 0, false);
         helpView.appendText("\t\trun_script _s : runs the script _s.\n", 0, false);
-        helpView.appendText("\t\tdebug_break : pops up a modal dialog reading various debugging information. The standard 'step over', 'step in', 'step out' are supported. 'resume' resumes the script execution and ends the debugging session. 'exit' terminates the script..\n", 0, false);
+        helpView.appendText("\t\tdebug_break : when in debug mode, pops up a modal dialog reading various debugging information. The standard 'step over', 'step in', 'step out' are supported. 'resume' resumes the script execution and ends the debugging session. 'exit' terminates the script..\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.BIG_FONT);

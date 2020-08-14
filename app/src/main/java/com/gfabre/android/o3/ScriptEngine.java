@@ -227,6 +227,30 @@ public class ScriptEngine {
     }
 
     /**
+     * Compiles the passed script block into the global compiled functions
+     * hashmap and saves the block in the global functions hashmap, both associated with
+     * the function name key.
+     *
+     * @param function is the name of the function to compile & save
+     * @param block is the script block for the function
+     */
+    private boolean compileAndSaveFunction(String function, String block) {
+        ArrayList<ScriptOperation> functionLambdaCode = new ArrayList<ScriptOperation>();
+        try {
+            if (new ScriptEngine(this, mCalculator, block).compileScript(functionLambdaCode)) {
+                mCompiledFunctions.put(function, functionLambdaCode);
+                mFunctions.put(function, block);
+
+                return true;
+            }
+        } catch (IOException e) {
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
      * Execute the subscript block associated with the function name key.
      *
      * @param function is the name of the function to execute
@@ -251,31 +275,24 @@ public class ScriptEngine {
         return runOk;
     }
 
-    // compiled counterpat
-    private boolean compileCallFunction(String function, ArrayList<ScriptOperation> lambdaCode) {
-        boolean compileOk = false;
-
-        if (!mFunctions.containsKey(function)) {
+    // compiled counterpart
+    private boolean compileFunctionCall(String function, ArrayList<ScriptOperation> lambdaCode) {
+        if (!mCompiledFunctions.containsKey(function)) {
             mCalculator.doDisplayMessage(mCalculator.getString(R.string.undefined_function) + function);
             return false;
         }
 
-        // if not done yet, compile the function in the context of a new engine
-        ArrayList<ScriptOperation> functionLambdaCode = new ArrayList<>();
-        try {
-            if (!(compileOk = mCompiledFunctions.containsKey(function)) &&
-                (compileOk = new ScriptEngine(this, mCalculator, mFunctions.get(function)).compileScript(functionLambdaCode)))
-                mCompiledFunctions.put(function, functionLambdaCode);
+        // compile the function call in the context of a new engine
+        /*
+        lambdaCode.add(() -> {
+            executeScript(mCompiledFunctions.get(function));
+            return true;
+        });
+        */
+        // inlined version
+        lambdaCode.addAll(mCompiledFunctions.get(function));
 
-            lambdaCode.add(() -> {
-                executeScript(mCompiledFunctions.get(function));
-                return true;
-            });
-        } catch (IOException e) {
-            // ignored on purpose
-        }
-
-        return compileOk;
+        return true;
     }
 
     /**
@@ -1326,7 +1343,7 @@ public class ScriptEngine {
                             if (mInnerFundef == 0) {
                                 mContexts.pop();
                                 curContext.mBlockEnd = computeOffsetFromStartOfBlock(curLexer.yyline(), curLexer.yycolumn());
-                                saveFunction(curContext.mBlockId, mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
+                                compileOk = compileAndSaveFunction(curContext.mBlockId, mScript.substring(curContext.mBlockStart, curContext.mBlockEnd));
                             } else
                                 --mInnerFundef;
                             break;
@@ -1515,7 +1532,7 @@ public class ScriptEngine {
 
                         case FUNCALL:
                             // interprets the given script, from the functions hashmap, using a new engine
-                            compileOk = compileCallFunction(curLexer.identifier, lambdaCode);
+                            compileOk = compileFunctionCall(curLexer.identifier, lambdaCode);
                             break;
 
                         case JAVA_MATH_CALL: {
