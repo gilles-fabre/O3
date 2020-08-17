@@ -261,14 +261,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
     /**
      *
-     * @return the default path where scripts shouls go.
+     * @return the default path where data should go.
      */
-    private String getDefaultScriptsPath() {
+    private String getDefaultDataPath() {
         File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         return dir == null ? "/" : dir.getPath();
     }
 
-    private String getDefaultScriptsAbsolutePath() {
+    private String getDefaultDataAbsolutePath() {
         File dir = Environment.getExternalStorageState() == null ? Environment.getDataDirectory() : Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         return dir == null ? "/" : dir.getAbsolutePath();
     }
@@ -429,11 +429,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                // generate a default init script if none exists
-                generateDefaultInitScript();
-
                 // path to the external download directory if available, internal one else.
-                new FileChooser(INIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultScriptsPath());
+                new FileChooser(INIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultDataPath());
                 return true;
             }
         });
@@ -458,7 +455,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                new FileChooser(DEBUG_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultScriptsPath());
+                new FileChooser(DEBUG_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultDataPath());
                 return true;
             }
         });
@@ -472,7 +469,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
                 pushValueOnStack();
-                new FileChooser(RUN_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultScriptsPath());
+                new FileChooser(RUN_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultDataPath());
                 return true;
             }
         });
@@ -522,7 +519,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                new FileChooser(EDIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultScriptsPath());
+                new FileChooser(EDIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultDataPath());
                 return true;
             }
         });
@@ -535,7 +532,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                new EditScriptDialog(mActivity, getDefaultScriptsAbsolutePath() + "/" + getString(R.string.new_script_name));
+                new EditScriptDialog(mActivity, getDefaultDataAbsolutePath() + "/" + getString(R.string.new_script_name));
                 return true;
             }
         });
@@ -613,11 +610,33 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                         getString(R.string.enter_png_filename), null);
 
                 try {
-                    filename = getDefaultScriptsAbsolutePath() + "/" + filename;
+                    filename = getDefaultDataAbsolutePath() + "/" + filename;
                     mGraphView.saveToPngFile(filename);
                     displayMessage(getString(R.string.saved_png) + filename);
                 } catch (IOException e) {
                     displayMessage(getString(R.string.error_saving_png) + e.getLocalizedMessage());
+                }
+                return true;
+            }
+        });
+
+        /**
+         * Loads the graph view from a png
+         */
+        item = submenu.add(getString(R.string.load_graph));
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                String filename = GenericDialog.promptMessage(mActivity,
+                        InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
+                        getString(R.string.enter_png_filename), null);
+
+                try {
+                    filename = getDefaultDataAbsolutePath() + "/" + filename;
+                    mGraphView.loadFromPngFile(filename);
+                    displayMessage(getString(R.string.loaded_png) + filename);
+                } catch (IOException e) {
+                    displayMessage(getString(R.string.error_loading_png) + e.getLocalizedMessage());
                 }
                 return true;
             }
@@ -1153,9 +1172,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
 
         // init script
-        if (prefs.contains(INIT_SCRIPT_NAME)) {
+
+        // generate the default init script if it doesn't exist
+        // WARNING : this resets the mInitScriptName to its default
+        generateDefaultInitScript();
+
+        // reload init script name
+        if (prefs.contains(INIT_SCRIPT_NAME))
             mInitScriptName = prefs.getString(INIT_SCRIPT_NAME, null);
 
+        if (mInitScriptName != null) {
             // run the init script
             try {
                 executeScript(readFile(mInitScriptName));
@@ -1447,43 +1473,46 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     private void generateScript(int Id, String filename) {
-        if (!new File(filename).exists()) {
-            try {
-                mInitScriptName = filename;
-                InputStream is = getResources().openRawResource(Id);
-                InputStreamReader isr = new InputStreamReader(is);
-                String s = "";
-                int c;
-                while ((c = isr.read()) != -1)
-                    s += (char) c;
-                writeFile(filename, s);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        try {
+            InputStream is = getResources().openRawResource(Id);
+            InputStreamReader isr = new InputStreamReader(is);
+            String s = "";
+            int c;
+            while ((c = isr.read()) != -1)
+                s += (char) c;
+            writeFile(filename, s);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     private void generateDefaultInitScript() {
         // create the init script out of the resources if it doesn't exist yet
-        generateScript(R.raw.functions, getDefaultScriptsAbsolutePath() + "/" + DEFAULT_INIT_SCRIPT_NAME + SCRIPT_EXTENSION);
+        String initScriptName = getDefaultDataAbsolutePath() + "/" + DEFAULT_INIT_SCRIPT_NAME + SCRIPT_EXTENSION;
+        if (!new File(initScriptName).exists()) {
+            // set the init script name upon initial script creation only
+            // so it can be modified by the user
+            mInitScriptName = initScriptName;
+            generateScript(R.raw.functions, mInitScriptName);
+        }
     }
 
     private void generateSampleScripts() {
         // generate all the samples if they do not exist yet
-        generateScript(R.raw.array_test, getDefaultScriptsAbsolutePath() + "/" + ARRAY_TEST_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.butterfly, getDefaultScriptsAbsolutePath() + "/" + BUTTERFLY_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.decrement_speed_test, getDefaultScriptsAbsolutePath() + "/" + DECREMENT_SPEED_TEST_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.draw_circles, getDefaultScriptsAbsolutePath() + "/" + DRAW_CIRCLES_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.draw_log2, getDefaultScriptsAbsolutePath() + "/" + DRAW_LOG2_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.draw_polygon, getDefaultScriptsAbsolutePath() + "/" + DRAW_POLYGON_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.draw_pow2, getDefaultScriptsAbsolutePath() + "/" + DRAW_POW2_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.draw_sine, getDefaultScriptsAbsolutePath() + "/" + DRAW_SINE_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.draw_sine_color, getDefaultScriptsAbsolutePath() + "/" + DRAW_SINE_COLOR_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.draw_sine_color3d, getDefaultScriptsAbsolutePath() + "/" + DRAW_SINE_COLOR3D_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.inner_while_test, getDefaultScriptsAbsolutePath() + "/" + INNER_WHILE_TEST_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.rand_plot, getDefaultScriptsAbsolutePath() + "/" + RAND_PLOT_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.whirl, getDefaultScriptsAbsolutePath() + "/" + WHIRL_SCRIPT_NAME + SCRIPT_EXTENSION);
-        generateScript(R.raw.x_pow_y, getDefaultScriptsAbsolutePath() + "/" + X_POW_Y_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.array_test, getDefaultDataAbsolutePath() + "/" + ARRAY_TEST_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.butterfly, getDefaultDataAbsolutePath() + "/" + BUTTERFLY_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.decrement_speed_test, getDefaultDataAbsolutePath() + "/" + DECREMENT_SPEED_TEST_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_circles, getDefaultDataAbsolutePath() + "/" + DRAW_CIRCLES_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_log2, getDefaultDataAbsolutePath() + "/" + DRAW_LOG2_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_polygon, getDefaultDataAbsolutePath() + "/" + DRAW_POLYGON_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_pow2, getDefaultDataAbsolutePath() + "/" + DRAW_POW2_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_sine, getDefaultDataAbsolutePath() + "/" + DRAW_SINE_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_sine_color, getDefaultDataAbsolutePath() + "/" + DRAW_SINE_COLOR_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.draw_sine_color3d, getDefaultDataAbsolutePath() + "/" + DRAW_SINE_COLOR3D_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.inner_while_test, getDefaultDataAbsolutePath() + "/" + INNER_WHILE_TEST_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.rand_plot, getDefaultDataAbsolutePath() + "/" + RAND_PLOT_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.whirl, getDefaultDataAbsolutePath() + "/" + WHIRL_SCRIPT_NAME + SCRIPT_EXTENSION);
+        generateScript(R.raw.x_pow_y, getDefaultDataAbsolutePath() + "/" + X_POW_Y_SCRIPT_NAME + SCRIPT_EXTENSION);
 
         displayMessage(getString(R.string.scripts_generated));
     }
@@ -1687,6 +1716,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         helpView.setFontSize(ColorLogView.SMALL_FONT);
         helpView.appendText("\t\tPrompts the user for a .png filename to save the graph to (no path, no extension expected).\n", 0, false);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
+        helpView.appendText("\n\nGraph View/Load.. menu :\n", 0x008888, true);
+        helpView.resetFontSize();
+
+        helpView.setFontSize(ColorLogView.SMALL_FONT);
+        helpView.appendText("\t\tPrompts the user for a .png filename to load the graph from (no path, no extension expected).\n", 0, false);
         helpView.resetFontSize();
 
         helpView.appendText("\nNOTE: running any script first pushes the edited value (if present) on the stack.\n", 0, true);

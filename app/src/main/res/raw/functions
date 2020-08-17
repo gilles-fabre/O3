@@ -238,3 +238,17 @@ fundef max
    !max
 end_fundef
 
+fundef fact
+    dup
+    1
+    >
+    if
+        drop
+        dup
+        funcall dec
+        funcall fact
+        *
+    else
+        drop
+    end_if
+end_fundef

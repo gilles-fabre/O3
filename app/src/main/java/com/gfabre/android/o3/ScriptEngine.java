@@ -277,20 +277,21 @@ public class ScriptEngine {
 
     // compiled counterpart
     private boolean compileFunctionCall(String function, ArrayList<ScriptOperation> lambdaCode) {
+        // recursive function call can't be inlined
         if (!mCompiledFunctions.containsKey(function)) {
-            mCalculator.doDisplayMessage(mCalculator.getString(R.string.undefined_function) + function);
-            return false;
+            // compile the function call in the context of a new engine
+            lambdaCode.add(() -> {
+                ArrayList<ScriptOperation> functionCode = mCompiledFunctions.get(function);
+                if (functionCode == null) {
+                        mCalculator.doDisplayMessage(mCalculator.getString(R.string.undefined_function) + function);
+                        return false;
+                }
+                return executeScript(functionCode);
+            });
+        } else {
+            // inlined version
+            lambdaCode.addAll(mCompiledFunctions.get(function));
         }
-
-        // compile the function call in the context of a new engine
-        /*
-        lambdaCode.add(() -> {
-            executeScript(mCompiledFunctions.get(function));
-            return true;
-        });
-        */
-        // inlined version
-        lambdaCode.addAll(mCompiledFunctions.get(function));
 
         return true;
     }

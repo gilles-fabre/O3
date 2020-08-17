@@ -3,6 +3,7 @@ package com.gfabre.android.o3;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -67,18 +68,17 @@ public class GraphView extends ScrollImageView {
         mPovY = 0.0;
         mPovZ = 0.0;
 
+        mPaint = new Paint();
+        mPaint.setStrokeWidth(DOT_SIZE);
+        mPaint.setStrokeCap(Paint.Cap.ROUND);
+
         // create a bitmap of that dimension
         mBitmap = Bitmap.createBitmap(mWidth,
         							  mHeight,
     								  Bitmap.Config.ARGB_8888); 
-		if (mBitmap == null)
-			return;
 
 		setImage(mBitmap);
         mBmpCanvas = new Canvas(mBitmap);
-        mPaint = new Paint();
-        mPaint.setStrokeWidth(DOT_SIZE);
-        mPaint.setStrokeCap(Paint.Cap.ROUND);
     }
 
     /**
@@ -299,5 +299,14 @@ public class GraphView extends ScrollImageView {
         FileOutputStream out = new FileOutputStream(filename);
         mBitmap.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
         out.close();
+    }
+
+    @SuppressLint("WrongThread")
+    public void loadFromPngFile(String filename) throws IOException {
+        if (!filename.endsWith(".png") && !filename.endsWith(".PNG"))
+            filename += ".png";
+        Bitmap bitmap = BitmapFactory.decodeFile(filename);
+        if (bitmap != null)
+            mBmpCanvas.drawBitmap(bitmap, (float)0, (float)0, mPaint);
     }
 }
