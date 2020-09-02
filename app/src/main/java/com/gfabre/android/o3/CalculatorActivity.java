@@ -64,7 +64,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final int HELP_DIALOG_ID = R.layout.log_view;
     private static final int GRAPH_DIALOG_ID = R.layout.graph_view;
     private static final String SCRIPT_EXTENSION = ".o3s";
-    private static final String INIT_SCRIPT_NAME = "InitScriptFilename";
     private static final String DEFAULT_INIT_SCRIPT_NAME = "InitScript";
     private static final String ARRAY_TEST_SCRIPT_NAME = "ArrayTest";
     private static final String BUTTERFLY_SCRIPT_NAME  = "Butterfly";
@@ -423,31 +422,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         submenu = menu.addSubMenu(R.string.scripts);
 
         /**
-         * Pick an init script
-         */
-        item = submenu.add(getString(R.string.init_script));
-        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                // path to the external download directory if available, internal one else.
-                new FileChooser(INIT_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultDataPath());
-                return true;
-            }
-        });
-
-        /**
-         * Remove init script
-         */
-        item = submenu.add(getString(R.string.cancel_init_script));
-        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                mInitScriptName = null;
-                return true;
-            }
-        });
-
-        /**
          * Pick and debug a script
          */
         item = submenu.add(getString(R.string.debug_script));
@@ -784,21 +758,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 new EditScriptDialog(this, filename);
             }
             break;
-
-            case INIT_SCRIPT_DIALOG_ID: {
-                // saves the init script name in the preferences
-                // it'll be run every time the program starts
-                mInitScriptName = dialog.getBundle().getString(FileChooser.FILENAME);
-
-                // run the init script
-                try {
-                    executeScript(readFile(mInitScriptName));
-                } catch (Exception e) {
-                    displayMessage(getString(R.string.init_script_error) + e.getLocalizedMessage());
-                    mInitScriptName = null;
-                }
-            }
-            break;
         }
     }
 
@@ -846,9 +805,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         // notice about help was shown, do not present it again
         editor.putBoolean(READ_HELP_FIRST_FLAG, true);
 
-        // save the init script
-        editor.putString(INIT_SCRIPT_NAME, mInitScriptName);
-
         // save the function buttons
         for (int i = 0; i < NUM_FUNC_BUTTONS; i++) {
             editor.putString(FUNCTION_TITLES_KEY + i, mFunctionTitles[i] == null ? "" : mFunctionTitles[i]);
@@ -890,8 +846,21 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 }
             } else {
                 // Permission has already been granted
+
+                // generate the default init script if it doesn't exist
+                // WARNING : this resets the mInitScriptName to its default
+                generateDefaultInitScript();
             }
         }
+    }
+
+    public void onRequestPermissionsResult (int requestCode,
+                                            String[] permissions,
+                                            int[] grantResults) {
+        if (requestCode == 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            // generate the default init script if it doesn't exist
+            // WARNING : this resets the mInitScriptName to its default
+            generateDefaultInitScript();
     }
 
     /**
@@ -1170,16 +1139,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         super.onResume();
         // get the preferences
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-
-        // init script
-
-        // generate the default init script if it doesn't exist
-        // WARNING : this resets the mInitScriptName to its default
-        generateDefaultInitScript();
-
-        // reload init script name
-        if (prefs.contains(INIT_SCRIPT_NAME))
-            mInitScriptName = prefs.getString(INIT_SCRIPT_NAME, null);
 
         if (mInitScriptName != null) {
             // run the init script
@@ -1492,9 +1451,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (!new File(initScriptName).exists()) {
             // set the init script name upon initial script creation only
             // so it can be modified by the user
-            mInitScriptName = initScriptName;
-            generateScript(R.raw.functions, mInitScriptName);
+            generateScript(R.raw.functions, initScriptName);
         }
+        mInitScriptName = initScriptName;
     }
 
     private void generateSampleScripts() {
@@ -1612,22 +1571,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.setFontSize(ColorLogView.SMALL_FONT);
         helpView.appendText("\t\t'Menu listing all the functions defined (see defun) in scripts which have been run. The selected function, if any, will be applied to the stack.\n", 0, false);
         helpView.appendText("\nNOTE: all of the these actions, except 'N' first push the edited value (if present) on the stack. \n", 0, true);
-        helpView.resetFontSize();
-
-        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
-        helpView.appendText("\n\nScripts/Select Init Script.. menu :\n", 0x008888, true);
-        helpView.resetFontSize();
-
-        helpView.setFontSize(ColorLogView.SMALL_FONT);
-        helpView.appendText("\t\tPops up a dialog where one can pick an O3 script to be run upon o3 start. A script named InitScript.o3s was automatically generated. It contains a few useful functions. You can give it a try!\n", 0, false);
-        helpView.resetFontSize();
-
-        helpView.setFontSize(ColorLogView.MEDIUM_FONT);
-        helpView.appendText("\n\nScripts/Cancel Init Script.. menu :\n", 0x008888, true);
-        helpView.resetFontSize();
-
-        helpView.setFontSize(ColorLogView.SMALL_FONT);
-        helpView.appendText("\t\tThe previously selected init script won't be run anymore upon o3 start.\n", 0, false);
         helpView.resetFontSize();
 
         helpView.setFontSize(ColorLogView.MEDIUM_FONT);
