@@ -306,6 +306,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                     return true;
 
                 executeScript(mHistory);
+                updateStackView();
                 return true;
             }
         });
