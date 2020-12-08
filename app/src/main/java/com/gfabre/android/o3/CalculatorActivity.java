@@ -44,6 +44,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.concurrent.Semaphore;
@@ -105,7 +107,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static CalculatorActivity mActivity;         // this reference
 
     private String mHistory = "";                        // all actions history from beginning of time.
-    private Stack<Double> mStack = new Stack<>();        // values stack
+    private Stack<BigDecimal> mStack = new Stack<>();        // values stack
     private String mValue = "";                          // value currently edited
     private EditText mValueField = null;                 // value edit field
     private ListView mStackView = null;                  // stack view
@@ -147,11 +149,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                     // prompt the user to enter a value
                     PromptForValueMessage prompt = (PromptForValueMessage) inputMessage.obj;
                     try {
-                        prompt.mValue =
-                                Double.valueOf(GenericDialog.promptMessage(mActivity,
+                        prompt.mValue = new BigDecimal(GenericDialog.promptMessage(mActivity,
                                         InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
                                         prompt.mMessage,
-                                        null));
+                                        null), MathContext.UNLIMITED);
                     } catch (NumberFormatException e) {
                         displayMessage(getString(R.string.invalid_number) + e.getMessage());
                     }
@@ -182,16 +183,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         return !mStack.isEmpty();
     }
 
-    public void doPushValueOnStack(Double value) {
+    public void doPushValueOnStack(BigDecimal value) {
         mStack.push(value);
     }
 
-    public Double doPopValueFromStack() {
-        return mStack.isEmpty() ? Double.NaN : mStack.pop();
+    public BigDecimal doPopValueFromStack() {
+        return mStack.isEmpty() ? BigDecimal.valueOf(0) : mStack.pop();
     }
 
-    public Double doPeekValueFromStack() {
-        return mStack.isEmpty() ? Double.NaN : mStack.peek();
+    public BigDecimal doPeekValueFromStack() {
+        return mStack.isEmpty() ? BigDecimal.valueOf(0) : mStack.peek();
     }
 
     /**
@@ -204,10 +205,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         // make sure we're pushing a properly formatted double
         try {
             mHistory += mValue + "\n";
-            mStack.push(Double.valueOf(mValue));
+            mStack.push(new BigDecimal(mValue, MathContext.UNLIMITED));
             updateStackView();
         } catch (Exception e) {
-            // there ain't much we can do here
             displayMessage(getString(R.string.invalid_number) + mValue);
         } finally {
             mValue = "";
@@ -643,10 +643,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         super.onSaveInstanceState(savedInstanceState);
 
         savedInstanceState.putString(EDITED_VALUE_KEY, mValue);
-        double[] doubleArray = new double[mStack.size()];
+        String[] valuesArray = new String[mStack.size()];
         for (int i = 0; i < mStack.size(); i++)
-            doubleArray[i] = mStack.get(i);
-        savedInstanceState.putDoubleArray(STACK_CONTENT_KEY, doubleArray);
+            valuesArray[i] = mStack.get(i).toEngineeringString();
+        savedInstanceState.putStringArray(STACK_CONTENT_KEY, valuesArray);
 
         // history
         savedInstanceState.putString(HISTORY_SCRIPT_KEY, mHistory);
@@ -663,12 +663,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         super.onRestoreInstanceState(savedInstanceState);
 
         mValue = savedInstanceState.getString(EDITED_VALUE_KEY);
-        double[] doubleArray = savedInstanceState.getDoubleArray(STACK_CONTENT_KEY);
+        String[] valuesArray = savedInstanceState.getStringArray(STACK_CONTENT_KEY);
         mStack.clear();
 
-        if (doubleArray != null) {
-            for (double d : doubleArray)
-                mStack.push(Double.valueOf(d));
+        if (valuesArray != null) {
+            for (String s : valuesArray)
+                mStack.push(new BigDecimal(s, MathContext.UNLIMITED));
         }
 
         mValueField.setText(mValue);
@@ -1236,7 +1236,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * @param classname
      * @return on object corresponding to the passed  className
      */
-    private Object castDoubleToType(String classname, Double value) {
+    private Object castBigDecimalToType(String classname, BigDecimal value) {
         switch (classname) {
             case "Long":
             case "long":
@@ -1250,45 +1250,51 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             case "float":
                 return Float.valueOf(value.floatValue());
 
+            case "BigDecimal":
+                return value;
+
             case "Double":
             case "double":
-                return value;
+                return value.doubleValue();
         }
 
         return null;
     }
 
     /**
-     * Returns an instance of Double from the given type.
+     * Returns an instance of BigDecimal from the given type.
      *
      * @param classname
      * @return on object corresponding to the passed  className
      */
-    private Double castTypeToDouble(String classname, Object value) {
+    private BigDecimal castTypeToBigDecimal(String classname, Object value) {
         switch (classname) {
             case "Long":
-                return Double.valueOf((Long) value);
+                return BigDecimal.valueOf((Long) value);
 
             case "long":
-                return Double.valueOf((long) value);
+                return BigDecimal.valueOf((long) value);
 
             case "Integer":
-                return Double.valueOf((Integer) value);
+                return BigDecimal.valueOf((Integer) value);
 
             case "int":
-                return Double.valueOf((int) value);
+                return BigDecimal.valueOf((int) value);
 
             case "Float":
-                return Double.valueOf((Float) value);
+                return BigDecimal.valueOf((Float) value);
 
             case "float":
-                return Double.valueOf((float) value);
+                return BigDecimal.valueOf((float) value);
+
+            case "BigDecimal":
+                return (BigDecimal)value;
 
             case "Double":
-                return (Double) value;
+                return BigDecimal.valueOf((Double) value);
 
             case "double":
-                return Double.valueOf((double) value);
+                return BigDecimal.valueOf((double) value);
         }
 
         return null;
@@ -1337,14 +1343,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         // prepare the parameters.
         Object[] argObjects = new Object[numParams];
         while (--numParams >= 0)
-            argObjects[numParams] = castDoubleToType(params[numParams].toString(), mStack.pop());
+            argObjects[numParams] = castBigDecimalToType(params[numParams].toString(), mStack.pop());
 
         // invoke the method
         boolean runOk = true;
         try {
             Object result = method.invoke(null, argObjects);
             if (result != null)
-                mStack.push(castTypeToDouble(method.getGenericReturnType().toString(), result));
+                mStack.push(castTypeToBigDecimal(method.getGenericReturnType().toString(), result));
         } catch (Exception e) {
             displayMessage(getString(R.string.function_call_err) + e.getMessage());
             runOk = false;
@@ -1680,7 +1686,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\t_value : pushes the _value onto the stack.\n", 0, false);
         helpView.appendText("\t\t+, -, *, / : have the same effect as their UI equivalents.\n", 0, false);
         helpView.appendText("\t\t% : Pushes the modulus (remaining part of division) on the stack.\n", 0, false);
-        helpView.appendText("\t\t&lt&gt, &lt, &lt=, &gt, &gt= : pop the two topmost values and pushes the result (0 means false, not 0.0 means true) of their comparison on the stack.\n", 0, false);
+        helpView.appendText("\t\t&lt&gt, &lt, &lt=, &gt, &gt= : pop the two topmost values and pushes the result (0 means false, any other value means true) of their comparison on the stack.\n", 0, false);
         helpView.appendText("\t\tif, [else], end_if : conditional block[s], if and else do not pop the 'test' value off the stack.\n", 0, false);
         helpView.appendText("\t\twhile, end_while : iteration block[s], while does not pop the 'test' value off the stack.\n", 0, false);
         helpView.appendText("\t\tfundef _f, end_fundef : defines a function _f which can later be invoked (until deleted) from any script during the session.\n", 0, false);
@@ -1754,9 +1760,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 +
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1 + v2);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(v1.add(v2));
         if (!fromEngine)
             updateStackView();
 
@@ -1772,9 +1778,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 -
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1 - v2);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(v1.subtract(v2));
         if (!fromEngine)
             updateStackView();
 
@@ -1790,9 +1796,15 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 /
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1 / v2);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        BigDecimal result = BigDecimal.valueOf(0);
+        try {
+            result = v1.divide(v2);
+        } catch (Exception e) {
+            // don't report, useless.
+        }
+        mStack.push(result);
         if (!fromEngine)
             updateStackView();
 
@@ -1808,9 +1820,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 *
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1 * v2);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(v1.multiply(v2));
         if (!fromEngine)
             updateStackView();
 
@@ -1835,7 +1847,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         if (!mStack.isEmpty()) {
             // or the top of the stack if present
-            mStack.push(-mStack.pop());
+            mStack.push(mStack.pop().negate());
             if (!fromEngine)
                 updateStackView();
 
@@ -1854,9 +1866,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 %
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1 % v2);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(v1.remainder(v2));
         if (!fromEngine)
             updateStackView();
 
@@ -1872,9 +1884,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 =
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1.doubleValue() == v2.doubleValue() ? 1.0 : 0.0);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) == 0 ? 1 : 0));
         if (!fromEngine)
             updateStackView();
 
@@ -1890,9 +1902,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 !=
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1.doubleValue() != v2.doubleValue() ? 1.0 : 0.0);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) == 0 ? 0 : 1));
         if (!fromEngine)
             updateStackView();
 
@@ -1908,9 +1920,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 <
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1 < v2 ? 1.0 : 0.0);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) < 0 ? 1 : 0));
         if (!fromEngine)
             updateStackView();
 
@@ -1926,9 +1938,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 <=
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1 <= v2 ? 1.0 : 0.0);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) <= 0 ? 1 : 0));
         if (!fromEngine)
             updateStackView();
 
@@ -1944,9 +1956,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 >
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1 > v2 ? 1.0 : 0.0);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) > 0 ? 1 : 0));
         if (!fromEngine)
             updateStackView();
 
@@ -1962,9 +1974,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 >=
-        Double v2 = mStack.pop();
-        Double v1 = mStack.pop();
-        mStack.push(v1 >= v2 ? 1.0 : 0.0);
+        BigDecimal v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) >= 0 ? 1 : 0));
         if (!fromEngine)
             updateStackView();
 
@@ -1982,12 +1994,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.isEmpty())
             return false;
 
-        Double i = mStack.pop();
+        int i = mStack.pop().intValue();
         if (i >= mStack.size())
             return false;
 
-        Double val = mStack.pop();
-        Stack<Double> st = new Stack<>();
+        BigDecimal val = mStack.pop();
+        Stack<BigDecimal> st = new Stack<>();
         while (--i >= 0)
             st.push(mStack.pop());
 
@@ -2024,11 +2036,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.isEmpty())
             return false;
 
-        Double i = mStack.pop();
+        int i = mStack.pop().intValue();
         if (mStack.isEmpty())
             return false;
 
-        Double val = mStack.peek();
+        BigDecimal val = mStack.peek();
         while (--i >= 0)
             mStack.push(val);
 
@@ -2061,7 +2073,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.isEmpty())
             return false;
 
-        Double i = mStack.pop();
+        int i = mStack.pop().intValue();
         if (i > mStack.size())
             return false;
 
@@ -2082,8 +2094,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        Double v1 = mStack.pop();
-        Double v2 = mStack.pop();
+        BigDecimal v1 = mStack.pop();
+        BigDecimal v2 = mStack.pop();
         mStack.push(v1);
         mStack.push(v2);
 
@@ -2101,13 +2113,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.isEmpty())
             return false;
 
-        Double i = mStack.pop();
+        int i = mStack.pop().intValue();
         if (i > mStack.size())
             return false;
 
-        Double v1 = mStack.elementAt(0);
-        Double v2 = mStack.elementAt(i.intValue() - 1);
-        mStack.setElementAt(v1, i.intValue() - 1);
+        BigDecimal v1 = mStack.elementAt(0);
+        BigDecimal v2 = mStack.elementAt(i - 1);
+        mStack.setElementAt(v1, i - 1);
         mStack.setElementAt(v2, 0);
 
         if (!fromEngine)
@@ -2133,7 +2145,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     private boolean stackSize(boolean fromEngine) {
-        mStack.push(Double.valueOf(mStack.size()));
+        mStack.push(BigDecimal.valueOf(mStack.size()));
         if (!fromEngine)
             updateStackView();
 
@@ -2203,12 +2215,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * and passed over to the main UI thread through a message.
      */
     class PromptForValueMessage {
-        double mValue;
+        BigDecimal mValue;
         String mMessage;
         Semaphore mWaitForValue;
 
         public PromptForValueMessage(String message) {
-            mValue = 0;
+            mValue = BigDecimal.valueOf(0);
             mMessage = message;
             mWaitForValue = new Semaphore(0);
         }
@@ -2417,10 +2429,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 2)
             return false;
 
-        Double y = mStack.pop();
-        Double x = mStack.pop();
+        BigDecimal y = mStack.pop();
+        BigDecimal x = mStack.pop();
 
-        mGraphView.doPlot(x, y);
+        mGraphView.doPlot(x.doubleValue(), y.doubleValue());
 
         return true;
     }
@@ -2429,11 +2441,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 3)
             return false;
 
-        Double z = mStack.pop();
-        Double y = mStack.pop();
-        Double x = mStack.pop();
+        BigDecimal z = mStack.pop();
+        BigDecimal y = mStack.pop();
+        BigDecimal x = mStack.pop();
 
-        mGraphView.doPlot3D(x, y, z);
+        mGraphView.doPlot3D(x.doubleValue(), y.doubleValue(), z.doubleValue());
 
         return true;
     }
@@ -2442,12 +2454,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 4)
             return false;
 
-        Double y1 = mStack.pop();
-        Double x1 = mStack.pop();
-        Double y0 = mStack.pop();
-        Double x0 = mStack.pop();
+        BigDecimal y1 = mStack.pop();
+        BigDecimal x1 = mStack.pop();
+        BigDecimal y0 = mStack.pop();
+        BigDecimal x0 = mStack.pop();
 
-        mGraphView.doLine(x0, y0, x1, y1);
+        mGraphView.doLine(x0.doubleValue(), y0.doubleValue(), x1.doubleValue(), y1.doubleValue());
 
         return true;
     }
@@ -2456,14 +2468,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 6)
             return false;
 
-        Double z1 = mStack.pop();
-        Double y1 = mStack.pop();
-        Double x1 = mStack.pop();
-        Double z0 = mStack.pop();
-        Double y0 = mStack.pop();
-        Double x0 = mStack.pop();
+        BigDecimal z1 = mStack.pop();
+        BigDecimal y1 = mStack.pop();
+        BigDecimal x1 = mStack.pop();
+        BigDecimal z0 = mStack.pop();
+        BigDecimal y0 = mStack.pop();
+        BigDecimal x0 = mStack.pop();
 
-        mGraphView.doLine3D(x0, y0, z0, x1, y1, z1);
+        mGraphView.doLine3D(x0.doubleValue(), y0.doubleValue(), z0.doubleValue(), x1.doubleValue(), y1.doubleValue(), z1.doubleValue());
 
         return true;
     }
@@ -2472,11 +2484,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 3)
             return false;
 
-        Double b = mStack.pop();
-        Double g = mStack.pop();
-        Double r = mStack.pop();
+        BigDecimal b = mStack.pop();
+        BigDecimal g = mStack.pop();
+        BigDecimal r = mStack.pop();
 
-        mGraphView.doErase(r, g, b);
+        mGraphView.doErase(r.doubleValue(), g.doubleValue(), b.doubleValue());
 
         return true;
     }
@@ -2485,12 +2497,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 4)
             return false;
 
-        Double yMax = mStack.pop();
-        Double yMin = mStack.pop();
-        Double xMax = mStack.pop();
-        Double xMin = mStack.pop();
+        BigDecimal yMax = mStack.pop();
+        BigDecimal yMin = mStack.pop();
+        BigDecimal xMax = mStack.pop();
+        BigDecimal xMin = mStack.pop();
 
-        mGraphView.setRange(xMin, xMax, yMin, yMax);
+        mGraphView.setRange(xMin.doubleValue(), xMax.doubleValue(), yMin.doubleValue(), yMax.doubleValue());
 
         return true;
     }
@@ -2499,11 +2511,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 3)
             return false;
 
-        Double z = mStack.pop();
-        Double y = mStack.pop();
-        Double x = mStack.pop();
+        BigDecimal z = mStack.pop();
+        BigDecimal y = mStack.pop();
+        BigDecimal x = mStack.pop();
 
-        mGraphView.doPov3D(x, y, z);
+        mGraphView.doPov3D(x.doubleValue(), y.doubleValue(), z.doubleValue());
 
         return true;
     }
@@ -2512,11 +2524,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 3)
             return false;
 
-        Double b = mStack.pop();
-        Double g = mStack.pop();
-        Double r = mStack.pop();
+        BigDecimal b = mStack.pop();
+        BigDecimal g = mStack.pop();
+        BigDecimal r = mStack.pop();
 
-        mGraphView.setColor(r, g, b);
+        mGraphView.setColor(r.doubleValue(), g.doubleValue(), b.doubleValue());
 
         return true;
     }
@@ -2525,9 +2537,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (mStack.size() < 1)
             return false;
 
-        Double s = mStack.pop();
+        BigDecimal s = mStack.pop();
 
-        mGraphView.setDotSize(s);
+        mGraphView.setDotSize(s.doubleValue());
 
         return true;
     }

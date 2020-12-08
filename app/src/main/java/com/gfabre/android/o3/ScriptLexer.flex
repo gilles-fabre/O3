@@ -3,7 +3,7 @@ package com.gfabre.android.o3;
 /* JFlex Script Lexical Analyzer definition file : yylex() will return script tokens  */
 import java_cup.runtime.*;
 import java.lang.String;
-import java.lang.Double;
+import java.math.BigDecimal;
 
 /**
  * This class defines the Script Lexical Analyzer
@@ -90,7 +90,7 @@ import java.lang.Double;
 
   String identifier = null;
   String filename = null;
-  Double doubleValue = null;
+  BigDecimal value = null;
   String expression = null;
 
   public int yyline() {
@@ -208,7 +208,7 @@ Filename = [^\r\n]+
 {JavaMathCall}                 { identifier = yytext().substring(MATH_CALL_LEN).trim(); return symbol(sym.JAVA_MATH_CALL);  }
 {RunScript}                    { filename = yytext().substring(RUN_SCRIPT_LEN).trim(); return symbol(sym.RUN_SCRIPT);  }
 
-{DoubleLiteral}                { try {doubleValue = new Double(yytext());} catch (Exception e) {doubleValue = Double.NaN;} return symbol(sym.DOUBLE_LITERAL); }
+{DoubleLiteral}                { try {value = new BigDecimal(yytext());} catch (Exception e) {value = new BigDecimal(0);} return symbol(sym.DOUBLE_LITERAL); }
 {PushIdentifier}               { identifier = yytext().substring(PUSH_VAR_LEN).trim(); return symbol(sym.PUSH_IDENTIFIER); }
 {PopIdentifier}                { identifier = yytext().substring(POP_VAR_LEN).trim(); return symbol(sym.POP_IDENTIFIER); }
 {PushArrayValue}               { identifier = yytext().substring(PUSH_ARRAY_LEN).trim(); return symbol(sym.PUSH_ARRAY_VALUE); }

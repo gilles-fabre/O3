@@ -6,8 +6,8 @@ android {
         applicationId "com.gfabre.android.o3"
         minSdkVersion 19
         targetSdkVersion 29
-        versionCode 214
-        versionName "2.14"
+        versionCode 300
+        versionName "3.00"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     lintOptions {

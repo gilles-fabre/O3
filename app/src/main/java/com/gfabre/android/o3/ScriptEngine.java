@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.math.BigDecimal;
 
 import java_cup.runtime.Symbol;
 
@@ -66,8 +67,8 @@ public class ScriptEngine {
     private static volatile boolean mStopRequired;
 
     // variables are 'in-scope' only
-    private HashMap<String, Double>     mVariables = new HashMap<>();
-    private HashMap<String, ArrayList<Double>>  mArrays = new HashMap<>();
+    private HashMap<String, BigDecimal>     mVariables = new HashMap<>();
+    private HashMap<String, ArrayList<BigDecimal>>  mArrays = new HashMap<>();
 
     // functions are globally defined
     private static HashMap<String, String>                     mFunctions = new HashMap<>();
@@ -110,7 +111,7 @@ public class ScriptEngine {
      * @param array is the target array
      * @param index is the position[ where to stop filling the array
      */
-    private void extendArrayToIndex(ArrayList<Double> array, int index) {
+    private void extendArrayToIndex(ArrayList<BigDecimal> array, int index) {
         for (int i = array.size(); i <= index; i++)
             array.add(i, null);
     }
@@ -122,7 +123,7 @@ public class ScriptEngine {
      * @param id is the name of the array we're looking for
      * @return the found array or null if it doesn't exist
      */
-    private ArrayList<Double> lookupForArray(String id) {
+    private ArrayList<BigDecimal> lookupForArray(String id) {
         if (mArrays.containsKey(id))
             return mArrays.get(id);
         if (mParent != null)
@@ -138,9 +139,9 @@ public class ScriptEngine {
      * @param index is the position of the entry to set in the array
      * @param value is the value to set
      */
-    private void setArrayValue(String id, int index, Double value) {
+    private void setArrayValue(String id, int index, BigDecimal value) {
         // need to create the array?
-        ArrayList<Double> array = lookupForArray(id);
+        ArrayList<BigDecimal> array = lookupForArray(id);
         if(array == null) {
             array = new ArrayList<>();
             mArrays.put(id, array);
@@ -157,20 +158,20 @@ public class ScriptEngine {
      * @param id is the name of the target array
      * @param index is the position of the entry to set in the array
      *
-     * @return the value or NaN if no array/value found
+     * @return the value or 0 if no array/value found
      */
-    private Double getArrayValue(String id, int index) {
+    private BigDecimal getArrayValue(String id, int index) {
         // return NaN if the array doesn't exist..
         // need to create the array?
-        ArrayList<Double> array = lookupForArray(id);
+        ArrayList<BigDecimal> array = lookupForArray(id);
         if(array == null)
-            return Double.NaN;
+            return BigDecimal.valueOf(0);
 
         // or if it's got no index entry
         extendArrayToIndex(array, index);
-        Double value = array.get(index);
+        BigDecimal value = array.get(index);
 
-        return value == null ? Double.NaN : value;
+        return value == null ? BigDecimal.valueOf(0) : value;
     }
 
     /**
@@ -180,7 +181,7 @@ public class ScriptEngine {
      * @param id is the name of the variable we're looking for
      * @return the found variable or null if it doesn't exist
      */
-    private Double lookupForVariable(String id) {
+    private BigDecimal lookupForVariable(String id) {
         if (mVariables.containsKey(id))
             return mVariables.get(id);
         if (mParent != null)
@@ -194,7 +195,7 @@ public class ScriptEngine {
      * @param id is the name of the target variable
      * @param value is the value to set
      */
-    private void setVariableValue(String id, Double value) {
+    private void setVariableValue(String id, BigDecimal value) {
         if (mVariables.containsKey(id))
             mVariables.put(id, value);
         else if (mParent != null && mParent.lookupForVariable(id) != null)
@@ -208,11 +209,11 @@ public class ScriptEngine {
      *
      * @param id is the name of the target variable
      *
-     * @return the value or NaN if no variable found
+     * @return the value or 0 if no variable found
      */
-    private Double getVariableValue(String id) {
-        Double variable = lookupForVariable(id);
-        return variable == null ? Double.NaN : variable;
+    private BigDecimal getVariableValue(String id) {
+        BigDecimal variable = lookupForVariable(id);
+        return variable == null ? BigDecimal.valueOf(0) : variable;
     }
 
     /**
@@ -344,7 +345,7 @@ public class ScriptEngine {
 
         // run the if block in the context of a new engine
         try {
-            if (mCalculator.doPeekValueFromStack() != 0.0)
+            if (mCalculator.doPeekValueFromStack().doubleValue() != 0.0)
                 return new ScriptEngine(this, mCalculator, block).interpretScript();
         } catch (IOException e) {
             // ignored on purpose
@@ -365,7 +366,7 @@ public class ScriptEngine {
                 if (!mCalculator.hasValueOnStack())
                     return false;
 
-                if (mCalculator.doPeekValueFromStack() != 0.0)
+                if (mCalculator.doPeekValueFromStack().doubleValue() != 0.0)
                     return executeScript(ifBlockLambdaCode);
 
                 return true;
@@ -391,7 +392,7 @@ public class ScriptEngine {
 
         // run the if/else block in the context of a new engine
         try {
-            if (mCalculator.doPeekValueFromStack() == 0.0)
+            if (mCalculator.doPeekValueFromStack().doubleValue() != 0.0)
                 // run the the else block
                 return new ScriptEngine(this, mCalculator, elseBlock).interpretScript();
             else {
@@ -419,7 +420,7 @@ public class ScriptEngine {
                 if (!mCalculator.hasValueOnStack())
                     return false;
 
-                if (mCalculator.doPeekValueFromStack() != 0.0)
+                if (mCalculator.doPeekValueFromStack().doubleValue() != 0.0)
                     return executeScript(ifBlockLambdaCode);
                 else
                     return executeScript(elseBlockLambdaCode);
@@ -445,7 +446,7 @@ public class ScriptEngine {
         // run the while block in the context of a new engine
         boolean runOk = true;
         try {
-            while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPeekValueFromStack() != 0.0) {
+            while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPeekValueFromStack().doubleValue() != 0.0) {
                 if (!(runOk = new ScriptEngine(this, mCalculator, block).interpretScript()))
                     break;
             }
@@ -466,7 +467,7 @@ public class ScriptEngine {
             lambdaCode.add(() ->
             {
                 boolean runOk;
-                while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPeekValueFromStack() != 0.0) {
+                while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPeekValueFromStack().doubleValue() != 0.0) {
                     if (!(runOk = executeScript(whileBlockLambdaCode)))
                         break;
                 }
@@ -577,8 +578,8 @@ public class ScriptEngine {
     /**
      * @return a copy of the concatenated hierarchy's variable hashmaps
      */
-    private HashMap<String, Double> lookupVariables() {
-        HashMap<String, Double> map = new HashMap<>(mVariables);
+    private HashMap<String, BigDecimal> lookupVariables() {
+        HashMap<String, BigDecimal> map = new HashMap<>(mVariables);
         if (mParent != null)
             map.putAll(mParent.lookupVariables());
         return map;
@@ -587,8 +588,8 @@ public class ScriptEngine {
     /**
      * @return a copy of the concatenated hierarchy's array hashmaps
      */
-    private HashMap<String, ArrayList<Double>> lookupArrays() {
-        HashMap<String, ArrayList<Double>> map = new HashMap<>(mArrays);
+    private HashMap<String, ArrayList<BigDecimal>> lookupArrays() {
+        HashMap<String, ArrayList<BigDecimal>> map = new HashMap<>(mArrays);
         if (mParent != null)
             map.putAll(mParent.lookupArrays());
         return map;
@@ -599,14 +600,14 @@ public class ScriptEngine {
      */
     private void displayDebugInfo() {
         StringBuilder variables = new StringBuilder();
-        Iterator<Map.Entry<String, Double>> i = lookupVariables().entrySet().iterator();
+        Iterator<Map.Entry<String, BigDecimal>> i = lookupVariables().entrySet().iterator();
         while (i.hasNext()) {
-            Map.Entry<String, Double> pair = i.next();
+            Map.Entry<String, BigDecimal> pair = i.next();
             variables.append(pair.getKey()).append(":").append(pair.getValue()).append("\n");
         }
-        Iterator<Map.Entry<String, ArrayList<Double>>> j = lookupArrays().entrySet().iterator();
+        Iterator<Map.Entry<String, ArrayList<BigDecimal>>> j = lookupArrays().entrySet().iterator();
         while (j.hasNext()) {
-            Map.Entry<String, ArrayList<Double>> pair = j.next();
+            Map.Entry<String, ArrayList<BigDecimal>> pair = j.next();
             ArrayList array = pair.getValue();
             for (int k = 0; k < array.size(); k++)
                 if (array.get(k) != null)
@@ -887,7 +888,7 @@ public class ScriptEngine {
 
                     switch (ScriptLexer.sym.values()[symbol.sym]) {
                         case DOUBLE_LITERAL:
-                            mCalculator.doPushValueOnStack(curLexer.doubleValue);
+                            mCalculator.doPushValueOnStack(curLexer.value);
                             break;
 
                         case PUSH_ARRAY_VALUE:
@@ -1354,7 +1355,7 @@ public class ScriptEngine {
                 case RUNNING:
                     switch (ScriptLexer.sym.values()[symbol.sym]) {
                         case DOUBLE_LITERAL: {
-                            Double value = curLexer.doubleValue;
+                            BigDecimal value = curLexer.value;
                             lambdaCode.add(() -> {
                                 mCalculator.doPushValueOnStack(value);
                                 return true;

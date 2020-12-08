@@ -7,7 +7,7 @@ package com.gfabre.android.o3;
 /* JFlex Script Lexical Analyzer definition file : yylex() will return script tokens  */
 import java_cup.runtime.*;
 import java.lang.String;
-import java.lang.Double;
+import java.math.BigDecimal;
 
 /**
  * This class defines the Script Lexical Analyzer
@@ -665,7 +665,7 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
 
   String identifier = null;
   String filename = null;
-  Double doubleValue = null;
+  BigDecimal value = null;
   String expression = null;
 
   public int yyline() {
@@ -1106,7 +1106,7 @@ public class ScriptLexer implements java_cup.runtime.Scanner {
             // fall through
           case 56: break;
           case 3:
-            { try {doubleValue = new Double(yytext());} catch (Exception e) {doubleValue = Double.NaN;} return symbol(sym.DOUBLE_LITERAL);
+            { try {value = new BigDecimal(yytext());} catch (Exception e) {value = new BigDecimal(0);} return symbol(sym.DOUBLE_LITERAL);
             }
             // fall through
           case 57: break;
