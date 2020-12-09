@@ -1796,14 +1796,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             return false;
 
         // v1 v2 /
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        BigDecimal result = BigDecimal.valueOf(0);
-        try {
-            result = v1.divide(v2);
-        } catch (Exception e) {
-            // don't report, useless.
-        }
+        // uses Double because BigDecimal does not handle divide very well (rounding up to programmer)
+        Double v2 = mStack.pop().doubleValue();
+        Double v1 = mStack.pop().doubleValue();
+        BigDecimal result = BigDecimal.valueOf(v1 / v2);
+
         mStack.push(result);
         if (!fromEngine)
             updateStackView();
