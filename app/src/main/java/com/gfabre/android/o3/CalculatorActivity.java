@@ -42,8 +42,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
@@ -102,13 +100,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final int SCRIPT_ENGINE_PRIORITY = Process.THREAD_PRIORITY_URGENT_AUDIO;
     private static final int UI_YIELD_MILLISEC_DELAY = 3; // needed time for the UI to get scheduled :/
 
-    private static Method[] mMethods = null;
-
     private static CalculatorActivity mActivity;         // this reference
+    private static Calculator mCalculator;
 
-    private String mHistory = "";                        // all actions history from beginning of time.
-    private Stack<BigDecimal> mStack = new Stack<>();        // values stack
-    private String mValue = "";                          // value currently edited
     private EditText mValueField = null;                 // value edit field
     private ListView mStackView = null;                  // stack view
     private ArrayAdapter mStackAdapter = null;           // stack view adapter
@@ -134,7 +128,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
                 case UPDATE_STACK_MESSAGE:
                     // update the stack
-                    updateStackView();
+                    mCalculator.updateStackView();
                     break;
 
                 case DISPLAY_MESSAGE:
@@ -179,52 +173,16 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         }
     };
 
-    public boolean hasValueOnStack() {
-        return !mStack.isEmpty();
-    }
-
-    public void doPushValueOnStack(BigDecimal value) {
-        mStack.push(value);
-    }
-
-    public BigDecimal doPopValueFromStack() {
-        return mStack.isEmpty() ? BigDecimal.valueOf(0) : mStack.pop();
-    }
-
-    public BigDecimal doPeekValueFromStack() {
-        return mStack.isEmpty() ? BigDecimal.valueOf(0) : mStack.peek();
-    }
-
-    /**
-     * If present, pushes the currently edited value onto the stack.
-     */
-    private void pushValueOnStack() {
-        if (mValue.isEmpty())
-            return;
-
-        // make sure we're pushing a properly formatted double
-        try {
-            mHistory += mValue + "\n";
-            mStack.push(new BigDecimal(mValue, MathContext.UNLIMITED));
-            updateStackView();
-        } catch (Exception e) {
-            displayMessage(getString(R.string.invalid_number) + mValue);
-        } finally {
-            mValue = "";
-            mValueField.setText(mValue);
-        }
-    }
-
     /**
      * Fills the stack view with the values currently held on the computation stack
      */
-    private void updateStackView() {
+    public void updateStackView(Stack<BigDecimal> stack) {
         if (mStackView == null)
             return;
 
         mStackAdapter.clear();
         int depth = 1;
-        Object[] values = mStack.toArray();
+        Object[] values = stack.toArray();
         for (int i = values.length - 1; i >= 0; i--) {
             mStackAdapter.add(depth + ": " + values[i].toString());
             depth++;
@@ -245,9 +203,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    pushValueOnStack();
+                    mCalculator.pushValueOnStack();
                     String funcall = "funcall " + f + "\n";
-                    mHistory += funcall;
+                    mCalculator.appendHistory(funcall);
                     mActivity.executeScript(funcall);
                     return true;
                 }
@@ -290,7 +248,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                mHistory = "";
+                mCalculator.setHistory("");
                 return true;
             }
         });
@@ -302,11 +260,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                if (mHistory.isEmpty())
+                if (mCalculator.isHistoryEmpty())
                     return true;
 
-                executeScript(mHistory);
-                updateStackView();
+                executeScript(mCalculator.getHistory());
+                mCalculator.updateStackView();
                 return true;
             }
         });
@@ -319,7 +277,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // saves history in a temporary file
-                new HistoryDialog(mActivity, mHistory);
+                new HistoryDialog(mActivity, mCalculator, mCalculator.getHistory());
                 return true;
             }
         });
@@ -333,7 +291,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             public boolean onMenuItemClick(MenuItem item) {
                 // saves history in a temporary file
                 String historyFile = getFilesDir() + "/" + HISTORY_SCRIPT_NAME + SCRIPT_EXTENSION;
-                writeFile(historyFile, mHistory);
+                writeFile(historyFile, mCalculator.getHistory());
                 new EditScriptDialog(mActivity, historyFile);
                 return true;
             }
@@ -349,9 +307,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                pushValueOnStack();
-                mHistory += "rolln\n";
-                rollN(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("rolln\n");
+                mCalculator.rollN(false);
                 return true;
             }
         });
@@ -363,9 +321,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                pushValueOnStack();
-                mHistory += "swapn\n";
-                swapN(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("swapn\n");
+                mCalculator.swapN(false);
                 return true;
             }
         });
@@ -377,9 +335,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                pushValueOnStack();
-                mHistory += "dupn\n";
-                dupN(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("dupn\n");
+                mCalculator.dupN(false);
                 return true;
             }
         });
@@ -391,9 +349,9 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                pushValueOnStack();
-                mHistory += "dropn\n";
-                dropN(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("dropn\n");
+                mCalculator.dropN(false);
                 return true;
             }
         });
@@ -410,8 +368,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // pops up a dialog to pick a java math func
-                pushValueOnStack();
-                new MathFunctionChooser(mActivity);
+                mCalculator.pushValueOnStack();
+                new MathFunctionChooser(mActivity, mCalculator);
                 return true;
             }
         });
@@ -443,7 +401,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // path to the external download directory if available, internal one else.
-                pushValueOnStack();
+                mCalculator.pushValueOnStack();
                 new FileChooser(RUN_SCRIPT_DIALOG_ID, mActivity, SCRIPT_EXTENSION, getDefaultDataPath());
                 return true;
             }
@@ -468,7 +426,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 displayMessage(getString(R.string.evaluating_label) + "\n" + ctor.getPostfix());
 
                 // and run it
-                mHistory += "infixed " + infixed + "\n";
+                mCalculator.appendHistory("infixed " + infixed + "\n");
                 interpretScript(ctor.getRpnScript());
                 return true;
             }
@@ -642,14 +600,14 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         super.onSaveInstanceState(savedInstanceState);
 
-        savedInstanceState.putString(EDITED_VALUE_KEY, mValue);
-        String[] valuesArray = new String[mStack.size()];
-        for (int i = 0; i < mStack.size(); i++)
-            valuesArray[i] = mStack.get(i).toEngineeringString();
+        savedInstanceState.putString(EDITED_VALUE_KEY, mCalculator.getValue());
+        String[] valuesArray = new String[mCalculator.getStackSize()];
+        for (int i = 0; i < mCalculator.getStackSize(); i++)
+            valuesArray[i] = mCalculator.getStack().get(i).toEngineeringString();
         savedInstanceState.putStringArray(STACK_CONTENT_KEY, valuesArray);
 
         // history
-        savedInstanceState.putString(HISTORY_SCRIPT_KEY, mHistory);
+        savedInstanceState.putString(HISTORY_SCRIPT_KEY, mCalculator.getHistory());
     }
 
     /**
@@ -662,20 +620,20 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
 
         super.onRestoreInstanceState(savedInstanceState);
 
-        mValue = savedInstanceState.getString(EDITED_VALUE_KEY);
+        mCalculator.setValue(savedInstanceState.getString(EDITED_VALUE_KEY));
         String[] valuesArray = savedInstanceState.getStringArray(STACK_CONTENT_KEY);
-        mStack.clear();
+        mCalculator.clearStack();
 
         if (valuesArray != null) {
             for (String s : valuesArray)
-                mStack.push(new BigDecimal(s, MathContext.UNLIMITED));
+                mCalculator.doPushValueOnStack(new BigDecimal(s, MathContext.UNLIMITED));
         }
 
-        mValueField.setText(mValue);
-        updateStackView();
+        mValueField.setText(mCalculator.getValue());
+        mCalculator.updateStackView();
 
         // history
-        mHistory = savedInstanceState.getString(HISTORY_SCRIPT_KEY);
+        mCalculator.setHistory(savedInstanceState.getString(HISTORY_SCRIPT_KEY));
     }
 
     /**
@@ -697,16 +655,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             }
             return sb.toString();
         }
-    }
-
-    /**
-     * Sets the calculator history.
-     *
-     * @param history is the new calculator history
-     */
-    public boolean setHistory(String history) {
-        mHistory = history;
-        return true;
     }
 
     /**
@@ -738,8 +686,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             case RUN_SCRIPT_DIALOG_ID: {
                 // run the selected script
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
-                pushValueOnStack();
-                mHistory += "run_script " + filename + "\n";
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("run_script " + filename + "\n");
                 doExecuteScriptFile(filename);
             }
             break;
@@ -747,7 +695,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             case DEBUG_SCRIPT_DIALOG_ID: {
                 // run the selected script
                 String filename = dialog.getBundle().getString(FileChooser.FILENAME);
-                pushValueOnStack();
+                mCalculator.pushValueOnStack();
                 // no history here, we're debugging
                 doDebugScriptFile(filename);
             }
@@ -879,8 +827,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (mFunctionScripts[_index] != null && !mFunctionScripts[_index].isEmpty()) {
-                    pushValueOnStack();
-                    mHistory += mFunctionScripts[_index] + "\n";
+                    mCalculator.pushValueOnStack();
+                    mCalculator.appendHistory(mFunctionScripts[_index] + "\n");
                     executeScript(mFunctionScripts[_index]);
                 } else {
                     // display a message explaining how to set a button function
@@ -924,6 +872,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         setContentView(R.layout.calculator_view);
 
         mActivity = this;
+        mCalculator = new Calculator(this);
         mGraphView = new GraphView(getApplicationContext());
 
         // set up handlers
@@ -935,19 +884,20 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mValue.isEmpty())
+                if (mCalculator.isValueEmpty())
                     return;
-                mValue = mValue.substring(0, mValue.length() - 1);
-                mValueField.setText(mValue);
+                String value = mCalculator.getValue();
+                mCalculator.setValue(value.substring(0, value.length() - 1));
+                mValueField.setText(value);
             }
         });
         backButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                if (mValue.isEmpty())
+                if (mCalculator.isValueEmpty())
                     return false;
-                mValue = "";
-                mValueField.setText(mValue);
+                mCalculator.setValue("");
+                mValueField.setText(mCalculator.getValue());
                 return true;
             }
         });
@@ -961,8 +911,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         mStackView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mValue = mStack.get(mStack.size() - position - 1).toString();
-                mValueField.setText(mValue);
+                mCalculator.setValue(mCalculator.getStack().get(mCalculator.getStackSize() - position - 1).toString());
+                mValueField.setText(mCalculator.getValue());
             }
         });
 
@@ -973,157 +923,162 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         Button button = findViewById(R.id.button_0);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "0";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("0");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_1);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "1";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("1");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_2);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "2";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("2");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_3);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "3";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("3");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_4);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "4";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("4");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_5);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "5";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("5");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_6);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "6";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("6");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_7);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "7";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("7");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_8);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "8";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("8");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_9);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mValue += "9";
-                mValueField.setText(mValue);
+                mCalculator.appendValue("9");
+                mValueField.setText(mCalculator.getValue());
             }
         });
         button = findViewById(R.id.button_add);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
-                mHistory += "+\n";
-                add(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("+\n");
+                mCalculator.add(false);
             }
         });
         button = findViewById(R.id.button_sub);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
-                mHistory += "-\n";
-                sub(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("-\n");
+                mCalculator.sub(false);
             }
         });
         button = findViewById(R.id.button_mul);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
-                mHistory += "*\n";
-                mul(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("*\n");
+                mCalculator.mul(false);
             }
         });
         button = findViewById(R.id.button_div);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
-                mHistory += "/\n";
-                div(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("/\n");
+                mCalculator.div(false);
             }
         });
         button = findViewById(R.id.button_enter);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
+                mCalculator.pushValueOnStack();
             }
         });
         button = findViewById(R.id.button_dot);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if (!mValue.isEmpty() && !mValue.contains(".")) {
-                    mValue += ".";
-                    mValueField.setText(mValue);
+                String value = mCalculator.getValue();
+                if (!value.isEmpty() && !value.contains(".")) {
+                    mCalculator.appendValue(".");
+                    mValueField.setText(mCalculator.getValue());
                 }
             }
         });
         button = findViewById(R.id.button_neg);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mHistory += "neg\n";
-                neg(false);
+                // neg must be added to history only when affecting the stack
+                // else, it would affect the value twice (when negating the value)
+                // then when the negated value is pushed on the stack...
+                if (mCalculator.isValueEmpty())
+                    mCalculator.appendHistory("neg\n");
+                mCalculator.neg(false);
             }
         });
         button = findViewById(R.id.button_dup);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
-                mHistory += "dup\n";
-                dup(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("dup\n");
+                mCalculator.dup(false);
             }
         });
         button = findViewById(R.id.button_drop);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
-                mHistory += "drop\n";
-                drop(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("drop\n");
+                mCalculator.drop(false);
             }
         });
         button = findViewById(R.id.button_swap);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
-                mHistory += "swap\n";
-                swap(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("swap\n");
+                mCalculator.swap(false);
             }
         });
         button = findViewById(R.id.button_clear);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                pushValueOnStack();
-                mHistory += "clear\n";
-                clear(false);
+                mCalculator.pushValueOnStack();
+                mCalculator.appendHistory("clear\n");
+                mCalculator.clear(false);
             }
         });
 
@@ -1228,139 +1183,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         button = findViewById(R.id.button_fn35);
         setFunctionButton(button, 34);
 
-    }
-
-    /**
-     * Returns an instance of the given type.
-     *
-     * @param classname
-     * @return on object corresponding to the passed  className
-     */
-    private Object castBigDecimalToType(String classname, BigDecimal value) {
-        switch (classname) {
-            case "Long":
-            case "long":
-                return Long.valueOf(value.longValue());
-
-            case "Integer":
-            case "int":
-                return Integer.valueOf(value.intValue());
-
-            case "Float":
-            case "float":
-                return Float.valueOf(value.floatValue());
-
-            case "BigDecimal":
-                return value;
-
-            case "Double":
-            case "double":
-                return value.doubleValue();
-        }
-
-        return null;
-    }
-
-    /**
-     * Returns an instance of BigDecimal from the given type.
-     *
-     * @param classname
-     * @return on object corresponding to the passed  className
-     */
-    private BigDecimal castTypeToBigDecimal(String classname, Object value) {
-        switch (classname) {
-            case "Long":
-                return BigDecimal.valueOf((Long) value);
-
-            case "long":
-                return BigDecimal.valueOf((long) value);
-
-            case "Integer":
-                return BigDecimal.valueOf((Integer) value);
-
-            case "int":
-                return BigDecimal.valueOf((int) value);
-
-            case "Float":
-                return BigDecimal.valueOf((Float) value);
-
-            case "float":
-                return BigDecimal.valueOf((float) value);
-
-            case "BigDecimal":
-                return (BigDecimal)value;
-
-            case "Double":
-                return BigDecimal.valueOf((Double) value);
-
-            case "double":
-                return BigDecimal.valueOf((double) value);
-        }
-
-        return null;
-    }
-
-    /**
-     * Returns an array containing all of the static java math methods.
-     *
-     * @return the java math methods array.
-     */
-    public Method[] getJavaMathMethods() {
-        if (mMethods == null) {
-            Class math = null;
-            try {
-                math = Class.forName("java.lang.Math");
-                mMethods = math.getMethods();
-            } catch (ClassNotFoundException e) {
-                displayMessage(getString(R.string.java_math_inspection_error) + e.getLocalizedMessage());
-            }
-        }
-
-        return mMethods;
-    }
-
-    /**
-     * Calls into the selected Java.math passed method using introspection.
-     *
-     * @param method is the math method to be called per user request.
-     */
-    public boolean invokeAndHistorizeMathFunction(Method method) {
-        pushValueOnStack();
-        mHistory += "math_call " + method.getName() + "\n";
-        return invokeMathMethod(method, false);
-    }
-
-    private boolean invokeMathMethod(Method method, boolean fromEngine) {
-        // invoke the selected function
-
-        // first make sure we have the appropriate number of elements
-        // on the stack
-        Type[] params = method.getParameterTypes();
-        int numParams = params.length;
-        if (numParams > mStack.size())
-            return false;
-
-        // prepare the parameters.
-        Object[] argObjects = new Object[numParams];
-        while (--numParams >= 0)
-            argObjects[numParams] = castBigDecimalToType(params[numParams].toString(), mStack.pop());
-
-        // invoke the method
-        boolean runOk = true;
-        try {
-            Object result = method.invoke(null, argObjects);
-            if (result != null)
-                mStack.push(castTypeToBigDecimal(method.getGenericReturnType().toString(), result));
-        } catch (Exception e) {
-            displayMessage(getString(R.string.function_call_err) + e.getMessage());
-            runOk = false;
-        } finally {
-            // we've eaten the stack anyway...
-            if (!fromEngine)
-                updateStackView();
-        }
-
-        return runOk;
     }
 
     /**
@@ -1718,435 +1540,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.resetFontSize();
     }
 
-    /* ------------------------------------- SCRIPT ACTIONS  ---------------------------------------
-        AONLY methods starting with 'do' can safely be called from the script engine thread, since
-        they interact with the GUI through messages.
-    */
-
-    /**
-     * Calls the given java math function if existing
-     *
-     * @param function is the function to be called.
-     * @return true if the function was found, false else.
-     */
-    public boolean doJavaMathCall(String function) {
-        Method[] methods = getJavaMathMethods();
-        if (methods == null)
-            return false;
-
-        // lookup function
-        // for (Method method : methods) too slow
-        for (int i = 0; i < methods.length; i++) {
-            Method m = methods[i];
-            if (function.equals(m.getName()))
-                return invokeMathMethod(m, true);
-        }
-
-        // the function was not found
-        displayMessage(getString(R.string.undefined_function) + function);
-
-        return false;
-    }
-
-    /**
-     * Public Basic Maths Functions
-     */
-    public boolean doAdd() {
-        return add(true);
-    }
-
-    private boolean add(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 +
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(v1.add(v2));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doSub() {
-        return sub(true);
-    }
-
-    private boolean sub(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 -
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(v1.subtract(v2));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doDiv() {
-        return div(true);
-    }
-
-    private boolean div(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 /
-        // uses Double because BigDecimal does not handle divide very well (rounding up to programmer)
-        Double v2 = mStack.pop().doubleValue();
-        Double v1 = mStack.pop().doubleValue();
-        BigDecimal result = BigDecimal.valueOf(v1 / v2);
-
-        mStack.push(result);
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doMul() {
-        return mul(true);
-    }
-
-    private boolean mul(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 *
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(v1.multiply(v2));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doNeg() {
-        return neg(true);
-    }
-
-    private boolean neg(boolean fromEngine) {
-        // either neg the edited value if any
-        if (!mValue.isEmpty()) {
-            if (mValue.startsWith("-"))
-                mValue = mValue.substring(1);
-            else
-                mValue = "-" + mValue;
-            mValueField.setText(mValue);
-
-            return true;
-        }
-
-        if (!mStack.isEmpty()) {
-            // or the top of the stack if present
-            mStack.push(mStack.pop().negate());
-            if (!fromEngine)
-                updateStackView();
-
-            return true;
-        }
-
-        return false;
-    }
-
-    public boolean doModulo() {
-        return modulo(true);
-    }
-
-    private boolean modulo(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 %
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(v1.remainder(v2));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doEqual() {
-        return equal(true);
-    }
-
-    private boolean equal(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 =
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) == 0 ? 1 : 0));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doNotEqual() {
-        return notEqual(true);
-    }
-
-    private boolean notEqual(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 !=
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) == 0 ? 0 : 1));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doLessThan() {
-        return lessThan(true);
-    }
-
-    private boolean lessThan(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 <
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) < 0 ? 1 : 0));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doLessThanOrEqual() {
-        return lessThanOrEqual(true);
-    }
-
-    private boolean lessThanOrEqual(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 <=
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) <= 0 ? 1 : 0));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doGreaterThan() {
-        return greaterThan(true);
-    }
-
-    private boolean greaterThan(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 >
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) > 0 ? 1 : 0));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doGreaterThanOrEqual() {
-        return greaterThanOrEqual(true);
-    }
-
-    private boolean greaterThanOrEqual(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        // v1 v2 >=
-        BigDecimal v2 = mStack.pop();
-        BigDecimal v1 = mStack.pop();
-        mStack.push(BigDecimal.valueOf(v1.compareTo(v2) >= 0 ? 1 : 0));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    /**
-     * Public Basic Stack Functions
-     */
-    public boolean doRollN() {
-        return rollN(true);
-    }
-
-    private boolean rollN(boolean fromEngine) {
-        if (mStack.isEmpty())
-            return false;
-
-        int i = mStack.pop().intValue();
-        if (i >= mStack.size())
-            return false;
-
-        BigDecimal val = mStack.pop();
-        Stack<BigDecimal> st = new Stack<>();
-        while (--i >= 0)
-            st.push(mStack.pop());
-
-        mStack.push(val);
-        while (!st.isEmpty())
-            mStack.push(st.pop());
-
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doDup() {
-        return dup(true);
-    }
-
-    private boolean dup(boolean fromEngine) {
-        if (mStack.isEmpty())
-            return false;
-
-        mStack.push(mStack.peek());
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doDupN() {
-        return dupN(true);
-    }
-
-    private boolean dupN(boolean fromEngine) {
-        if (mStack.isEmpty())
-            return false;
-
-        int i = mStack.pop().intValue();
-        if (mStack.isEmpty())
-            return false;
-
-        BigDecimal val = mStack.peek();
-        while (--i >= 0)
-            mStack.push(val);
-
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doDrop() {
-        return drop(true);
-    }
-
-    private boolean drop(boolean fromEngine) {
-        if (mStack.isEmpty())
-            return false;
-
-        mStack.pop();
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doDropN() {
-        return dropN(true);
-    }
-
-    private boolean dropN(boolean fromEngine) {
-        if (mStack.isEmpty())
-            return false;
-
-        int i = mStack.pop().intValue();
-        if (i > mStack.size())
-            return false;
-
-        while (--i >= 0)
-            mStack.pop();
-
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doSwap() {
-        return swap(true);
-    }
-
-    private boolean swap(boolean fromEngine) {
-        if (mStack.size() < 2)
-            return false;
-
-        BigDecimal v1 = mStack.pop();
-        BigDecimal v2 = mStack.pop();
-        mStack.push(v1);
-        mStack.push(v2);
-
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doSwapN() {
-        return swapN(true);
-    }
-
-    private boolean swapN(boolean fromEngine) {
-        if (mStack.isEmpty())
-            return false;
-
-        int i = mStack.pop().intValue();
-        if (i > mStack.size())
-            return false;
-
-        BigDecimal v1 = mStack.elementAt(0);
-        BigDecimal v2 = mStack.elementAt(i - 1);
-        mStack.setElementAt(v1, i - 1);
-        mStack.setElementAt(v2, 0);
-
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doClear() {
-        return clear(true);
-    }
-
-    private boolean clear(boolean fromEngine) {
-        mStack = new Stack<>();
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
-    }
-
-    public boolean doStackSize() {
-        return stackSize(true);
-    }
-
-    private boolean stackSize(boolean fromEngine) {
-        mStack.push(BigDecimal.valueOf(mStack.size()));
-        if (!fromEngine)
-            updateStackView();
-
-        return true;
+    public void setValueField(String value) {
+        mValueField.setText(value);
     }
 
     /**
@@ -2169,7 +1564,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      *
      * @param message is the message to be displayed.
      */
-    private void displayMessage(String message) {
+    public void displayMessage(String message) {
         if (Looper.getMainLooper().isCurrentThread()) {
             GenericDialog.displayMessage(this, message);
         } else {
@@ -2237,7 +1632,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        mStack.push(prompt.mValue);
+        mCalculator.doPushValueOnStack(prompt.mValue);
     }
 
     /**
@@ -2261,7 +1656,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (ScriptEngine.isRunning())
             return;
 
-        final ScriptEngine engine = new ScriptEngine(mActivity, script);
+        final ScriptEngine engine = new ScriptEngine(mActivity, mCalculator, script);
         new Thread() {
             @Override
             public void run() {
@@ -2285,7 +1680,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (ScriptEngine.isRunning())
             return;
 
-        final ScriptEngine engine = new ScriptEngine(mActivity, script);
+        final ScriptEngine engine = new ScriptEngine(mActivity, mCalculator, script);
         new Thread() {
             @Override
             public void run() {
@@ -2309,7 +1704,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         if (ScriptEngine.isRunning())
             return;
 
-        final ScriptEngine engine = new ScriptEngine(mActivity, script);
+        final ScriptEngine engine = new ScriptEngine(mActivity, mCalculator, script);
         new Thread() {
             @Override
             public void run() {
@@ -2391,7 +1786,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         boolean found = false;
         try {
             String script = readFile(filename);
-            new ScriptEngine(mActivity, script).interpretScript();
+            new ScriptEngine(mActivity, mCalculator, script).interpretScript();
             found = true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -2410,7 +1805,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         boolean found = false;
         try {
             String script = readFile(filename);
-            new ScriptEngine(mActivity, script).executeScript();
+            new ScriptEngine(mActivity, mCalculator, script).executeScript();
             found = true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -2423,11 +1818,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      * Graphical functions
      */
     public boolean doPlot() {
-        if (mStack.size() < 2)
+        if (mCalculator.getStackSize() < 2)
             return false;
 
-        BigDecimal y = mStack.pop();
-        BigDecimal x = mStack.pop();
+        BigDecimal y = mCalculator.getStack().pop();
+        BigDecimal x = mCalculator.getStack().pop();
 
         mGraphView.doPlot(x.doubleValue(), y.doubleValue());
 
@@ -2435,12 +1830,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doPlot3D() {
-        if (mStack.size() < 3)
+        if (mCalculator.getStackSize() < 3)
             return false;
 
-        BigDecimal z = mStack.pop();
-        BigDecimal y = mStack.pop();
-        BigDecimal x = mStack.pop();
+        BigDecimal z = mCalculator.getStack().pop();
+        BigDecimal y = mCalculator.getStack().pop();
+        BigDecimal x = mCalculator.getStack().pop();
 
         mGraphView.doPlot3D(x.doubleValue(), y.doubleValue(), z.doubleValue());
 
@@ -2448,13 +1843,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doLine() {
-        if (mStack.size() < 4)
+        if (mCalculator.getStackSize() < 4)
             return false;
 
-        BigDecimal y1 = mStack.pop();
-        BigDecimal x1 = mStack.pop();
-        BigDecimal y0 = mStack.pop();
-        BigDecimal x0 = mStack.pop();
+        BigDecimal y1 = mCalculator.getStack().pop();
+        BigDecimal x1 = mCalculator.getStack().pop();
+        BigDecimal y0 = mCalculator.getStack().pop();
+        BigDecimal x0 = mCalculator.getStack().pop();
 
         mGraphView.doLine(x0.doubleValue(), y0.doubleValue(), x1.doubleValue(), y1.doubleValue());
 
@@ -2462,15 +1857,15 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doLine3D() {
-        if (mStack.size() < 6)
+        if (mCalculator.getStackSize() < 6)
             return false;
 
-        BigDecimal z1 = mStack.pop();
-        BigDecimal y1 = mStack.pop();
-        BigDecimal x1 = mStack.pop();
-        BigDecimal z0 = mStack.pop();
-        BigDecimal y0 = mStack.pop();
-        BigDecimal x0 = mStack.pop();
+        BigDecimal z1 = mCalculator.getStack().pop();
+        BigDecimal y1 = mCalculator.getStack().pop();
+        BigDecimal x1 = mCalculator.getStack().pop();
+        BigDecimal z0 = mCalculator.getStack().pop();
+        BigDecimal y0 = mCalculator.getStack().pop();
+        BigDecimal x0 = mCalculator.getStack().pop();
 
         mGraphView.doLine3D(x0.doubleValue(), y0.doubleValue(), z0.doubleValue(), x1.doubleValue(), y1.doubleValue(), z1.doubleValue());
 
@@ -2478,12 +1873,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doErase() {
-        if (mStack.size() < 3)
+        if (mCalculator.getStackSize() < 3)
             return false;
 
-        BigDecimal b = mStack.pop();
-        BigDecimal g = mStack.pop();
-        BigDecimal r = mStack.pop();
+        BigDecimal b = mCalculator.getStack().pop();
+        BigDecimal g = mCalculator.getStack().pop();
+        BigDecimal r = mCalculator.getStack().pop();
 
         mGraphView.doErase(r.doubleValue(), g.doubleValue(), b.doubleValue());
 
@@ -2491,13 +1886,13 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSetRange() {
-        if (mStack.size() < 4)
+        if (mCalculator.getStackSize() < 4)
             return false;
 
-        BigDecimal yMax = mStack.pop();
-        BigDecimal yMin = mStack.pop();
-        BigDecimal xMax = mStack.pop();
-        BigDecimal xMin = mStack.pop();
+        BigDecimal yMax = mCalculator.getStack().pop();
+        BigDecimal yMin = mCalculator.getStack().pop();
+        BigDecimal xMax = mCalculator.getStack().pop();
+        BigDecimal xMin = mCalculator.getStack().pop();
 
         mGraphView.setRange(xMin.doubleValue(), xMax.doubleValue(), yMin.doubleValue(), yMax.doubleValue());
 
@@ -2505,12 +1900,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSetPov3D() {
-        if (mStack.size() < 3)
+        if (mCalculator.getStackSize() < 3)
             return false;
 
-        BigDecimal z = mStack.pop();
-        BigDecimal y = mStack.pop();
-        BigDecimal x = mStack.pop();
+        BigDecimal z = mCalculator.getStack().pop();
+        BigDecimal y = mCalculator.getStack().pop();
+        BigDecimal x = mCalculator.getStack().pop();
 
         mGraphView.doPov3D(x.doubleValue(), y.doubleValue(), z.doubleValue());
 
@@ -2518,12 +1913,12 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSetColor() {
-        if (mStack.size() < 3)
+        if (mCalculator.getStackSize() < 3)
             return false;
 
-        BigDecimal b = mStack.pop();
-        BigDecimal g = mStack.pop();
-        BigDecimal r = mStack.pop();
+        BigDecimal b = mCalculator.getStack().pop();
+        BigDecimal g = mCalculator.getStack().pop();
+        BigDecimal r = mCalculator.getStack().pop();
 
         mGraphView.setColor(r.doubleValue(), g.doubleValue(), b.doubleValue());
 
@@ -2531,10 +1926,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     }
 
     public boolean doSetDotSize() {
-        if (mStack.size() < 1)
+        if (mCalculator.getStackSize() < 1)
             return false;
 
-        BigDecimal s = mStack.pop();
+        BigDecimal s = mCalculator.getStack().pop();
 
         mGraphView.setDotSize(s.doubleValue());
 
@@ -2552,8 +1947,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
      */
     public String getStackDebugInfo() {
         StringBuilder stack = new StringBuilder();
-        for (int i = mStack.size() - 1; i >= 0; i--)
-            stack.append("stack(").append(i).append(") : ").append(mStack.get(i)).append("\n");
+        for (int i = mCalculator.getStackSize() - 1; i >= 0; i--)
+            stack.append("stack(").append(i).append(") : ").append(mCalculator.getStack().get(i)).append("\n");
 
         return stack.toString();
     }

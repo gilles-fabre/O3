@@ -25,7 +25,8 @@ import com.gfabre.android.utilities.widgets.GenericDialog.GenericDialogListener;
  * @date December, 2018
  */
 public class MathFunctionChooser implements GenericDialogListener {
-    private CalculatorActivity  mCalculator;
+    private CalculatorActivity  mActivity;
+    private Calculator          mCalculator;
     private EditText            mFunction;
     private ListView            mFunctionList;
     private ArrayAdapter        mFunctionsAdapter;
@@ -108,12 +109,13 @@ public class MathFunctionChooser implements GenericDialogListener {
         }
     }
 
-    public MathFunctionChooser(CalculatorActivity activity) {
-        mCalculator = activity;
+    public MathFunctionChooser(CalculatorActivity activity, Calculator calculator) {
+        mActivity = activity;
+        mCalculator = calculator;
 
         GenericDialog dialog = new GenericDialog(MATHS_FUNCTIONS_DIALOG_ID, activity.getString(R.string.pick_math_function), false);
         dialog.setListener(this);
-        dialog.show(mCalculator.getFragmentManager(), activity.getString(R.string.pick_math_function));
+        dialog.show(mActivity.getFragmentManager(), activity.getString(R.string.pick_math_function));
     }
 
     @Override
@@ -150,7 +152,7 @@ public class MathFunctionChooser implements GenericDialogListener {
 
         // set the selection type and the adapter
         mFunctionList.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        mFunctionsAdapter = new ArrayAdapter<>(mCalculator, R.layout.simple_row, new ArrayList<String>());
+        mFunctionsAdapter = new ArrayAdapter<>(mActivity, R.layout.simple_row, new ArrayList<String>());
         mFunctionList.setAdapter(mFunctionsAdapter);
         mFunctionList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -168,7 +170,7 @@ public class MathFunctionChooser implements GenericDialogListener {
                  String helpUrl = "https://docs.oracle.com/javase/7/docs/api/java/lang/Math.html#" + mMethod.getName();
                  helpUrl += getParamList(mMethod);
                  Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(helpUrl));
-                 mCalculator.startActivity(intent);
+                 mActivity.startActivity(intent);
 
                  return true;
              }

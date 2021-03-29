@@ -14,16 +14,18 @@ import com.gfabre.android.utilities.widgets.GenericDialog;
 public class HistoryDialog implements GenericDialog.GenericDialogListener {
     public static final int HISTORY_DIALOG_ID = R.layout.history_dialog;
 
-    GenericDialog       mDialog;
-    CalculatorActivity  mActivity;
-    String              mHistory;
+    GenericDialog           mDialog;
+    CalculatorActivity      mActivity;
+    Calculator              mCalculator;
+    String                  mHistory;
 
-    HistoryDialog(CalculatorActivity activity, String history) {
+    HistoryDialog(CalculatorActivity activity, Calculator calculator, String history) {
+        mCalculator = calculator;
         mActivity = activity;
         mHistory = history;
         mDialog = new GenericDialog(HISTORY_DIALOG_ID, null, false, mActivity.getString(R.string.apply), mActivity.getString(R.string.cancel));
         mDialog.setListener(this);
-        mDialog.show(mActivity.getFragmentManager(), activity.getString(R.string.edit_script));
+        mDialog.show(activity.getFragmentManager(), activity.getString(R.string.edit_script));
     }
 
     @Override
@@ -43,7 +45,8 @@ public class HistoryDialog implements GenericDialog.GenericDialogListener {
     @Override
     public boolean onDialogValidate(int Id, GenericDialog dialog, View view) {
         EditText text = (EditText)mDialog.getField(R.id.text);
-        return mActivity.setHistory(text.getText().toString());
+        mCalculator.setHistory(text.getText().toString());
+        return true;
     }
 
     @Override
