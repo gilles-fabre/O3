@@ -14,35 +14,27 @@ public class Calculator {
 
     private static CalculatorActivity mActivity;         // the associated activity
 
-    public Calculator(CalculatorActivity activity) {
+    Calculator(CalculatorActivity activity) {
         mActivity = activity;                           // need a reference to activity for UI access
     }
 
     // ================================  Stack Management ==========================================
-    public void clearStack() {
+    void clearStack() {
         mStack.clear();
     }
 
-    public boolean hasValueOnStack() {
+    boolean hasValueOnStack() {
         return !mStack.isEmpty();
     }
 
-    public int getStackSize() {
+    int getStackSize() {
         return mStack.size();
-    }
-
-    private boolean pushStackSize(boolean fromEngine) {
-        mStack.push(BigDecimal.valueOf(mStack.size()));
-        if (!fromEngine)
-            mActivity.updateStackView(mStack);
-
-        return true;
     }
 
     /**
      * If present, pushes the currently edited value onto the stack.
      */
-    public void pushValueOnStack() {
+    void pushValueOnStack() {
         if (mValue.isEmpty())
             return;
 
@@ -59,7 +51,7 @@ public class Calculator {
         }
     }
 
-    public void updateStackView() {
+    void updateStackView() {
         mActivity.updateStackView(mStack);
     }
 
@@ -68,7 +60,7 @@ public class Calculator {
     }
 
     // ===========================  History Management =============================================
-    public void appendHistory(String action) {
+    void appendHistory(String action) {
         mHistory += action;
     }
 
@@ -77,15 +69,15 @@ public class Calculator {
      *
      * @param history is the new calculator history
      */
-    public void setHistory(String history) {
+    void setHistory(String history) {
         mHistory = history;
     }
 
-    public boolean isHistoryEmpty() {
+    boolean isHistoryEmpty() {
         return mHistory.isEmpty();
     }
 
-    public String getHistory() {
+    String getHistory() {
         return mHistory;
     }
 
@@ -98,11 +90,11 @@ public class Calculator {
         mValue = value;
     }
 
-    public boolean isValueEmpty() {
+    boolean isValueEmpty() {
         return mValue.isEmpty();
     }
 
-    public void appendValue(String symbol) {
+    void appendValue(String symbol) {
         mValue += symbol;
     }
 
@@ -111,9 +103,9 @@ public class Calculator {
      *
      * @return the java math methods array.
      */
-    public Method[] getJavaMathMethods() {
+    Method[] getJavaMathMethods() {
         if (mMethods == null) {
-            Class math = null;
+            Class math;
             try {
                 math = Class.forName("java.lang.Math");
                 mMethods = math.getMethods();
@@ -136,15 +128,18 @@ public class Calculator {
         switch (classname) {
             case "Long":
             case "long":
-                return Long.valueOf(value.longValue());
+                //return Long.valueOf(value.longValue());
+                return value.longValue();
 
             case "Integer":
             case "int":
-                return Integer.valueOf(value.intValue());
+                // return Integer.valueOf(value.intValue());
+                return value.intValue();
 
             case "Float":
             case "float":
-                return Float.valueOf(value.floatValue());
+                //return Float.valueOf(value.floatValue());
+                return value.floatValue();
 
             case "BigDecimal":
                 return value;
@@ -201,10 +196,10 @@ public class Calculator {
      *
      * @param method is the math method to be called per user request.
      */
-    public boolean invokeAndHistorizeMathFunction(Method method) {
+    void invokeAndHistorizeMathFunction(Method method) {
         pushValueOnStack();
         mHistory += "math_call " + method.getName() + "\n";
-        return invokeMathMethod(method, false);
+        invokeMathMethod(method, false);
     }
 
     /**
@@ -253,20 +248,22 @@ public class Calculator {
         they interact with the GUI through messages.
     */
 
-    public void doPushValueOnStack(BigDecimal value) {
+    void doPushValueOnStack(BigDecimal value) {
         mStack.push(value);
     }
 
-    public BigDecimal doPopValueFromStack() {
+    BigDecimal doPopValueFromStack() {
         return mStack.isEmpty() ? BigDecimal.valueOf(0) : mStack.pop();
     }
 
-    public BigDecimal doPeekValueFromStack() {
+    BigDecimal doPeekValueFromStack() {
         return mStack.isEmpty() ? BigDecimal.valueOf(0) : mStack.peek();
     }
 
-    public boolean doPushStackSize() {
-        return pushStackSize(true);
+    boolean doPushStackSize() {
+        mStack.push(BigDecimal.valueOf(mStack.size()));
+
+        return true;
     }
 
     /**
@@ -275,15 +272,14 @@ public class Calculator {
      * @param function is the function to be called.
      * @return true if the function was found, false else.
      */
-    public boolean doJavaMathCall(String function) {
+    boolean doJavaMathCall(String function) {
         Method[] methods = getJavaMathMethods();
         if (methods == null)
             return false;
 
         // lookup function
         // for (Method method : methods) too slow
-        for (int i = 0; i < methods.length; i++) {
-            Method m = methods[i];
+        for (Method m : methods) {
             if (function.equals(m.getName()))
                 return invokeMathMethod(m, true);
         }
@@ -297,7 +293,7 @@ public class Calculator {
     /**
      * Public Basic Maths Functions
      */
-    public boolean doAdd() {
+    boolean doAdd() {
         return add(true);
     }
 
@@ -315,11 +311,11 @@ public class Calculator {
         return true;
     }
 
-    public boolean doSub() {
+    boolean doSub() {
         return sub(true);
     }
 
-    public boolean sub(boolean fromEngine) {
+    boolean sub(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -333,11 +329,11 @@ public class Calculator {
         return true;
     }
 
-    public boolean doDiv() {
+    boolean doDiv() {
         return div(true);
     }
 
-    public boolean div(boolean fromEngine) {
+    boolean div(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -354,11 +350,11 @@ public class Calculator {
         return true;
     }
 
-    public boolean doMul() {
+    boolean doMul() {
         return mul(true);
     }
 
-    public boolean mul(boolean fromEngine) {
+    boolean mul(boolean fromEngine) {
         if (mStack.size() < 2)
             return false;
 
@@ -372,11 +368,11 @@ public class Calculator {
         return true;
     }
 
-    public boolean doNeg() {
+    boolean doNeg() {
         return neg(true);
     }
 
-    public boolean neg(boolean fromEngine) {
+    boolean neg(boolean fromEngine) {
         // either neg the edited value if any
         if (!mValue.isEmpty()) {
             if (mValue.startsWith("-"))
@@ -400,11 +396,7 @@ public class Calculator {
         return false;
     }
 
-    public boolean doModulo() {
-        return modulo(true);
-    }
-
-    private boolean modulo(boolean fromEngine) {
+    boolean doModulo() {
         if (mStack.size() < 2)
             return false;
 
@@ -412,17 +404,11 @@ public class Calculator {
         BigDecimal v2 = mStack.pop();
         BigDecimal v1 = mStack.pop();
         mStack.push(v1.remainder(v2));
-        if (!fromEngine)
-            mActivity.updateStackView(mStack);
 
         return true;
     }
 
-    public boolean doEqual() {
-        return equal(true);
-    }
-
-    private boolean equal(boolean fromEngine) {
+    boolean doEqual() {
         if (mStack.size() < 2)
             return false;
 
@@ -430,17 +416,11 @@ public class Calculator {
         BigDecimal v2 = mStack.pop();
         BigDecimal v1 = mStack.pop();
         mStack.push(BigDecimal.valueOf(v1.compareTo(v2) == 0 ? 1 : 0));
-        if (!fromEngine)
-            mActivity.updateStackView(mStack);
 
         return true;
     }
 
-    public boolean doNotEqual() {
-        return notEqual(true);
-    }
-
-    private boolean notEqual(boolean fromEngine) {
+    boolean doNotEqual() {
         if (mStack.size() < 2)
             return false;
 
@@ -448,17 +428,11 @@ public class Calculator {
         BigDecimal v2 = mStack.pop();
         BigDecimal v1 = mStack.pop();
         mStack.push(BigDecimal.valueOf(v1.compareTo(v2) == 0 ? 0 : 1));
-        if (!fromEngine)
-            mActivity.updateStackView(mStack);
 
         return true;
     }
 
-    public boolean doLessThan() {
-        return lessThan(true);
-    }
-
-    private boolean lessThan(boolean fromEngine) {
+    boolean doLessThan() {
         if (mStack.size() < 2)
             return false;
 
@@ -466,17 +440,11 @@ public class Calculator {
         BigDecimal v2 = mStack.pop();
         BigDecimal v1 = mStack.pop();
         mStack.push(BigDecimal.valueOf(v1.compareTo(v2) < 0 ? 1 : 0));
-        if (!fromEngine)
-            mActivity.updateStackView(mStack);
 
         return true;
     }
 
-    public boolean doLessThanOrEqual() {
-        return lessThanOrEqual(true);
-    }
-
-    private boolean lessThanOrEqual(boolean fromEngine) {
+    boolean doLessThanOrEqual() {
         if (mStack.size() < 2)
             return false;
 
@@ -484,17 +452,11 @@ public class Calculator {
         BigDecimal v2 = mStack.pop();
         BigDecimal v1 = mStack.pop();
         mStack.push(BigDecimal.valueOf(v1.compareTo(v2) <= 0 ? 1 : 0));
-        if (!fromEngine)
-            mActivity.updateStackView(mStack);
 
         return true;
     }
 
-    public boolean doGreaterThan() {
-        return greaterThan(true);
-    }
-
-    private boolean greaterThan(boolean fromEngine) {
+    boolean doGreaterThan() {
         if (mStack.size() < 2)
             return false;
 
@@ -502,17 +464,11 @@ public class Calculator {
         BigDecimal v2 = mStack.pop();
         BigDecimal v1 = mStack.pop();
         mStack.push(BigDecimal.valueOf(v1.compareTo(v2) > 0 ? 1 : 0));
-        if (!fromEngine)
-            mActivity.updateStackView(mStack);
 
         return true;
     }
 
-    public boolean doGreaterThanOrEqual() {
-        return greaterThanOrEqual(true);
-    }
-
-    private boolean greaterThanOrEqual(boolean fromEngine) {
+    boolean doGreaterThanOrEqual() {
         if (mStack.size() < 2)
             return false;
 
@@ -520,8 +476,6 @@ public class Calculator {
         BigDecimal v2 = mStack.pop();
         BigDecimal v1 = mStack.pop();
         mStack.push(BigDecimal.valueOf(v1.compareTo(v2) >= 0 ? 1 : 0));
-        if (!fromEngine)
-            mActivity.updateStackView(mStack);
 
         return true;
     }
@@ -529,11 +483,11 @@ public class Calculator {
     /**
      * Public Basic Stack Functions
      */
-    public boolean doRollN() {
+    boolean doRollN() {
         return rollN(true);
     }
 
-    public boolean rollN(boolean fromEngine) {
+    boolean rollN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
@@ -556,7 +510,7 @@ public class Calculator {
         return true;
     }
 
-    public boolean doDup() {
+    boolean doDup() {
         return dup(true);
     }
 
@@ -571,11 +525,11 @@ public class Calculator {
         return true;
     }
 
-    public boolean doDupN() {
+    boolean doDupN() {
         return dupN(true);
     }
 
-    public boolean dupN(boolean fromEngine) {
+    boolean dupN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
@@ -593,7 +547,7 @@ public class Calculator {
         return true;
     }
 
-    public boolean doDrop() {
+    boolean doDrop() {
         return drop(true);
     }
 
@@ -608,11 +562,11 @@ public class Calculator {
         return true;
     }
 
-    public boolean doDropN() {
+    boolean doDropN() {
         return dropN(true);
     }
 
-    public boolean dropN(boolean fromEngine) {
+    boolean dropN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
@@ -629,7 +583,7 @@ public class Calculator {
         return true;
     }
 
-    public boolean doSwap() {
+    boolean doSwap() {
         return swap(true);
     }
 
@@ -648,11 +602,11 @@ public class Calculator {
         return true;
     }
 
-    public boolean doSwapN() {
+    boolean doSwapN() {
         return swapN(true);
     }
 
-    public boolean swapN(boolean fromEngine) {
+    boolean swapN(boolean fromEngine) {
         if (mStack.isEmpty())
             return false;
 
@@ -671,7 +625,7 @@ public class Calculator {
         return true;
     }
 
-    public boolean doClear() {
+    boolean doClear() {
         return clear(true);
     }
 

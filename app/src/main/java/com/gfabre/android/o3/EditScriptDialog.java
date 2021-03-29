@@ -15,11 +15,11 @@ import java.io.IOException;
  *  @date December, 2018
  */
 public class EditScriptDialog implements GenericDialog.GenericDialogListener {
-    public static final int EDIT_DIALOG_ID = R.layout.edit_dialog;
+    private static final int EDIT_DIALOG_ID = R.layout.edit_dialog;
 
-    GenericDialog       mDialog;
-    CalculatorActivity  mActivity;
-    String              mFilename;
+    private GenericDialog       mDialog;
+    private CalculatorActivity  mActivity;
+    private String              mFilename;
 
     EditScriptDialog(CalculatorActivity activity, String filename) {
         mActivity = activity;

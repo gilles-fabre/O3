@@ -20,6 +20,7 @@ import com.gfabre.android.threeD.*;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * A simple canvas view used to draw from scripts
@@ -51,8 +52,8 @@ public class GraphView extends ScrollImageView {
         	mHeight = parent.getHeight();
         } else {
 	        // retrieve the display size
-	        Display display = ((WindowManager) context
-					.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+	        Display display = ((WindowManager) Objects.requireNonNull(context
+                    .getSystemService(Context.WINDOW_SERVICE))).getDefaultDisplay();
 	
 	        Rect rect = new Rect();
 	        if (display != null) 
@@ -302,7 +303,7 @@ public class GraphView extends ScrollImageView {
     }
 
     @SuppressLint("WrongThread")
-    public void loadFromPngFile(String filename) throws IOException {
+    public void loadFromPngFile(String filename) {
         if (!filename.endsWith(".png") && !filename.endsWith(".PNG"))
             filename += ".png";
         Bitmap bitmap = BitmapFactory.decodeFile(filename);

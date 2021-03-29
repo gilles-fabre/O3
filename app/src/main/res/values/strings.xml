@@ -44,7 +44,6 @@
     <string name="enter_button_title">Enter button title : </string>
     <string name="undefined_button">...</string>
     <string name="error_saving_png">Error saving png file : </string>
-    <string name="error_loading_png">Error loading png file : </string>
     <string name="saved_png">Saved png : </string>
     <string name="loaded_png">Loaded png : </string>
     <string name="function_call_err">Error calling function : </string>

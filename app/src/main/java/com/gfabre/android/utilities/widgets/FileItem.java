@@ -7,7 +7,7 @@ public class FileItem implements Comparable<FileItem> {
     private String mPath;
     private String mImage;
    
-    public FileItem(String name, String data, String date, String path, String img) {
+    FileItem(String name, String data, String date, String path, String img) {
         mName = name;
         mData = data;
         mDate = date;
@@ -19,7 +19,7 @@ public class FileItem implements Comparable<FileItem> {
         return mName;
     }
     
-    public String getData() {
+    String getData() {
         return mData;
     }
     
@@ -27,11 +27,11 @@ public class FileItem implements Comparable<FileItem> {
         return mDate;
     }
     
-    public String getPath() {
+    String getPath() {
         return mPath;
     }
     
-    public String getImage() {
+    String getImage() {
         return mImage;
     }
 

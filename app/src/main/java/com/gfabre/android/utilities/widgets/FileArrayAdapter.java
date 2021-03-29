@@ -22,7 +22,7 @@ public class FileArrayAdapter extends ArrayAdapter <FileItem> {
    private int 				mResId;
    private List<FileItem>	mItems;
   
-   public FileArrayAdapter(Activity activity, int viewResourceId, List<FileItem> objects) {
+   FileArrayAdapter(Activity activity, int viewResourceId, List<FileItem> objects) {
        super(activity, viewResourceId, objects);
        mActivity = activity;
        mResId = viewResourceId;

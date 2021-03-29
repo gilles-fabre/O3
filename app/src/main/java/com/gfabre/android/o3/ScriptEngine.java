@@ -29,7 +29,7 @@ public class ScriptEngine {
     // and debugging context
     private static Stack<Context> mContexts = new Stack<>();
 
-    public static void stop() {
+    static void stop() {
         mStopRequired = true;
     }
 
@@ -239,7 +239,7 @@ public class ScriptEngine {
      * @param block is the script block for the function
      */
     private boolean compileAndSaveFunction(String function, String block) {
-        ArrayList<ScriptOperation> functionLambdaCode = new ArrayList<ScriptOperation>();
+        ArrayList<ScriptOperation> functionLambdaCode = new ArrayList<>();
         try {
             if (new ScriptEngine(this, mActivity, mCalculator, block).compileScript(functionLambdaCode)) {
                 mCompiledFunctions.put(function, functionLambdaCode);
@@ -262,14 +262,14 @@ public class ScriptEngine {
      * @return the block execution result or false if the function doesn't exist
      */
     private boolean callFunction(String function) {
-        boolean runOk = false;
-
         if (!mFunctions.containsKey(function)) {
             mActivity.doDisplayMessage(mActivity.getString(R.string.undefined_function) + function);
-            return runOk;
+            return false;
         }
 
         // run the function in the context of a new engine
+        boolean runOk = false;
+
         try {
             runOk = new ScriptEngine(this, mActivity, mCalculator, mFunctions.get(function)).interpretScript();
         } catch (IOException e) {
@@ -281,6 +281,9 @@ public class ScriptEngine {
 
     // compiled counterpart
     private boolean compileFunctionCall(String function, ArrayList<ScriptOperation> lambdaCode) {
+        if (mCompiledFunctions == null)
+            return false;
+
         // recursive function call can't be inlined
         if (!mCompiledFunctions.containsKey(function)) {
             // compile the function call in the context of a new engine
@@ -301,36 +304,10 @@ public class ScriptEngine {
     }
 
     /**
-     * Execute the script block associated with the function name key outside the context of
-     * an existing scriptEngine.
-     *
-     * @param function is the name of the function to execute
-     *
-     * @return the block execution result or false if the function doesn't exist
-     */
-    public static boolean interpretFunction(CalculatorActivity activity, Calculator calculator, String function) {
-        boolean runOk = false;
-
-        if (!mFunctions.containsKey(function)) {
-            activity.doDisplayMessage(activity.getString(R.string.undefined_function) + function);
-            return false;
-        }
-
-        // run the function in the context of a new engine
-        try {
-            runOk = new ScriptEngine(activity, calculator, mFunctions.get(function)).interpretScript();
-        } catch (IOException e) {
-            // ignored on purpose
-        }
-
-        return runOk;
-    }
-
-    /**
      * @return the sorted list of ('defuned') functions in ascending order.
      */
     public static String[] getFunctions() {
-        String []functions = mFunctions.keySet().toArray(new String[0]);;
+        String []functions = mFunctions.keySet().toArray(new String[0]);
         Arrays.sort(functions);
         return functions;
     }
@@ -603,14 +580,10 @@ public class ScriptEngine {
      */
     private void displayDebugInfo() {
         StringBuilder variables = new StringBuilder();
-        Iterator<Map.Entry<String, BigDecimal>> i = lookupVariables().entrySet().iterator();
-        while (i.hasNext()) {
-            Map.Entry<String, BigDecimal> pair = i.next();
+        for (Map.Entry<String, BigDecimal> pair : lookupVariables().entrySet()) {
             variables.append(pair.getKey()).append(":").append(pair.getValue()).append("\n");
         }
-        Iterator<Map.Entry<String, ArrayList<BigDecimal>>> j = lookupArrays().entrySet().iterator();
-        while (j.hasNext()) {
-            Map.Entry<String, ArrayList<BigDecimal>> pair = j.next();
+        for (Map.Entry<String, ArrayList<BigDecimal>> pair : lookupArrays().entrySet()) {
             ArrayList array = pair.getValue();
             for (int k = 0; k < array.size(); k++)
                 if (array.get(k) != null)
@@ -623,24 +596,20 @@ public class ScriptEngine {
     /**
      * Debugs the given script.
      *
-     * @return true if the script was executed correctly, else return false
-     *
      * @throws IOException
      */
-    public boolean debugScript() throws IOException {
+    void debugScript() throws IOException {
         // we enter here to debug a complete script
         Context newContext = new Context(Context.State.RUNNING);
         newContext.mDebugState = DebugView.DebugState.step_in;
 
         mContexts.push(newContext);
-        boolean runOk = interpretScript();
+        interpretScript();
         mContexts.pop();
 
         // close the debug dialog
         if (mActivity.isDebugViewShown())
             mActivity.doHideDebugView();
-
-        return runOk;
     }
 
     /**
@@ -651,11 +620,11 @@ public class ScriptEngine {
      * @throws IOException
      */
     private static final AtomicInteger mCounter = new AtomicInteger(0);
-    public static boolean isRunning() {
+    static boolean isRunning() {
         return mCounter.get() > 0;
     }
 
-    public boolean interpretScript() throws IOException {
+    boolean interpretScript() throws IOException {
         Symbol  symbol;
         boolean runOk = true, stop = false;
 
@@ -1192,7 +1161,7 @@ public class ScriptEngine {
     }
 
     // compiled counterpart
-    public boolean executeScript() throws IOException {
+    boolean executeScript() throws IOException {
         // a (new) script is running
         mCounter.incrementAndGet();
 

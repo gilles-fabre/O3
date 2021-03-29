@@ -564,13 +564,10 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS,
                         getString(R.string.enter_png_filename), null);
 
-                try {
-                    filename = getDefaultDataAbsolutePath() + "/" + filename;
-                    mGraphView.loadFromPngFile(filename);
-                    displayMessage(getString(R.string.loaded_png) + filename);
-                } catch (IOException e) {
-                    displayMessage(getString(R.string.error_loading_png) + e.getLocalizedMessage());
-                }
+                filename = getDefaultDataAbsolutePath() + "/" + filename;
+                mGraphView.loadFromPngFile(filename);
+                displayMessage(getString(R.string.loaded_png) + filename);
+
                 return true;
             }
         });

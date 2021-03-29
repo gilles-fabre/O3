@@ -34,7 +34,7 @@ public class MathFunctionChooser implements GenericDialogListener {
     private Method              mMethod = null;
     private boolean             mSeekFunction = true;
 
-    public static final int MATHS_FUNCTIONS_DIALOG_ID = R.layout.maths_functions_dialog;
+    private static final int MATHS_FUNCTIONS_DIALOG_ID = R.layout.maths_functions_dialog;
 
     private void selectMethod(int position) {
         mMethod = mMethods.get(position);
@@ -109,7 +109,7 @@ public class MathFunctionChooser implements GenericDialogListener {
         }
     }
 
-    public MathFunctionChooser(CalculatorActivity activity, Calculator calculator) {
+    MathFunctionChooser(CalculatorActivity activity, Calculator calculator) {
         mActivity = activity;
         mCalculator = calculator;
 

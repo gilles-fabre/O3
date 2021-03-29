@@ -12,12 +12,12 @@ import com.gfabre.android.utilities.widgets.GenericDialog;
  *  @date December, 2018
  */
 public class HistoryDialog implements GenericDialog.GenericDialogListener {
-    public static final int HISTORY_DIALOG_ID = R.layout.history_dialog;
+    private static final int HISTORY_DIALOG_ID = R.layout.history_dialog;
 
-    GenericDialog           mDialog;
-    CalculatorActivity      mActivity;
-    Calculator              mCalculator;
-    String                  mHistory;
+    private GenericDialog       mDialog;
+    private CalculatorActivity  mActivity;
+    private Calculator          mCalculator;
+    private String              mHistory;
 
     HistoryDialog(CalculatorActivity activity, Calculator calculator, String history) {
         mCalculator = calculator;

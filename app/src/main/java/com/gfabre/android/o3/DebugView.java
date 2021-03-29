@@ -1,8 +1,6 @@
 package com.gfabre.android.o3;
 
-import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -12,7 +10,6 @@ import com.gfabre.android.utilities.widgets.GenericDialog;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class provides support for a modal, synchronous, debug dialog which can
@@ -39,10 +36,10 @@ public class DebugView implements GenericDialog.GenericDialogListener {
     private boolean             mIsShown;
 
     private static final AtomicBoolean mInInnerLoop = new AtomicBoolean(false);
-    public static boolean inInnerLoop() {
+    private static boolean inInnerLoop() {
         return mInInnerLoop.get();
     }
-    public static void enterInnerLoop() {
+    private static void enterInnerLoop() {
         mInInnerLoop.set(true);
         try{
             Looper.loop();
@@ -50,7 +47,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
             System.out.println("exiting on" + e.getMessage());
         }
     }
-    public static void exitInnerLoop() {
+    private static void exitInnerLoop() {
         if (inInnerLoop()) {
             mInInnerLoop.set(false);
             throw new RuntimeException();
@@ -76,7 +73,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
         mState = DebugState.step_in;
     }
 
-    public void updateDebugInfo(int scriptLine, String script, String variables, String stack) {
+    void updateDebugInfo(int scriptLine, String script, String variables, String stack) {
         mScript = script;
         mVariables = variables;
         mStack = stack;
@@ -103,7 +100,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
         enterInnerLoop();
     }
 
-    public void hide() {
+    void hide() {
         mDialog.dismiss(); // mIsShown is set on onDismiss
     }
 
@@ -140,11 +137,9 @@ public class DebugView implements GenericDialog.GenericDialogListener {
      */
     @Override
     public void onDialogInitialize(int Id, GenericDialog dialog, View view) {
-        final GenericDialog _dialog = dialog;
-
         ListView list = (ListView)dialog.getField(R.id.stack);
         if (list != null)  {
-            mStackAdapter = new ArrayAdapter<>(mActivity, R.layout.simple_row, new ArrayList<String>());
+            mStackAdapter = new ArrayAdapter<>(mActivity, R.layout.simple_row, new ArrayList<>());
             list.setAdapter(mStackAdapter);
             populateListView(mStackAdapter, mStack);
         }
@@ -152,7 +147,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
         if (mScriptList != null)  {
             mScriptList.setEnabled(false);
             mScriptList.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-            mScriptAdapter = new ArrayAdapter<>(mActivity, R.layout.simple_row, new ArrayList<String>());
+            mScriptAdapter = new ArrayAdapter<>(mActivity, R.layout.simple_row, new ArrayList<>());
             mScriptList.setAdapter(mScriptAdapter);
             populateListView(mScriptAdapter, mScript);
             mScriptList.setItemChecked(mScriptLine, true);
@@ -160,7 +155,7 @@ public class DebugView implements GenericDialog.GenericDialogListener {
         }
         list = (ListView)dialog.getField(R.id.variables);
         if (list != null)  {
-            mVariablesAdapter = new ArrayAdapter<>(mActivity, R.layout.simple_row, new ArrayList<String>());
+            mVariablesAdapter = new ArrayAdapter<>(mActivity, R.layout.simple_row, new ArrayList<>());
             list.setAdapter(mVariablesAdapter);
             populateListView(mVariablesAdapter, mVariables);
         }
@@ -239,11 +234,11 @@ public class DebugView implements GenericDialog.GenericDialogListener {
         exitInnerLoop();
     }
 
-    public DebugState getDebugState() {
+    DebugState getDebugState() {
         return mState;
     }
 
-    public boolean isShown() {
+    boolean isShown() {
         return mIsShown;
     }
 }

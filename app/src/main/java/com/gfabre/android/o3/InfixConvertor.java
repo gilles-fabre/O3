@@ -3,13 +3,13 @@ package com.gfabre.android.o3;
 import java.util.Stack;
 import java.util.StringTokenizer;
 
-public class InfixConvertor {
+class InfixConvertor {
     private static final String FUNCTION_CALL_MARKER = "fc@";
     private static final String MATH_CALL_MARKER = "mc@";
 
-    String mInfix;           // sanitized infixed expression
-    String mPostfix;         // post fixed
-    String mRpnScript;       // rpn script (with \n after each operand/operator)
+    private String mInfix;           // sanitized infixed expression
+    private String mPostfix;         // post fixed
+    private String mRpnScript;       // rpn script (with \n after each operand/operator)
 
 
     /**
@@ -21,7 +21,7 @@ public class InfixConvertor {
      * @param infix is a well formed infixed expression, containing basic operators,
      *        variables and function or math function calls.
      */
-    public InfixConvertor(String infix) {
+    InfixConvertor(String infix) {
         mInfix = infix;
         Sanitize();
         mPostfix = "";
@@ -67,7 +67,7 @@ public class InfixConvertor {
      * Return the arithmetic precedence of the passed token.
      *
      * @param token is the operand or operator which precedence has to be returned
-     * @return the athmetic precedence of the token.
+     * @return the arithmetic precedence of the token.
      */
     private int precedence(String token) {
 
@@ -221,11 +221,11 @@ public class InfixConvertor {
         mRpnScript = mRpnScript.replaceAll("mc@", "math_call ");
     }
 
-    public String getPostfix() {
+    String getPostfix() {
         return mPostfix;
     }
 
-    public String getRpnScript() {
+    String getRpnScript() {
         return mRpnScript;
     }
 }
