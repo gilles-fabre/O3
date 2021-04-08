@@ -64,7 +64,8 @@ class InfixConvertor {
     }
 
     /**
-     * Return the arithmetic precedence of the passed token.
+     * Return the arithmetic precedence of the passed token. The biggest
+     *        is the returned number, the higher is the precedence priority.
      *
      * @param token is the operand or operator which precedence has to be returned
      * @return the arithmetic precedence of the token.
@@ -75,7 +76,7 @@ class InfixConvertor {
             case "(":
             case ",": // just so it is considered as an operator
             case ")":
-                return 1;
+                return 3;
 
             case "*":
             case "/":
@@ -84,7 +85,7 @@ class InfixConvertor {
 
             case "-":
             case "+":
-                return 3;
+                return 1;
         }
 
         return 0;
