@@ -884,7 +884,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 if (mCalculator.isValueEmpty())
                     return;
                 String value = mCalculator.getValue();
-                mCalculator.setValue(value.substring(0, value.length() - 1));
+                value = value.substring(0, value.length() - 1);
+                mCalculator.setValue(value);
                 mValueField.setText(value);
             }
         });
@@ -894,7 +895,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                 if (mCalculator.isValueEmpty())
                     return false;
                 mCalculator.setValue("");
-                mValueField.setText(mCalculator.getValue());
+                mValueField.setText("");
                 return true;
             }
         });
