@@ -189,8 +189,11 @@ class InfixConvertor {
                 // we've encountered an arithmetic operator of a new expression
                 // until we reach the end of the stack or a new expression, unstack and append
                 // more prioritary operators to the postfix result
-                while (!operator.isEmpty() && !token.equals("(") && precedence(operator.peek()) >= precedence(token))
-                    postfix += " " + operator.pop();
+                while (!operator.isEmpty() && !token.equals("(") && precedence(operator.peek()) >= precedence(token)) {
+                    popped = operator.pop();
+                    if (!popped.equals("("))
+                        postfix += " " + operator.pop();
+                }
 
                 // stack operator or function
                 operator.push(token); // note : ',' & ')' not pushed on purpose
