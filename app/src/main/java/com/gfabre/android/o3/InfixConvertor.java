@@ -192,7 +192,7 @@ class InfixConvertor {
                 while (!operator.isEmpty() && !token.equals("(") && precedence(operator.peek()) >= precedence(token)) {
                     popped = operator.pop();
                     if (!popped.equals("("))
-                        postfix += " " + operator.pop();
+                        postfix += " " + popped;
                 }
 
                 // stack operator or function
