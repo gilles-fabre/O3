@@ -341,6 +341,13 @@ public class Calculator {
         // uses Double because BigDecimal does not handle divide very well (rounding up to programmer)
         Double v2 = mStack.pop().doubleValue();
         Double v1 = mStack.pop().doubleValue();
+        if (v2 == 0) {
+            mActivity.displayMessage(mActivity.getString(R.string.division_by_zero));
+            mStack.push(BigDecimal.valueOf(v1));
+            mStack.push(BigDecimal.valueOf(v2));
+            return false;
+        }
+
         BigDecimal result = BigDecimal.valueOf(v1 / v2);
 
         mStack.push(result);
