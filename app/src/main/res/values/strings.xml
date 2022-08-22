@@ -15,7 +15,7 @@
     <string name="script_functions">Script Functions</string>
     <string name="scripts">Scripts</string>
     <string name="show_samples">Show Samples..</string>
-    <string name="generate_samples">Generate Samples</string>
+    <string name="regenerate_samples">Regenerate Samples</string>
     <string name="init_script">Select Init Script..</string>
     <string name="cancel_init_script">Cancel Init Script</string>
     <string name="edit_script">Edit..</string>
