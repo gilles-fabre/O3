@@ -36,7 +36,6 @@ dot_size
 
 1.0
 while
-	drop
 	!x
 	dup
 	0.0
@@ -55,7 +54,6 @@ end_while
 
 1.0
 while
-	drop
 	!y
 	0.0
 	swap
@@ -81,7 +79,6 @@ color
 
 1.0
 while
-	drop
 	!x
 	math_call sin
 	!x

@@ -82,7 +82,6 @@ dot_size
 // iterate until t reaches max_t, by increments of t_step
 1
 while
-    drop
     funcall x_func_of_t
     dup
     math_call abs
@@ -108,7 +107,6 @@ while
     !max_t
     funcall lte
 end_while
-drop
 
 // get rid of local functions
 fundel x_func_of_t

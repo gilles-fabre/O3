@@ -34,7 +34,6 @@ dot_size
 
 1.0
 while
-	drop
 	!x
 	dup
 	0.0
@@ -43,9 +42,9 @@ while
 	?"exit? (anything != 0 exits)
 	if
 		exit
-	end_if 
+	end_if
 	pop
-*/	
+*/
 	plot
 	1
 	+
@@ -68,7 +67,6 @@ clear
 
 1.0
 while
-	drop
 	2.0
 	!x
 	funcall logN
@@ -85,4 +83,3 @@ while
 end_while
 
 !"done drawing log2 x
-

@@ -44,8 +44,6 @@ range
 
 !iter
 while
-     drop
-
      funcall rand_size
      dot_size
 
@@ -64,7 +62,6 @@ while
 
      ?iter
 end_while
-drop
 
 fundel rand_coord
 fundel rand_color

@@ -1,8 +1,4 @@
 // collatz conjecture
-0.0
-2.0
-dupn
-erase
 
 fundef incx
 	!x
@@ -12,8 +8,18 @@ fundef incx
 end_fundef
 
 fundef draw
+	!oldx
+	!oldn
 	!x
 	!n
+	line
+	
+	!x
+	dup
+	?oldx
+	!n
+	dup
+	?oldn
 	plot
 end_fundef
 
@@ -21,7 +27,6 @@ fundef nextn
 	!n
 	2.0
 	math_call floorMod
-
 	if
 		!n
 		3.0
@@ -39,7 +44,9 @@ end_fundef
 
 ?"enter start value
 math_call abs
+dup
 ?n
+?oldn
 
 // set drawing range
 0.0
@@ -60,8 +67,16 @@ color
 10.0
 dot_size
 
+// clear graph view
 0.0
+2.0
+dupn
+erase
+
+0.0
+dup
 ?x
+?oldx
 
 !n
 1.0

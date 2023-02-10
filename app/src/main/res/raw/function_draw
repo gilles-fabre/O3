@@ -63,7 +63,6 @@ color
 
 !x
 while
-    drop
     funcall fun_of_x
     !x
     swap

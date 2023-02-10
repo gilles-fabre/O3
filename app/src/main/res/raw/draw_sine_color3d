@@ -56,8 +56,6 @@ line3D
 ?z
 1.0
 while
-	drop
-
 	// draw points in increasing/decreasing & opposed red/green
 	0.0
 	6.0
@@ -83,7 +81,6 @@ while
 		-
 		!b
 		color
-		drop
 		!x
 		math_call sin
 		!x
