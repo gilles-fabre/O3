@@ -58,9 +58,6 @@ fundef sum
     !stacksize
     funcall dec
     while
-		// drop stacksize
-	    drop
-
 	    // add sum to top value
        	!sum
 	    +
@@ -127,7 +124,6 @@ fundef standardDeviation
         ?[]a
         !i
     end_while
-    drop
 
     !n
     dup
@@ -139,7 +135,6 @@ fundef standardDeviation
         ![]a
         !i
     end_while
-    drop
 
     funcall average
     ?avr
@@ -164,7 +159,6 @@ fundef standardDeviation
         ?sum
         !i
     end_while
-    drop
 
     !sum
     !n
@@ -202,7 +196,6 @@ fundef min
    ?min
    stack_size
    while
-      drop
       dup
       ?next
       !min
@@ -211,10 +204,8 @@ fundef min
           !next
           ?min
       end_if
-      drop
       stack_size
    end_while
-   drop
    !min
 end_fundef
 
@@ -222,7 +213,6 @@ fundef max
    ?max
    stack_size
    while
-      drop
       dup
       ?next
       !max
@@ -231,10 +221,8 @@ fundef max
           !next
           ?max
       end_if
-      drop
       stack_size
    end_while
-   drop
    !max
 end_fundef
 

@@ -1243,7 +1243,6 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                     "!max_x\n" +
                     "<=\n" +
                     "while\n" +
-                    "    drop\n" +
                     "    infixed " + expression + "\n" +
                     "    !x\n" +
                     "    swap\n" +
@@ -1255,8 +1254,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
                     "    ?x\n" +
                     "    !max_x\n" +
                     "    <=\n" +
-                    "end_while\n" +
-                    "drop\n";
+                    "end_while\n";
 
         executeScript(script);
     }
@@ -1596,8 +1594,8 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\t+, -, *, / : have the same effect as their UI equivalents.\n", 0, false);
         helpView.appendText("\t\t% : Pushes the modulus (remaining part of division) on the stack.\n", 0, false);
         helpView.appendText("\t\t&lt&gt, &lt, &lt=, &gt, &gt= : pop the two topmost values and pushes the result (0 means false, any other value means true) of their comparison on the stack.\n", 0, false);
-        helpView.appendText("\t\tif, [else], end_if : conditional block[s], if and else do not pop the 'test' value off the stack.\n", 0, false);
-        helpView.appendText("\t\twhile, end_while : iteration block[s], while does not pop the 'test' value off the stack.\n", 0, false);
+        helpView.appendText("\t\tif, [else], end_if : conditional block[s], if block is entered when the topmost value is not equal to 0, the else block (if presnt) otherwise.\n", 0, false);
+        helpView.appendText("\t\twhile, end_while : iteration block[s], entered when the topmost value is different from 0.\n", 0, false);
         helpView.appendText("\t\tfundef _f, end_fundef : defines a function _f which can later be invoked (until deleted) from any script during the session.\n", 0, false);
         helpView.appendText("\t\tfundel _f : deletes (forgets) the _f function.\n", 0, false);
         helpView.appendText("\t\tfuncall _f : calls the script function _f.\n", 0, false);

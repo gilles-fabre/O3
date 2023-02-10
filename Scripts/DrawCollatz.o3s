@@ -1,0 +1,85 @@
+// collatz conjecture
+0.0
+2.0
+dupn
+erase
+
+fundef incx
+	!x
+	10.0
+	+
+	?x
+end_fundef
+
+fundef draw
+	!x
+	!n
+	plot
+end_fundef
+
+fundef nextn
+	!n
+	2.0
+	math_call floorMod
+
+	if
+		!n
+		3.0
+		*
+		1.0
+		+
+		?n
+	else
+		!n
+		2.0
+		/
+		?n
+	end_if
+end_fundef
+
+?"enter start value
+math_call abs
+?n
+
+// set drawing range
+0.0
+100.0
+0.0
+!n
+8.0
+*
+range
+
+// set plot color
+255.0
+0.0
+0.0
+color
+
+// dot size
+10.0
+dot_size
+
+0.0
+?x
+
+!n
+1.0
+>
+while
+	funcall draw
+	funcall nextn
+	funcall incx
+
+	!n
+	1.0
+	>
+end_while
+
+funcall draw
+
+fundel incx
+fundel nextn
+fundel draw
+
+!"done drawing...

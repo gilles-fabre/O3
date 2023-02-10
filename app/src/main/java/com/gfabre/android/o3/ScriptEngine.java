@@ -325,7 +325,7 @@ public class ScriptEngine {
 
         // run the if block in the context of a new engine
         try {
-            if (mCalculator.doPeekValueFromStack().doubleValue() != 0.0)
+            if (mCalculator.doPopValueFromStack().doubleValue() != 0.0)
                 return new ScriptEngine(this, mActivity, mCalculator, block).interpretScript();
         } catch (IOException e) {
             // ignored on purpose
@@ -346,7 +346,7 @@ public class ScriptEngine {
                 if (!mCalculator.hasValueOnStack())
                     return false;
 
-                if (mCalculator.doPeekValueFromStack().doubleValue() != 0.0)
+                if (mCalculator.doPopValueFromStack().doubleValue() != 0.0)
                     return executeScript(ifBlockLambdaCode);
 
                 return true;
@@ -372,12 +372,12 @@ public class ScriptEngine {
 
         // run the if/else block in the context of a new engine
         try {
-            if (mCalculator.doPeekValueFromStack().doubleValue() != 0.0)
-                // run the the else block
-                return new ScriptEngine(this,mActivity, mCalculator, elseBlock).interpretScript();
-            else {
+            if (mCalculator.doPopValueFromStack().doubleValue() != 0.0)
                 // run the if block
-                return new ScriptEngine(this, mActivity, mCalculator, ifBlock).interpretScript();
+                return new ScriptEngine(this,mActivity, mCalculator, ifBlock).interpretScript();
+            else {
+                // run the else block
+                return new ScriptEngine(this, mActivity, mCalculator, elseBlock).interpretScript();
             }
         } catch (IOException e) {
             // ignored on purpose
@@ -400,7 +400,7 @@ public class ScriptEngine {
                 if (!mCalculator.hasValueOnStack())
                     return false;
 
-                if (mCalculator.doPeekValueFromStack().doubleValue() != 0.0)
+                if (mCalculator.doPopValueFromStack().doubleValue() != 0.0)
                     return executeScript(ifBlockLambdaCode);
                 else
                     return executeScript(elseBlockLambdaCode);
@@ -426,7 +426,7 @@ public class ScriptEngine {
         // run the while block in the context of a new engine
         boolean runOk = true;
         try {
-            while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPeekValueFromStack().doubleValue() != 0.0) {
+            while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPopValueFromStack().doubleValue() != 0.0) {
                 if (!(runOk = new ScriptEngine(this, mActivity, mCalculator, block).interpretScript()))
                     break;
             }
@@ -447,7 +447,7 @@ public class ScriptEngine {
             lambdaCode.add(() ->
             {
                 boolean runOk;
-                while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPeekValueFromStack().doubleValue() != 0.0) {
+                while ((runOk = mCalculator.hasValueOnStack()) && mCalculator.doPopValueFromStack().doubleValue() != 0.0) {
                     if (!(runOk = executeScript(whileBlockLambdaCode)))
                         break;
                 }

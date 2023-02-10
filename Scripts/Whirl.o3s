@@ -41,7 +41,6 @@ dot_size
 // iterate until t reaches max_t, by increments of t_step
 1
 while
-    drop
 	infixed mc@sin(!t)*!t
 	infixed mc@cos(!t)*!t
     plot
@@ -53,7 +52,6 @@ while
     !max_t
     funcall lte
 end_while
-drop
 
 // display message to the user
 !"done drawing whirl

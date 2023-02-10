@@ -34,7 +34,6 @@ dot_size
 
 1.0
 while
-	drop
 	!x
 	dup
 	0.0
@@ -68,7 +67,6 @@ clear
 
 1.0
 while
-	drop
 	2.0
 	!x
 	math_call pow
@@ -85,4 +83,3 @@ while
 end_while
 
 !"done drawing 2^x
-

@@ -2,8 +2,6 @@
 
 //  a small sample to demonstrate array capabilities
 
-debug_break
-
 100.0
 99.0
 ?[]a
@@ -11,21 +9,23 @@ debug_break
 ![]a
 
 99.0
+dup
 while
 	3.0 
 	dupn
 	?[]a
 	funcall dec
+	dup
 end_while
-//clear
-
-//debug_break
 
 99.0
+dup
 while
 	dup
 	![]a
 	swap
 	funcall dec
+	dup
 end_while
 
+!"done

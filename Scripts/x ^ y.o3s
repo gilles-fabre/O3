@@ -26,9 +26,6 @@ while
 	!y
 end_while
 
-// drop counter
-drop
-
 // result
 !r
 
