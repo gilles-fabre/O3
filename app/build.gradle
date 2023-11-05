@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
     defaultConfig {
         applicationId "com.gfabre.android.o3"
-        minSdkVersion 19
-        targetSdkVersion 32
-        versionCode 401
-        versionName "4.01"
+        minSdkVersion 23
+        targetSdkVersion 33
+        versionCode 402
+        versionName "4.02"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

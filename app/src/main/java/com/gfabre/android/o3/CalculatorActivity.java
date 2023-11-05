@@ -88,7 +88,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
     private static final String HISTORY_SCRIPT_KEY = "HistoryScript";
     private static final String HISTORY_SCRIPT_NAME = "HistoryScript";
 
-    private static final int NUM_FUNC_BUTTONS = 35;
+    private static final int NUM_FUNC_BUTTONS = 36;
 
     private static final int DISPLAY_PROGRESS_MESSAGE = 0;
     private static final int UPDATE_STACK_MESSAGE = 1;
@@ -1367,6 +1367,11 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
             mFunctionScripts[14] = "funcall standardDeviation";
             button = findViewById(R.id.button_fn15);
             setFunctionButton(button, 14);
+
+            mFunctionTitles[15] = "n!";
+            mFunctionScripts[15] = "funcall fact";
+            button = findViewById(R.id.button_fn16);
+            setFunctionButton(button, 15);
         }
 
         return createButtons;
@@ -1594,7 +1599,7 @@ public class CalculatorActivity extends AppCompatActivity implements GenericDial
         helpView.appendText("\t\t+, -, *, / : have the same effect as their UI equivalents.\n", 0, false);
         helpView.appendText("\t\t% : Pushes the modulus (remaining part of division) on the stack.\n", 0, false);
         helpView.appendText("\t\t&lt&gt, &lt, &lt=, &gt, &gt= : pop the two topmost values and pushes the result (0 means false, any other value means true) of their comparison on the stack.\n", 0, false);
-        helpView.appendText("\t\tif, [else], end_if : conditional block[s], if block is entered when the topmost value is not equal to 0, the else block (if presnt) otherwise.\n", 0, false);
+        helpView.appendText("\t\tif, [else], end_if : conditional block[s], if block is entered when the topmost value is not equal to 0, the else block (if present) otherwise.\n", 0, false);
         helpView.appendText("\t\twhile, end_while : iteration block[s], entered when the topmost value is different from 0.\n", 0, false);
         helpView.appendText("\t\tfundef _f, end_fundef : defines a function _f which can later be invoked (until deleted) from any script during the session.\n", 0, false);
         helpView.appendText("\t\tfundel _f : deletes (forgets) the _f function.\n", 0, false);

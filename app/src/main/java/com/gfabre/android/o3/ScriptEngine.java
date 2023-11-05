@@ -610,6 +610,9 @@ public class ScriptEngine {
         // close the debug dialog
         if (mActivity.isDebugViewShown())
             mActivity.doHideDebugView();
+
+        // stack needs to be updated upon debug exit
+        mActivity.doUpdateStack();
     }
 
     /**

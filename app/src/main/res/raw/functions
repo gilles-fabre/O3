@@ -106,49 +106,69 @@ fundef modulo
     !rem
 end_fundef
 
-fundef standardDeviation
-    // create global array!
+fundef buildArray
+    !stacksize
     0
-    0
-    ?[]a
-
-    stack_size
-    2
-    dupn
-    ?n
-    ?i
-    while
-        funcall dec
-        dup
-        ?i
-        ?[]a
-        !i
-    end_while
-
-    !n
     dup
     ?i
+    funcall neq
     while
-        funcall dec
+        !i
+        ?[]a
+        !i
+        funcall inc
         dup
         ?i
-        ![]a
-        !i
+        !stacksize
+        funcall neq
     end_while
+end_fundef
 
+fundef pushArray
+    !stacksize
+    0
+    dup
+    ?i
+    funcall neq
+    while
+      !i
+      ![]a
+      !i
+      funcall inc
+      dup
+      ?i
+      !stacksize
+      funcall neq
+    end_while
+end_fundef
+
+fundef standardDeviation
+    // get the stack size
+    stack_size
+    ?stacksize
+
+    // save the stack in an array
+    funcall buildArray
+
+    // push the array back onto the stack
+    funcall pushArray
+
+    // compute the average value
     funcall average
     ?avr
 
+    // initialize the standard deviation
     0
     ?sum
 
-    !n
+    // iterate through the array to compute the std dev
+    !stacksize
+    0
     dup
     ?i
+    funcall neq
     while
-        funcall dec
-        dup
-        ?i
+        !i
         ![]a
         !avr
         -
@@ -157,11 +177,16 @@ fundef standardDeviation
         !sum
         +
         ?sum
+        !stacksize
         !i
+        funcall inc
+        dup
+        ?i
+        funcall neq
     end_while
 
     !sum
-    !n
+    !stacksize
     /
     math_call sqrt
 end_fundef
@@ -226,3 +251,18 @@ fundef max
    !max
 end_fundef
 
+fundef fact
+    dup
+    ?x
+    0
+    funcall eq
+    if
+        1
+    else
+        !x
+        dup
+        funcall dec
+        funcall fact
+        *
+    end_if
+end_fundef
