@@ -25,6 +25,7 @@ android {
     lint {
         abortOnError false
     }
+    namespace 'com.gfabre.android.o3'
 }
 
 dependencies {
